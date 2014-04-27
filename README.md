@@ -1,4 +1,4 @@
-Comixology backup
+Comixology Backup
 ======
 
 Do you like Comixology ( http://comixology.com )? Me too!
@@ -7,7 +7,7 @@ Are you annoyed that you can't download the comics you bought in a standard form
 
 So, I have written a Chrome/Chromium extension, that allows you to do just that. It should work on any OS where Chrome works.
 
-(The extension is intended **just for back-uping** your comics collection on disk. Don't distribute the files or images anywhere else.)
+*REMEMBER:* Do not use the extension for piracy! Only create private backups! We do not intent to compromise ComiXology. **Downloaded comics always have your username included. Distributed comics can be tracked back to you!**
 
 Installation
 -----
@@ -36,21 +36,32 @@ The second way is more or less the same, just without that retarded drag-and-dro
 - Select the "source" folder
 - Now you just open your comics in the Comixology reader and you should see an orange panel, asking for back-up.
 
+Updates
+-----
+
+If you want to be notified about updates you can add an update server in the extensions options. You get there by opening the extensions panel in the settings and then click on "Options" right to the Comixology Backup extension. The options should open and you can click on "Set update server".
+
+The update server URL is: `https://raw.githubusercontent.com/Cortys/comixology-backup/master`
+
+Copy it exactly like that.
+
 ### Why it's not on Chrome Store?
 
-I am fairly certain Comixology will, unfortunately, try to remove this extension from Chrome Store, because
-it goes around their DRM.
+I am fairly certain Comixology will, unfortunately, try to remove this extension from Chrome Store, because it goes around their DRM.
+
+How to use
+-----
+
+* Download zip archive.
+* Drag and drop the extension.crx file to the extensions panel in the Chrome settings.
+* Open a ComiXology comic (with at least two pages) in the web reader. An orange bar should appear, asking you if you want to backup.
+* Click "Yes". Because this is the first time you use the extension a scan has to be created. This basically means that the extension will ask you to click on some element of the reader. The things you are asked to do (switch view mode, open thumbnails...) are operations you can accomplish with one click. So only perform ONE click in each step or the setup won't work.
+* If everything worked fine you will get a success message and may start to backup your comic library now.
+* Sometimes backups of comics with many pages (~200+) fail. To circumvent that you can enable *single image* container compression in the options and all the pages of the comic will be downloaded as separate images. To get a CBZ you then have to zip the images manually.
 
 How it works
 -----
 You can look at the source code - but basically, it fetches the pixels of the canvas elements that compose to the opened page, puts them together, and then it downloads those again and zips them using zip.js.
-
-Known troubles
------
-If the book is larger than 200-something pages, it never finishes. It's not my problem though, it's an issue with comixology that just stops loading images for some reason after about 200 pages. Probably some DRM issues, lel. And because I am just intercepting the requests, I never finish intercepting the end of the book.  
-Note: This issue is intermittent.  Sometimes it works fine.
-
-Sometimes the extension will get stuck on the first page and never go forward.  Refreshing the page and starting over usually gets around it.
 
 About me, licence
 ----
