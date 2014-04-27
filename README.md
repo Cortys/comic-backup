@@ -1,19 +1,18 @@
 Comixology Backup
 ======
 
-Do you like Comixology ( http://comixology.com )? Me too!
+Do you like [Comixology](http://comixology.com)? Me too!
 
 Are you annoyed that you can't download the comics you bought in a standard format, readable by all possible software? Me too!
 
-So, I have written a Chrome/Chromium extension, that allows you to do just that. It should work on any OS where Chrome works.
+This is a Chrome/Chromium extension, that allows you to do just that. It should work on any OS where Chrome works.
 
-*REMEMBER:* Do not use the extension for piracy! Only create private backups! We do not intent to compromise ComiXology. **Downloaded comics always have your username included. Distributed comics can be tracked back to you!**
+*IMPORTANT:* Do not use the extension for piracy! Only create private backups! We do not intent to compromise ComiXology. **Downloaded comics always have your username included. Distributed comics can be tracked back to you!**
 
 Installation
 -----
 
-Because Google is retarded, the installation is slightly complicated (since I don't want to add this
-to the Chrome Store). 
+The installation is slightly complicated (since I don't want to add this to the Chrome Store). 
 There are two ways of installing the extension.
 
 ### First possibility
@@ -27,7 +26,7 @@ The first way is [by this help page](https://support.google.com/chrome_webstore/
 
 ### Second possibility
 
-The second way is more or less the same, just without that retarded drag-and-drop
+The second way is without drag-and-drop.
 
 - In Chrome, click on the settings icon on the right (looks like three vertical lines on top of each other)
 - Select Tools > Extensions
