@@ -61,10 +61,11 @@ How it works
 -----
 You can look at the source code - but basically, it fetches the pixels of the canvas elements that compose to the opened page, puts them together, and then it downloads those again and zips them using zip.js.
 
-About me, licence
+About, licence
 ----
-The extension is made by SpergLord Enterprises, LLC, the leading provider in fun-based entertainment.
 
-If you have problems with the software/have an idea, add an issue on github via Issues.
+Project started by SpergLord Enterprises, LLC and continued by other awesome contributors.
+
+If you have problems with the software/have an idea, add an issue on Github via Issues.
 
 The code is under GPLv3 licence. Code uses JSZip by Stuart Knightley.
