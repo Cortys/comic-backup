@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>ComiXology Backup</title>
+	<style type="text/css">
+		body {
+			text-align: center;
+			font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+			line-height: 50px;
+			cursor: default;
+			font-size: 14px;
+			margin: 0;
+			padding: 0;
+		}
+		p {
+			position: relative;
+			width: 500px;
+			margin: 0 auto;
+			line-height: 20px;
+		}
+	</style>
+	<script src="source/common.js" type="text/javascript"></script>
+</head>
+<body>
+	<h1>Origin check</h1>
+	<p>
+		Add a backuped file here and we will tell you who created it.<br><br>
+		<input id="file" type="file" multiple="multiple"><br><br>
+	</p>
+	
+	<p>
+		The username you are looking for should be somewhere in here:
+		<pre>...</pre>
+	</p>
+	<script type="text/javascript">
+		function imgLogic(name, result) {
+			var c = document.createElement("canvas"),
+				ctx = c.getContext("2d"),
+				img = new Image();
+			img.onload = function() {
+				c.width = img.width;
+				c.height = img.height;
+				ctx.drawImage(img, 0, 0, img.width, img.height);
+				var data = ctx.getImageData(img.width%8, img.height-1, img.width-img.width%8, 1),
+					r = "", buff = "", code;
+				for (var i = 0; i < data.data.length; i+=4) {
+					if(buff.length < 8)
+						buff += rgbToHsl(data.data[i], data.data[i+1], data.data[i+2])[2]>0.5?"1":"0";
+					if(buff.length >= 8) {
+						code = parseInt(buff, 2);
+						if(code == 0)
+							r = "";
+						else
+							r += String.fromCharCode(code);
+						buff = "";
+					}
+				}
+				document.getElementsByTagName("pre")[0].innerHTML += name+": <b>"+r+"</b>\n";
+			};
+			img.src = result;
+		}
+		document.getElementById("file").addEventListener("change", function(e) {
+			document.getElementsByTagName("pre")[0].innerHTML += "<hr>";
+			var file, i=0;
+			while(file = e.target.files[i++])
+				(function(file) {
+					var reader = new FileReader();
+					reader.onload = function(e) {
+						if(file.type.match(/image*/i))
+							imgLogic(file.name, e.target.result);
+					};
+					reader.readAsDataURL(file);
+				})(file);
+		});
+	</script>
+</body>
+</html>

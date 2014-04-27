@@ -1,0 +1,45 @@
+{
+	"manifest_version": 2,
+
+	"name": "Comixology Backup",
+	"description": "Save your Comixology comics as standard CBZ files",
+	"version": "1.5.3",
+	"minimum_chrome_version": "26",
+	
+	"icons": {
+		"128": "logo128.png",
+		"48": "logo48.png"
+	},
+	
+	"permissions": [
+		"webRequest",
+		"webRequestBlocking",
+		"tabs",
+		"activeTab",
+		"storage",
+		"*://*/"
+	],
+	
+	"background": {
+		"scripts": [
+			"bgPage.js",
+			"jszip.min.js"
+		]
+	},
+	
+	"content_scripts": [
+		{
+			"matches": ["*://www.comixology.com/comic-reader/*","*://www.comixology.eu/comic-reader/*","*://www.comixology.co.uk/comic-reader/*","*://www.comixology.fr/comic-reader/*","*://www.comixology.de/comic-reader/*"],
+			"js": ["common.js", "reactivate_dom.js"],
+			"run_at": "document_start"
+		}, {
+			"matches": ["*://www.comixology.com/comic-reader/*","*://www.comixology.eu/comic-reader/*","*://www.comixology.co.uk/comic-reader/*","*://www.comixology.fr/comic-reader/*","*://www.comixology.de/comic-reader/*"],
+			"js": ["diff_match_patch.js", "common.js", "myscript.js"],
+			"run_at": "document_end"
+		}
+	],
+	
+	"options_page": "options.html",
+		
+	"web_accessible_resources": ["ajax-loader.gif"]
+}
