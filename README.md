@@ -52,8 +52,6 @@ I am fairly certain Comixology will, unfortunately, try to remove this extension
 How to use
 -----
 
-* Download zip archive.
-* Drag and drop the extension.crx file to the extensions panel in the Chrome settings.
 * Open a ComiXology comic (with at least two pages) in the web reader. An orange bar should appear, asking you if you want to backup.
 * Click "Yes". Because this is the first time you use the extension a scan has to be created. This basically means that the extension will ask you to click on some element of the reader. The things you are asked to do (switch view mode, open thumbnails...) are operations you can accomplish with one click. So only perform ONE click in each step or the setup won't work.
 * If everything worked fine you will get a success message and may start to backup your comic library now.
