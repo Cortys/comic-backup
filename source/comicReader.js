@@ -357,7 +357,7 @@ function setupSelectors() {
 	nextStep(); // start with first setup instruction
 }
 
-function loadComic() {
+function loadComic(callback) {
 
 	div.innerHTML = "Downloading comic... <span>0</span>%";
 	div.style.lineHeight = "50px";
@@ -405,6 +405,7 @@ function loadComic() {
 			zipImages(function() {
 				document.documentElement.removeChild(div);
 				document.documentElement.removeChild(overlay);
+				callback();
 				realClick(firstPageFig);
 			});
 		}, firstPage = 0, firstPageFig = null, rmListener = function() {
@@ -525,3 +526,12 @@ function getOpenedPage(callback) {
 		}, 300);
 	}
 }
+
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+	if(request.what == "start_download") {
+		loadComic(function() {
+			sendResponse({ what:"finished_download" });
+		});
+		return true;
+	}
+});
