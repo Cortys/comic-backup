@@ -10,7 +10,9 @@ for (i in readButtons)
 		clone.href = "javascript:";
 		clone.addEventListener("click", function(){
 			chrome.runtime.sendMessage({"what": "open_background_tab", "url": readButtons[i].href}, function(tab){
-				console.log(tab);
+				chrome.runtime.sendMessage({"what": "start_download"}, function(what){
+					chrome.runtime.sendMessage({"what": "close_background_tab", "tab": tab});
+				});
 			});
 		}, false);
 		readButtons[i].parentElement.appendChild(clone);	
