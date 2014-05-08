@@ -45,8 +45,6 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		chrome.tabs.remove(request.tab.id);
 		sendResponse({ what:"closed_background_tab" });
 	}
-	else
-		sendResponse("ERROR");
 });
 
 chrome.tabs.onRemoved.addListener(handleStop);
