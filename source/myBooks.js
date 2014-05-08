@@ -1,9 +1,5 @@
 var readButtons = document.body.querySelectorAll(".read-comic.titleBtn"),
 	i;
-for (i in readButtons){
-	
-}
-
 for (i in readButtons){ 
 	(function(i){
 		var clone = readButtons[i].cloneNode(false);
