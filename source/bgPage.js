@@ -32,6 +32,15 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		handleStop(sender.tab.id);
 		sendResponse({ what:"completed_zipping", url:URL.createObjectURL(result) });
 	}
+	else if(request.what == "open_background_tab") {
+		chrome.tabs.create({"url": request.url, "active": false}, function(tab) {
+			chrome.tabs.onUpdated.addListener(function(id, info){
+				if(tab.id == id && info.status == "complete")
+					sendResponse(tab);
+			})
+		});
+		return true;
+	}
 	else
 		sendResponse("ERROR");
 });
