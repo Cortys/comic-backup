@@ -31,7 +31,7 @@
 		{
 			"matches": ["*://www.comixology.com/comic-reader/*","*://www.comixology.eu/comic-reader/*","*://www.comixology.co.uk/comic-reader/*","*://www.comixology.fr/comic-reader/*","*://www.comixology.de/comic-reader/*"],
 			"js": ["common.js", "reactivateDom.js"],
-			"run_at": "documentStart"
+			"run_at": "document_start"
 		}, {
 			"matches": ["*://www.comixology.com/comic-reader/*","*://www.comixology.eu/comic-reader/*","*://www.comixology.co.uk/comic-reader/*","*://www.comixology.fr/comic-reader/*","*://www.comixology.de/comic-reader/*"],
 			"js": ["diffMatchPatch.js", "common.js", "comicReader.js"],
