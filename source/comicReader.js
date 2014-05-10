@@ -361,7 +361,12 @@ function loadComic(callback) {
 
 	div.innerHTML = "Downloading comic... <span>0</span>%";
 	div.style.lineHeight = "50px";
-
+	
+	if(!dom.canvasContainer)
+		return setTimeout(function() {
+			loadComic(callback);
+		}, 100);
+	
 	var pos = -1,
 		l = dom.pages.length,
 		numLength = String(l-1).length,
@@ -527,11 +532,15 @@ function getOpenedPage(callback) {
 	}
 }
 
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-	if(request.what == "start_download") {
-		loadComic(function() {
-			sendResponse({ what:"finished_download" });
+chrome.runtime.sendMessage({ what:"tab_info" }, function(info) {
+	var tab = info.tab,
+		openerTab = info.opener;
+	if(openerTab)
+		chrome.runtime.sendMessage({ what:"tab_message", tab:openerTab.id, message:{ what:"ready_to_download", tab:tab } }, function(start) {
+			if(start && start.download) {
+				loadComic(function() {
+					chrome.runtime.sendMessage({ what:"tab_message", tab:openerTab.id, message:{ what:"finished_download", tab:tab } });
+				});
+			}
 		});
-		return true;
-	}
 });

@@ -2,10 +2,13 @@
 //Code is under GNUGPLv3 - read http://www.gnu.org/licenses/gpl.html
 
 var zips = {},
+	openers = {},
 
 handleStop = function(tabId) {
 	if(typeof zips[tabId] !== "undefined")
 		delete zips[tabId];
+	if(typeof openers[tabId] !== "undefined")
+		delete openers[tabId];
 };
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
@@ -34,10 +37,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 	}
 	else if(request.what == "open_background_tab") {
 		chrome.tabs.create({"url": request.url, "active": false}, function(tab) {
-			chrome.tabs.onUpdated.addListener(function(id, info){
-				if(tab.id == id && info.status == "complete")
-					sendResponse(tab);
-			});
+			openers[tab.id] = sender.tab;
+			sendResponse(tab);
 		});
 		return true;
 	}
@@ -45,13 +46,19 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		chrome.tabs.remove(request.tab.id);
 		sendResponse({ what:"closed_background_tab" });
 	}
+	else if(request.what == "tab_info")
+		sendResponse({ tab:sender.tab, opener:openers[sender.tab.id] });
+	else if(request.what == "tab_message") {
+		chrome.tabs.sendMessage(request.tab, request.message, sendResponse);
+		return true;
+	}
 });
 
 chrome.tabs.onRemoved.addListener(handleStop);
 
-function nullfill(num, len) {
-	num = String(num);
-	for(var i = num.length; i < len; i++)
+function nullFill(num, len) {
+	num += "";
+	while(num.length < len)
 		num = "0"+num;
 	return num;
 }

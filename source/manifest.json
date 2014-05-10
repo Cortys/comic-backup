@@ -22,8 +22,8 @@
 	
 	"background": {
 		"scripts": [
-			"bgPage.js",
-			"jszip.min.js"
+			"jszip.min.js",
+			"bgPage.js"
 		]
 	},
 	
@@ -35,10 +35,10 @@
 		}, {
 			"matches": ["*://www.comixology.com/comic-reader/*","*://www.comixology.eu/comic-reader/*","*://www.comixology.co.uk/comic-reader/*","*://www.comixology.fr/comic-reader/*","*://www.comixology.de/comic-reader/*"],
 			"js": ["diffMatchPatch.js", "common.js", "comicReader.js"],
-			"run_at": "document_end"
+			"run_at": "document_idle"
 		}, {
 			"matches": ["*://www.comixology.com/my-books/*","*://www.comixology.eu/my-books/*","*://www.comixology.co.uk/my-books/*","*://www.comixology.fr/my-books/*","*://www.comixology.de/my-books/*","*://www.comixology.com/my-comics/*","*://www.comixology.eu/my-comics/*","*://www.comixology.co.uk/my-comics/*","*://www.comixology.fr/my-comics/*","*://www.comixology.de/my-comics/*"],
-			"js": ["diffMatchPatch.js", "common.js", "myBooks.js"],
+			"js": ["common.js", "myBooks.js"],
 			"run_at": "document_end"
 		}
 	],
