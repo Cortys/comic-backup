@@ -12,7 +12,7 @@ if(!exceptions[location.pathname.split("/"[1], 1)]){
 		addButton = function(button){
 			var clone = button.cloneNode(false);
 			clone.innerHTML = "Download";
-			clone.style.width = (parseInt(button.style.width = window.getComputedStyle(button).width) - ((button.nextSibling && typeof button.nextSibling.className == "string" && button.nextSibling.className.match(/gift_link/g)) ? parseInt(window.getComputedStyle(button.nextSibling).width) : 0)) + "px";
+			clone.style.width = (parseInt(button.style.width = window.getComputedStyle(button).width) - ((button.nextSibling && typeof button.nextSibling.className == "string" && button.nextSibling.className.match(/gift_link/g)) && parseInt(window.getComputedStyle(button.nextSibling).width) || 0)) + "px";
 			clone.style.textAlign = button.style.textAlign = "center";
 			clone.href = "javascript:";
 			clone.addEventListener("click", function(){
