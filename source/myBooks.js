@@ -1,10 +1,10 @@
 var readButtons = document.body.querySelectorAll(".read-comic.titleBtn"),
 	i,
 	tabDownloaders = {},
-	addButton = function(button, width){ //TODO incorporate correct button widths
+	addButton = function(button){
 		var clone = button.cloneNode(false);
 		clone.innerHTML = "Download";
-		clone.style.width = button.style.width = parseInt(window.getComputedStyle(button).width);
+		clone.style.width = button.style.width = window.getComputedStyle(button).width;
 		clone.style.textAlign = button.style.textAlign = "center";
 		clone.href = "javascript:";
 		clone.addEventListener("click", function(){
@@ -15,6 +15,7 @@ var readButtons = document.body.querySelectorAll(".read-comic.titleBtn"),
 			});
 		}, false);
 		button.parentNode.insertBefore(clone, button.nextSibling);
+		return clone;
 	};
 
 
