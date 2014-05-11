@@ -37,7 +37,7 @@
 			"js": ["diffMatchPatch.js", "common.js", "comicReader.js"],
 			"run_at": "document_idle"
 		}, {
-			"matches": ["*://www.comixology.com/my-books/*","*://www.comixology.eu/my-books/*","*://www.comixology.co.uk/my-books/*","*://www.comixology.fr/my-books/*","*://www.comixology.de/my-books/*","*://www.comixology.com/my-comics/*","*://www.comixology.eu/my-comics/*","*://www.comixology.co.uk/my-comics/*","*://www.comixology.fr/my-comics/*","*://www.comixology.de/my-comics/*","*://www.comixology.com/my-series/*","*://www.comixology.eu/my-series/*","*://www.comixology.co.uk/my-series/*","*://www.comixology.fr/my-series/*","*://www.comixology.de/my-series/*"],
+			"matches": ["*://www.comixology.com/my-books/*","*://www.comixology.eu/my-books/*","*://www.comixology.co.uk/my-books/*","*://www.comixology.fr/my-books/*","*://www.comixology.de/my-books/*","*://www.comixology.com/my-comics/*","*://www.comixology.eu/my-comics/*","*://www.comixology.co.uk/my-comics/*","*://www.comixology.fr/my-comics/*","*://www.comixology.de/my-comics/*","*://www.comixology.com/my-series/*","*://www.comixology.eu/my-series/*","*://www.comixology.co.uk/my-series/*","*://www.comixology.fr/my-series/*","*://www.comixology.de/my-series/*","*://www.comixology.eu/*"],
 			"js": ["common.js", "myBooks.js"],
 			"run_at": "document_end"
 		}
