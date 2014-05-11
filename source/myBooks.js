@@ -11,9 +11,8 @@ if(!exceptions[location.pathname.split("/"[1], 1)]){
 		tabDownloaders = {},
 		addButton = function(button){
 			var clone = button.cloneNode(false);
-			button.parentNode.insertBefore(clone, button.nextSibling);
 			clone.innerHTML = "Download";
-			clone.style.width = button.style.width = parseInt(window.getComputedStyle(button).width) - ((clone.nextSibling.className.match("/gift_link/g")) ? window.getComputedStyle(clone.nextSibling).width : 0) + "px";
+			clone.style.width = (parseInt(button.style.width = window.getComputedStyle(button).width) - ((button.nextSibling && typeof button.nextSibling.className == "string" && button.nextSibling.className.match(/gift_link/g)) ? parseInt(window.getComputedStyle(button.nextSibling).width) : 0)) + "px";
 			clone.style.textAlign = button.style.textAlign = "center";
 			clone.href = "javascript:";
 			clone.addEventListener("click", function(){
@@ -23,6 +22,7 @@ if(!exceptions[location.pathname.split("/"[1], 1)]){
 					};
 				});
 			}, false);
+			button.parentNode.insertBefore(clone, button.nextSibling);
 			return clone;
 		};
 
