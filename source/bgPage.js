@@ -22,7 +22,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		sendResponse({ what:"new_zip_created" });
 	}
 	else if(request.what == "add_page") {
-		var name = "page"+nullfill(request.i, request.len)+"."+request.extension;
+		var name = "page"+nullFill(request.i, request.len)+"."+request.extension;
 		if(request.toZip)
 			zips[sender.tab.id].file(name, request.page.substr(request.page.indexOf(",")+1), { base64:true });
 		sendResponse({ what:"page_added", name:name });
