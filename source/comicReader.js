@@ -397,7 +397,8 @@ function loadComic(callback, step) {
 				getOpenedPage(function(page) {
 					chrome.runtime.sendMessage({ what:"add_page", page:(settings.compression!=2?page:""), i:pos, len:numLength, extension:(settings.page?"png":"jpg"), toZip:(settings.compression!=2) }, function(result) {
 						var c = function() {
-							div.getElementsByTagName("span")[0].innerHTML = (var perc = Math.round((pos + 1) / l * 100));
+							var perc = Math.round(pos + 1) / l * 100;
+							div.getElementsByTagName("span")[0].innerHTML = perc;
 							step(perc);
 							interval();
 						};
