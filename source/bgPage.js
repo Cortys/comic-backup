@@ -7,8 +7,10 @@ var zips = {},
 handleStop = function(tabId) {
 	if(typeof zips[tabId] !== "undefined")
 		delete zips[tabId];
-	if(typeof openers[tabId] !== "undefined")
+	if(typeof openers[tabId] !== "undefined") {
+		chrome.tabs.sendMessage(openers[tabId].id, { what:"closed_background_tab", tab:{ id:tabId } });
 		delete openers[tabId];
+	}
 };
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
@@ -42,10 +44,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		});
 		return true;
 	}
-	else if(request.what == "close_background_tab") {
+	else if(request.what == "close_background_tab")
 		chrome.tabs.remove(request.tab.id);
-		sendResponse({ what:"closed_background_tab" });
-	}
 	else if(request.what == "tab_info")
 		sendResponse({ tab:sender.tab, opener:openers[sender.tab.id] });
 	else if(request.what == "tab_message") {
