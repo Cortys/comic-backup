@@ -9,7 +9,7 @@ if(!exceptions[location.pathname.split("/"[1], 1)]){
 	var readButtons = document.body.querySelectorAll(".read-comic.titleBtn, .read_link"),
 		i,
 		tabDownloaders = {},
-		addButton = function(button){
+		Button = function(button){
 			var clone = button.cloneNode(false),
 				hasGiftButton = false,
 				giftButton = button.nextSibling;
@@ -34,7 +34,7 @@ if(!exceptions[location.pathname.split("/"[1], 1)]){
 
 	for(i = 0; i < readButtons.length; i++)
 		(function(e){
-			addButton(e);
+			new Button(e);
 		})(readButtons[i]);
 
 
@@ -46,5 +46,7 @@ if(!exceptions[location.pathname.split("/"[1], 1)]){
 		}
 		else if(request.what == "finished_download")
 			chrome.runtime.sendMessage({ what:"close_background_tab", tab:request.tab });
+		else if(request.what == "download_progress")
+			
 	});
 }

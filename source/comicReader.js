@@ -357,7 +357,7 @@ function setupSelectors() {
 	nextStep(); // start with first setup instruction
 }
 
-function loadComic(callback) {
+function loadComic(callback, step) {
 
 	div.innerHTML = "Downloading comic... <span>0</span>%";
 	div.style.lineHeight = "50px";
@@ -397,7 +397,8 @@ function loadComic(callback) {
 				getOpenedPage(function(page) {
 					chrome.runtime.sendMessage({ what:"add_page", page:(settings.compression!=2?page:""), i:pos, len:numLength, extension:(settings.page?"png":"jpg"), toZip:(settings.compression!=2) }, function(result) {
 						var c = function() {
-							div.getElementsByTagName("span")[0].innerHTML = Math.round((pos + 1) / l * 100);
+							div.getElementsByTagName("span")[0].innerHTML = (var perc = Math.round((pos + 1) / l * 100));
+							step(perc);
 							interval();
 						};
 						if(settings.compression==2)
@@ -545,7 +546,9 @@ chrome.runtime.sendMessage({ what:"tab_info" }, function(info) {
 			if(start && start.download) {
 				loadComic(function() {
 					chrome.runtime.sendMessage({ what:"tab_message", tab:openerTab.id, message:{ what:"finished_download", tab:tab } });
-				});
+				}, function(perc) {
+					chrome.runtime.sendMessage({ what:"download_progress", tab:openerTab.id, message:{ what:perc, tab:tab } });
+					});
 			}
 		});
 });
