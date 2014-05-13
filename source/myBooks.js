@@ -20,9 +20,7 @@ if(!exceptions[location.pathname.split("/", 1)[1]]){
 			clone.style.marginTop = "1px";
 			clone.href = "javascript:";
 			clone.addEventListener("click", function(){
-				chrome.runtime.sendMessage({"what": "open_background_tab", "url": button.href}, function(tab) {
-					t.tab = tab;
-					downloadEvents[tab.id] = t;
+				t.events.["start_download"].call(t);
 				});
 			}, false);
 			button.parentNode.insertBefore(clone, giftButton);
@@ -35,9 +33,18 @@ if(!exceptions[location.pathname.split("/", 1)[1]]){
 		downloadButton: null,
 		tab: null,
 		events: {
-			"ready_to_download": downloadEvents[tab.id] = function(sendResponse) { sendResponse({download: true}); },
-			"finished_download": function(){ chrome.runtime.sendMessage({ what: "close_background_tab", tab: this.tab }) },
-			"closed_background_tab": function(){ delete downloadEvents[tab.id]; }
+			"ready_to_download": downloadEvents[tab.id] = function(sendResponse) {
+				sendResponse({download: true}); 
+			}, "finished_download": function(){ 
+				chrome.runtime.sendMessage({ what: "close_background_tab", tab: this.tab }) 
+			}, "closed_background_tab": function(){ 
+				delete downloadEvents[tab.id]; 
+			}, "start_download": function(){ 
+				chrome.runtime.sendMessage({what: "open_background_tab", url: this.readButton.href}, function(tab) {
+					t.tab = tab;
+					downloadEvents[tab.id] = t;
+				}); 
+			}
 		}
 	};
 
@@ -48,12 +55,8 @@ if(!exceptions[location.pathname.split("/", 1)[1]]){
 
 
 	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-		if(request.what == "ready_to_download" && downloadEvents[request.tab.id]) {
-			downloadEvents[request.tab.id](sendResponse);
-			delete downloadEvents[request.tab.id];
-			return true;
-		}
-		else if(request.what == "finished_download")
-			chrome.runtime.sendMessage({ what:"close_background_tab", tab:request.tab });
+		var tab = downloadEvents[request.tab.id] && tab.events.[request.what].call(tab);
+		
 	});
+
 }
