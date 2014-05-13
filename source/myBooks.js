@@ -7,8 +7,8 @@ var exceptions = {
 if(!exceptions[location.pathname.split("/", 1)[1]]){
 	var readButtons = document.body.querySelectorAll(".read-comic.titleBtn, .read_link"),
 		i,
-		tabDownloaders = {},
-		Button = function(button){
+		downloadEvents = {},
+		Download = function(button){
 			var clone = button.cloneNode(false),
 				hasGiftButton = false,
 				giftButton = button.nextSibling;
@@ -27,13 +27,20 @@ if(!exceptions[location.pathname.split("/", 1)[1]]){
 			button.parentNode.insertBefore(clone, giftButton);
 			if(hasGiftButton)
 				button.parentNode.insertBefore(giftButton, clone);
-			return clone;
 		};
 
+	Download.prototype = {
+		readButton: null,
+		downloadButton: null,
+		tab: null,
+		events: {
+			"ready_to_download": function(){}
+		}
+	};
 
 	for(i = 0; i < readButtons.length; i++)
 		(function(e){
-			new Button(e);
+			new Download(e);
 		})(readButtons[i]);
 
 
