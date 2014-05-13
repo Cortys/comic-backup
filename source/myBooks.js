@@ -16,6 +16,7 @@ if(!exceptions[location.pathname.split("/"[1], 1)]){
 			clone.innerHTML = "Download";
 			clone.style.width = (parseInt(button.style.width = window.getComputedStyle(button).width) + (giftButton && typeof giftButton.className == "string" && (hasGiftButton =  giftButton.className.match(/gift_link/g)) && parseInt(window.getComputedStyle(giftButton).width) || 0)) + "px";
 			clone.style.textAlign = button.style.textAlign = "center";
+			clone.style.marginTop = "1px";
 			clone.href = "javascript:";
 			clone.addEventListener("click", function(){
 				chrome.runtime.sendMessage({"what": "open_background_tab", "url": button.href}, function(tab) {
