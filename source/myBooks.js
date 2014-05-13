@@ -14,7 +14,7 @@ if(!exceptions[location.pathname.split("/"[1], 1)]){
 				hasGiftButton = false,
 				giftButton = button.nextSibling;
 			clone.innerHTML = "Download";
-			clone.style.width = (parseInt(button.style.width = window.getComputedStyle(button).width) + ((giftButton && typeof giftButton.className == "string" && (hasGiftButton =  giftButton.className.match(/gift_link/g))) && parseInt(window.getComputedStyle(giftButton).width) || 0)) + "px";
+			clone.style.width = (parseInt(button.style.width = window.getComputedStyle(button).width) + (giftButton && typeof giftButton.className == "string" && (hasGiftButton =  giftButton.className.match(/gift_link/g)) && parseInt(window.getComputedStyle(giftButton).width) || 0)) + "px";
 			clone.style.textAlign = button.style.textAlign = "center";
 			clone.href = "javascript:";
 			clone.addEventListener("click", function(){
@@ -25,7 +25,8 @@ if(!exceptions[location.pathname.split("/"[1], 1)]){
 				});
 			}, false);
 			button.parentNode.insertBefore(clone, giftButton);
-			button.parentNode.insertBefore(giftButton, clone);
+			if(hasGiftButton)
+				button.parentNode.insertBefore(giftButton, clone);
 			return clone;
 		};
 
