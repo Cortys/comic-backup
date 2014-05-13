@@ -1,11 +1,10 @@
 var exceptions = {
 	"": true,
-	"/": true,
-	"/comic-reader/": true
+	"comic-reader": true
 };
 
 
-if(!exceptions[location.pathname.split("/"[1], 1)]){
+if(!exceptions[location.pathname.split("/", 1)[1]]){
 	var readButtons = document.body.querySelectorAll(".read-comic.titleBtn, .read_link"),
 		i,
 		tabDownloaders = {},

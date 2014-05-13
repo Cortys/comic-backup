@@ -514,8 +514,8 @@ function getOpenedPage(callback) {
 		doneLoading = view && (view.style.webkitTransform || view.style.transform) && (!loader || loader.style.display == "none");
 	if(doneLoading) {
 		var canvasOnThisPage = view.childNodes,
-			w = view.style.width.split('p')[0],
-			h = view.style.height.split('p')[0],
+			w = parseInt(view.style.width),
+			h = parseInt(view.style.height),
 			outCanvas = document.createElement('canvas'),
 			ctx = outCanvas.getContext('2d'),
 			canvas, data;
@@ -523,7 +523,7 @@ function getOpenedPage(callback) {
 		outCanvas.height = h;
 		for (var i = 0; i < canvasOnThisPage.length; i++) {
 			canvas = canvasOnThisPage[i];
-			ctx.drawImage(canvas, canvas.style.left.split('p')[0]*1, canvas.style.top.split('p')[0]*1, canvas.style.width.split('p')[0]*1, canvas.style.height.split('p')[0]*1);
+			ctx.drawImage(canvas, parseInt(canvas.style.left), parseInt(canvas.style.top), parseInt(canvas.style.width), parseInt(canvas.style.height));
 		}
 		data = getUsernameImage(ctx, w, h);
 		ctx.putImageData(data, w-data.width, h-data.height);
