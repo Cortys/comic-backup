@@ -362,6 +362,11 @@ function loadComic(callback) {
 	div.innerHTML = "Downloading comic... <span>0</span>%";
 	div.style.lineHeight = "50px";
 	
+	if(typeof callback != "function")
+		callback = function() {};
+	if(typeof step != "function")
+		step = function() {};
+	
 	if(!dom.canvasContainer)
 		return setTimeout(function() {
 			loadComic(callback);
