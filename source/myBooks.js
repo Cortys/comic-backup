@@ -9,7 +9,9 @@ if(!exceptions[location.pathname.split("/", 1)[1]]){
 		i,
 		downloadEvents = {},
 		Download = function(button){
-			var clone = button.cloneNode(false),
+			this.readButton = button;
+			var clone = this.downloadButton = button.cloneNode(false),
+				t = this,
 				hasGiftButton = false,
 				giftButton = button.nextSibling;
 			clone.innerHTML = "Download";
@@ -19,9 +21,8 @@ if(!exceptions[location.pathname.split("/", 1)[1]]){
 			clone.href = "javascript:";
 			clone.addEventListener("click", function(){
 				chrome.runtime.sendMessage({"what": "open_background_tab", "url": button.href}, function(tab) {
-					tabDownloaders[tab.id] = function(sendResponse) {
-						sendResponse({download: true});
-					};
+					t.tab = tab;
+					downloadEvents[tab.id] = t;
 				});
 			}, false);
 			button.parentNode.insertBefore(clone, giftButton);
@@ -34,7 +35,9 @@ if(!exceptions[location.pathname.split("/", 1)[1]]){
 		downloadButton: null,
 		tab: null,
 		events: {
-			"ready_to_download": function(){}
+			"ready_to_download": downloadEvents[tab.id] = function(sendResponse) { sendResponse({download: true}); },
+			"finished_download": function(){ chrome.runtime.sendMessage({ what: "close_background_tab", tab: this.tab }) },
+			"closed_background_tab": function(){ delete downloadEvents[tab.id]; }
 		}
 	};
 
@@ -45,14 +48,12 @@ if(!exceptions[location.pathname.split("/", 1)[1]]){
 
 
 	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-		if(request.what == "ready_to_download" && tabDownloaders[request.tab.id]) {
-			tabDownloaders[request.tab.id](sendResponse);
-			delete tabDownloaders[request.tab.id];
+		if(request.what == "ready_to_download" && downloadEvents[request.tab.id]) {
+			downloadEvents[request.tab.id](sendResponse);
+			delete downloadEvents[request.tab.id];
 			return true;
 		}
 		else if(request.what == "finished_download")
 			chrome.runtime.sendMessage({ what:"close_background_tab", tab:request.tab });
-		else if(request.what == "download_progress")
-			
 	});
 }
