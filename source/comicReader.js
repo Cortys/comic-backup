@@ -548,7 +548,7 @@ chrome.runtime.sendMessage({ what:"tab_info" }, function(info) {
 				loadComic(function() {
 					chrome.runtime.sendMessage({ what:"tab_message", tab:openerTab.id, message:{ what:"finished_download", tab:tab } });
 				}, function(perc) {
-					chrome.runtime.sendMessage({ what:"download_progress", tab:openerTab.id, message:{ what:perc, tab:tab } });
+					chrome.runtime.sendMessage({ what:"tab_message", tab:openerTab.id, message:{ what:"tab_message", tab:tab, perc:perc } });
 				});
 			}
 		});
