@@ -315,11 +315,6 @@ function setupSelectors() {
 					write.pagenumCorrection = smallestIntAttr.value;
 					return inactive && active && smallestIntAttr;
 				}
-			}, {
-				text: "Please manually disable the auto continuation prompt in the reader settings menu.",
-				callback: function(){
-					return true;
-				}
 			}
 		],
 		waiter = function() {},
