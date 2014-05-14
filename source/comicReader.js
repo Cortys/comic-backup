@@ -279,7 +279,7 @@ function setupSelectors() {
 					return inactive && active;
 				}
 			}, {
-				text: "Click the browse button, that shows all pages.",
+				text: "Click the browse button that shows all pages.",
 				callback: function(element) {
 					var btn = getPathFor(element);
 					write.selectorBrowseButton = btn;
@@ -314,6 +314,11 @@ function setupSelectors() {
 					write.pagenumAttr = smallestIntAttr.name;
 					write.pagenumCorrection = smallestIntAttr.value;
 					return inactive && active && smallestIntAttr;
+				}
+			}, {
+				text: "Please manually disable the auto continuation prompt in the reader settings menu.",
+				callback: function(){
+					return true;
 				}
 			}
 		],
