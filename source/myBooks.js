@@ -56,6 +56,6 @@ if(!exceptions[location.pathname.split("/", 1)[1]]){
 
 
 	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-		return downloadEvents[request.tab.id] && typeof downloadEvents[request.tab.id].events[request.what] == "function" && downloadEvents[request.tab.id].events[request.what].call(downloadEvents[request.tab.id], sendResponse);
+		return downloadEvents[request.tab.id] && typeof downloadEvents[request.tab.id].events[request.what] == "function" && downloadEvents[request.tab.id].events[request.what].call(downloadEvents[request.tab.id], sendResponse, request.data);
 	});
 }
