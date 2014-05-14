@@ -369,7 +369,7 @@ function loadComic(callback, step) {
 	
 	if(!dom.canvasContainer)
 		return setTimeout(function() {
-			loadComic(callback);
+			loadComic(callback, step);
 		}, 100);
 	
 	var pos = -1,
