@@ -45,8 +45,8 @@ if(!exceptions[location.pathname.split("/", 1)[1]]){
 					t.tab = tab;
 					downloadEvents[tab.id] = t;
 				});
-			}, "download_progress": function(perc){
-				
+			}, "download_progress": function(sendResponse, percentage){
+				this.downloadButton.innerHTML = percentage + "%";
 			}
 		}
 	};
