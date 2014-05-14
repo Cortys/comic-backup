@@ -4,7 +4,9 @@
 var zips = {},
 	openers = {},
 
-handleStop = function(tabId) {
+handleStop = function(tabId, info) {
+	if(!info)
+		return;
 	if(typeof zips[tabId] !== "undefined")
 		delete zips[tabId];
 	if(typeof openers[tabId] !== "undefined") {
