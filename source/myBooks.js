@@ -5,7 +5,14 @@ var exceptions = {
 
 
 if(!exceptions[location.pathname.split("/", 1)[1]]){
-	var readButtons = document.body.querySelectorAll(".read-comic.titleBtn, .read_link"),
+	var cssClass = randomString(20, 40),
+		injectCss = function(){
+			var style = document.createElement("style");
+			style.type = "text/css";
+			style.innerHTML = "." + cssClass + "{}";
+			document.documentElement.insertBefore(style);
+		},
+		readButtons = document.body.querySelectorAll(".read-comic.titleBtn, .read_link"),
 		i,
 		downloadEvents = {},
 		Download = function(button){
@@ -22,6 +29,7 @@ if(!exceptions[location.pathname.split("/", 1)[1]]){
 			clone.addEventListener("click", function(){
 				t.events["start_download"].call(t);
 			}, false);
+			clone.classList.add(cssClass);
 			button.parentNode.insertBefore(clone, giftButton);
 			if(hasGiftButton)
 				button.parentNode.insertBefore(giftButton, clone);
