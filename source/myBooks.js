@@ -32,7 +32,7 @@ if(!exceptions[location.pathname.split("/", 1)[1]]){
 		downloadButton: null,
 		tab: null,
 		events: {
-			"ready_to_download": function(sendResponse) {
+			"ready_to_download": function(sendResponse){
 				sendResponse({download: true});
 			}, "finished_download": function(){
 				chrome.runtime.sendMessage({ what: "close_background_tab", tab: this.tab });
@@ -45,6 +45,8 @@ if(!exceptions[location.pathname.split("/", 1)[1]]){
 					t.tab = tab;
 					downloadEvents[tab.id] = t;
 				});
+			}, "download_progress": function(perc){
+				
 			}
 		}
 	};
