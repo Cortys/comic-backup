@@ -9,7 +9,7 @@ handleStop = function(tabId, info) {
 		return;
 	if(typeof zips[tabId] !== "undefined")
 		delete zips[tabId];
-	if(typeof openers[tabId] !== "undefined") {
+	if(info != "zip" && typeof openers[tabId] !== "undefined") {
 		chrome.tabs.sendMessage(openers[tabId].id, { what:"closed_background_tab", tab:{ id:tabId } });
 		delete openers[tabId];
 	}
@@ -17,7 +17,7 @@ handleStop = function(tabId, info) {
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 	if(request.what == "empty_cache") {
-		handleStop(sender.tab.id);
+		handleStop(sender.tab.id, "zip");
 		sendResponse({ what:"cache_emptied" });
 	}
 	else if(request.what == "new_zip") {
@@ -36,7 +36,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 			type: "blob",
 			compression: request.compress?"DEFLATE":"STORE"
 		});
-		handleStop(sender.tab.id);
+		handleStop(sender.tab.id, "zip");
 		sendResponse({ what:"completed_zipping", url:URL.createObjectURL(result) });
 	}
 	else if(request.what == "open_background_tab") {
