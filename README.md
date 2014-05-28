@@ -26,7 +26,7 @@ The first way is [by this help page](https://support.google.com/chrome_webstore/
 
 ### Second possibility
 
-The second way is without drag-and-drop.
+The second way is without drag-and-drop, https://developer.chrome.com/extensions/getstarted#unpacked
 
 - In Chrome, click on the settings icon on the right (looks like three vertical lines on top of each other)
 - Select Tools > Extensions
