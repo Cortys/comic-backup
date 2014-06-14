@@ -19,7 +19,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		sendResponse({ what:"new_zip_created" });
 	}
 	else if(request.what == "add_page") {
-		var name = "page"+nullfill(request.i, request.len)+"."+request.extension;
+		var name = "page"+nullFill(request.i, request.len)+"."+request.extension;
 		if(request.toZip)
 			zips[sender.tab.id].file(name, request.page.substr(request.page.indexOf(",")+1), { base64:true });
 		sendResponse({ what:"page_added", name:name });
@@ -32,15 +32,12 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		handleStop(sender.tab.id);
 		sendResponse({ what:"completed_zipping", url:URL.createObjectURL(result) });
 	}
+	else if(request.what == "download_blob") {
+		downloadFile(request.name, request.data, request.overwrite, sendResponse);
+		return true;
+	}
 	else
 		sendResponse("ERROR");
 });
 
 chrome.tabs.onRemoved.addListener(handleStop);
-
-function nullfill(num, len) {
-	num = String(num);
-	for(var i = num.length; i < len; i++)
-		num = "0"+num;
-	return num;
-}

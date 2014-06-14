@@ -96,3 +96,14 @@ function hslToRgb(h, s, l) {
 
 	return [r * 255, g * 255, b * 255];
 }
+
+function downloadFile(name, data, overwrite, callback) { // overwrite is not used currently
+	setTimeout(function() {
+		var a = document.createElement("a");
+		a.download = a.innerHTML = name;
+		a.href = data;
+		a.click();
+		if(typeof callback === "function")
+			callback();
+	}, 0);
+}

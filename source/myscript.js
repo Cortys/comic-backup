@@ -385,13 +385,13 @@ function loadComic() {
 		interval = function() {
 			nextPage(function() {
 				getOpenedPage(function(page) {
-					chrome.runtime.sendMessage({ what:"add_page", page:(settings.compression!=2?page:""), i:pos, len:numLength, extension:(settings.page?"png":"jpg"), toZip:(settings.compression!=2) }, function(result) {
+					chrome.runtime.sendMessage({ what:"add_page", page:(settings.compression!=2?page:""), i:pos, len:numLength, extension:(settings.page?"png":"jpeg"), toZip:(settings.compression!=2) }, function(result) {
 						var c = function() {
 							div.getElementsByTagName("span")[0].innerHTML = Math.round((pos + 1) / l * 100);
 							interval();
 						};
 						if(settings.compression==2)
-							downloadFile(getName()+"/"+result.name, page, true, c);
+							downloadFile(getName()+"-"+result.name, page, true, c);
 						else
 							c();
 					});
@@ -446,7 +446,7 @@ function getUsername() {
 	return (reader && reader.getAttribute("data-username")) || "";
 }
 
-var getUsernameImage = function(ctx, w, h) {
+function getUsernameImage(ctx, w, h) {
 	var uName = getUsername(),
 		uW = (uName.length+1)*8,
 		data = ctx.getImageData(w-uW, h-1, uW, 1),
@@ -465,23 +465,15 @@ var getUsernameImage = function(ctx, w, h) {
 			data.data[q] = rgb[0];
 			data.data[q+1] = rgb[1];
 			data.data[q+2] = rgb[2];
-			data.data[q+3] = 255 | 0;
 		}
 	}
 	
 	return data;
 }
 
-function downloadFile(name, data, overwrite, callback) { // overwrite is not used currently
-	setTimeout(function() {
-		var a = document.createElement("a");
-		a.download = a.innerHTML = name;
-		a.rel = "stylesheet";
-		a.href = data;
-		a.click();
-		if(typeof callback === "function")
-			callback();
-	}, 0);
+function downloadBlob(name, data, overwrite, callback) { // overwrite is not used currently
+	// blobs have to be downloaded from background page (same origin policy)
+	chrome.runtime.sendMessage({ what:"download_blob", name:name, data:data, overwrite:overwrite }, callback);
 }
 
 function zipImages(callback) {
@@ -492,7 +484,7 @@ function zipImages(callback) {
 
 	chrome.runtime.sendMessage({ what:"start_zipping", compress:settings.compression }, function(result) {
 		div.innerHTML = "Saving comic...";
-		downloadFile(getName()+"."+(settings.container?"zip":"cbz"), result.url, false, callback);
+		downloadBlob(getName()+"."+(settings.container?"zip":"cbz"), result.url, false, callback);
 	});
 }
 

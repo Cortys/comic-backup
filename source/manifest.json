@@ -22,8 +22,9 @@
 	
 	"background": {
 		"scripts": [
-			"bgPage.js",
-			"jszip.min.js"
+			"jszip.min.js",
+			"common.js",
+			"bgPage.js"
 		]
 	},
 	
