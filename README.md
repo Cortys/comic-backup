@@ -15,9 +15,12 @@ Installation
 The installation is slightly complicated (since I don't want to add this to the Chrome Store). 
 There are two ways of installing the extension.
 
+### *IMPORTANT* for Windows users
+If you are using Chrome 35+ on Windows you have to use the [second possibility](#second-possibility)! Using packed extensions, that aren't from the Chrome Web Store, does not work anymore.
+
 ### First possibility
 
-The first way is [by this help page](https://support.google.com/chrome_webstore/answer/2664769?hl=en)
+The first way is [by this help page](https://support.google.com/chrome_webstore/answer/2664769?hl=en). **This does not work on Windows with Chrome version 35+.**
 
 - In Chrome, click on the settings icon on the right (looks like three vertical lines on top of each other)
 - Select Tools > Extensions
@@ -27,6 +30,8 @@ The first way is [by this help page](https://support.google.com/chrome_webstore/
 ### Second possibility
 
 The second way is without drag-and-drop, https://developer.chrome.com/extensions/getstarted#unpacked
+
+**This works for Windows with Chrome version 35+!**
 
 - In Chrome, click on the settings icon on the right (looks like three vertical lines on top of each other)
 - Select Tools > Extensions
@@ -58,7 +63,7 @@ How to use
 
 How it works
 -----
-You can look at the source code - but basically, it fetches the pixels of the canvas elements that compose to the opened page, puts them together, and then it downloads those again and zips them using zip.js.
+You can look at the source code - but basically, it fetches the pixels of the canvas elements that compose the opened page, puts them together, and then it downloads those zipped using JSZip or as single image blobs using JavaScript-Canvas-to-Blob.
 
 About, licence
 ----
@@ -67,4 +72,4 @@ Project started by SpergLord Enterprises, LLC and continued by other awesome con
 
 If you have problems with the software/have an idea, add an issue on Github via Issues.
 
-The code is under GPLv3 licence. Code uses JSZip by Stuart Knightley.
+The code is under GPLv3 licence. Code uses JSZip by Stuart Knightley and JavaScript-Canvas-to-Blob by Sebastian Tschan.
