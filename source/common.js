@@ -107,3 +107,31 @@ function downloadFile(name, data, overwrite, callback) { // overwrite is not use
 			callback();
 	}, 0);
 }
+/**
+ * dataURLtoBlob by github.com/blueimp/JavaScript-Canvas-to-Blob
+ * Released under the MIT License
+ */
+function dataURLtoBlob(dataURI) {
+	var byteString,
+		arrayBuffer,
+		intArray,
+		i,
+		mimeString;
+	if (dataURI.split(',')[0].indexOf('base64') >= 0) {
+		// Convert base64 to raw binary data held in a string:
+		byteString = atob(dataURI.split(',')[1]);
+	} else {
+		// Convert base64/URLEncoded data component to raw binary data:
+		byteString = decodeURIComponent(dataURI.split(',')[1]);
+	}
+	// Write the bytes of the string to an ArrayBuffer:
+	arrayBuffer = new ArrayBuffer(byteString.length);
+	intArray = new Uint8Array(arrayBuffer);
+	for (i = 0; i < byteString.length; i += 1) {
+		intArray[i] = byteString.charCodeAt(i);
+	}
+	// Separate out the mime component:
+	mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+	// Write the ArrayBuffer (or ArrayBufferView) to a blob:
+	return new Blob([intArray], {type: mimeString});
+}

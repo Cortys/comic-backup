@@ -1,6 +1,6 @@
 //(C) 2013 Sperglord Enterprises
 //Code is under GNUGPLv3 - read http://www.gnu.org/licenses/gpl.html
-var current_version = 108,
+var current_version = 109,
 	div = document.createElement("div"),
 	overlay = document.createElement("div"),
 	settings = {},
@@ -391,7 +391,7 @@ function loadComic() {
 							interval();
 						};
 						if(settings.compression==2)
-							downloadFile(getName()+"-"+result.name, page, true, c);
+							downloadData(getName()+"/"+result.name, page, true, c);
 						else
 							c();
 					});
@@ -474,6 +474,9 @@ function getUsernameImage(ctx, w, h) {
 function downloadBlob(name, data, overwrite, callback) { // overwrite is not used currently
 	// blobs have to be downloaded from background page (same origin policy)
 	chrome.runtime.sendMessage({ what:"download_blob", name:name, data:data, overwrite:overwrite }, callback);
+}
+function downloadData(name, data, overwrite, callback) { // overwrite is not used currently
+	downloadFile(name, URL.createObjectURL(dataURLtoBlob(data)), overwrite, callback);
 }
 
 function zipImages(callback) {
