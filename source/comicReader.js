@@ -1,6 +1,6 @@
 //(C) 2013 Sperglord Enterprises
 //Code is under GNUGPLv3 - read http://www.gnu.org/licenses/gpl.html
-var current_version = 108,
+var current_version = 109,
 	div = document.createElement("div"),
 	overlay = document.createElement("div"),
 	settings = {},
@@ -395,7 +395,7 @@ function loadComic(callback, step) {
 		interval = function() {
 			nextPage(function() {
 				getOpenedPage(function(page) {
-					chrome.runtime.sendMessage({ what:"add_page", page:(settings.compression!=2?page:""), i:pos, len:numLength, extension:(settings.page?"png":"jpg"), toZip:(settings.compression!=2) }, function(result) {
+					chrome.runtime.sendMessage({ what:"add_page", page:(settings.compression!=2?page:""), i:pos, len:numLength, extension:(settings.page?"png":"jpeg"), toZip:(settings.compression!=2) }, function(result) {
 						var c = function() {
 							var perc = Math.round((pos + 1) / l * 100);
 							div.getElementsByTagName("span")[0].innerHTML = perc;
@@ -403,7 +403,7 @@ function loadComic(callback, step) {
 							interval();
 						};
 						if(settings.compression==2)
-							downloadFile(getName()+"/"+result.name, page, true, c);
+							downloadData(getName()+"/"+result.name, page, true, c);
 						else
 							c();
 					});
@@ -459,7 +459,7 @@ function getUsername() {
 	return (reader && reader.getAttribute("data-username")) || "";
 }
 
-var getUsernameImage = function(ctx, w, h) {
+function getUsernameImage(ctx, w, h) {
 	var uName = getUsername(),
 		uW = (uName.length+1)*8,
 		data = ctx.getImageData(w-uW, h-1, uW, 1),
@@ -478,23 +478,18 @@ var getUsernameImage = function(ctx, w, h) {
 			data.data[q] = rgb[0];
 			data.data[q+1] = rgb[1];
 			data.data[q+2] = rgb[2];
-			data.data[q+3] = 255 | 0;
 		}
 	}
 	
 	return data;
 }
 
-function downloadFile(name, data, overwrite, callback) { // overwrite is not used currently
-	setTimeout(function() {
-		var a = document.createElement("a");
-		a.download = a.innerHTML = name;
-		a.rel = "stylesheet";
-		a.href = data;
-		a.click();
-		if(typeof callback === "function")
-			callback();
-	}, 0);
+function downloadBlob(name, data, overwrite, callback) { // overwrite is not used currently
+	// blobs have to be downloaded from background page (same origin policy)
+	chrome.runtime.sendMessage({ what:"download_blob", name:name, data:data, overwrite:overwrite }, callback);
+}
+function downloadData(name, data, overwrite, callback) { // overwrite is not used currently
+	downloadFile(name, URL.createObjectURL(dataURLtoBlob(data)), overwrite, callback);
 }
 
 function zipImages(callback) {
@@ -505,7 +500,7 @@ function zipImages(callback) {
 
 	chrome.runtime.sendMessage({ what:"start_zipping", compress:settings.compression }, function(result) {
 		div.innerHTML = "Saving comic...";
-		downloadFile(getName()+"."+(settings.container?"zip":"cbz"), result.url, false, callback);
+		downloadBlob(getName()+"."+(settings.container?"zip":"cbz"), result.url, false, callback);
 	});
 }
 
