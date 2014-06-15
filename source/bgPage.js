@@ -39,7 +39,10 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		handleStop(sender.tab.id, "zip");
 		sendResponse({ what:"completed_zipping", url:URL.createObjectURL(result) });
 	}
-<<<<<<< HEAD
+	else if(request.what == "download_blob") {
+		downloadFile(request.name, request.data, request.overwrite, sendResponse);
+		return true;
+	}
 	else if(request.what == "open_background_tab") {
 		chrome.tabs.create({"url": request.url, "active": false}, function(tab) {
 			openers[tab.id] = sender.tab;
@@ -58,21 +61,3 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 });
 
 chrome.tabs.onRemoved.addListener(handleStop);
-
-function nullFill(num, len) {
-	num += "";
-	while(num.length < len)
-		num = "0"+num;
-	return num;
-}
-=======
-	else if(request.what == "download_blob") {
-		downloadFile(request.name, request.data, request.overwrite, sendResponse);
-		return true;
-	}
-	else
-		sendResponse("ERROR");
-});
-
-chrome.tabs.onRemoved.addListener(handleStop);
->>>>>>> downloadFilenameFix

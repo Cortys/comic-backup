@@ -3,7 +3,7 @@
 
 	"name": "Comixology Backup",
 	"description": "Save your Comixology comics as standard CBZ files",
-	"version": "1.5.4",
+	"version": "1.6.0",
 	"minimum_chrome_version": "26",
 	
 	"icons": {
@@ -23,10 +23,7 @@
 	"background": {
 		"scripts": [
 			"jszip.min.js",
-<<<<<<< HEAD
-=======
 			"common.js",
->>>>>>> downloadFilenameFix
 			"bgPage.js"
 		]
 	},

@@ -1,6 +1,6 @@
 //(C) 2013 Sperglord Enterprises
 //Code is under GNUGPLv3 - read http://www.gnu.org/licenses/gpl.html
-var current_version = 109,
+var current_version = 110,
 	div = document.createElement("div"),
 	overlay = document.createElement("div"),
 	settings = {},
