@@ -1,20 +1,21 @@
 //(C) 2013 Sperglord Enterprises
 //Code is under GNUGPLv3 - read http://www.gnu.org/licenses/gpl.html
+
 var current_version = 110,
 	div = document.createElement("div"),
 	overlay = document.createElement("div"),
 	settings = {},
-	linkStyle = "color:#ffffff;font-weight:bold;background-color:#345190;padding:3px;text-decoration:none;display:inline-block;width:60px;text-align:center;height:20px;box-sizing:border-box;line-height:14px;";
+	linkStyle = "color:#ffffff;font-weight:bold;background:linear-gradient(to bottom, rgb(115, 152, 200) 0%,rgb(179, 206, 233) 1%,rgb(82, 142, 204) 5%,rgb(79, 137, 200) 20%,rgb(66, 120, 184) 50%,rgb(49, 97, 161) 100%);padding:3px;text-decoration:none;display:inline-block;width:60px;text-align:center;height:22px;box-sizing:border-box;line-height:14px;border:1px solid rgb(49,96,166);";
 
-div.id = randomString(5,10);
+div.id = randomString(20,40);
 
 div.style.fontSize = "13px";
 div.style.top = "0px";
 div.style.width = "100%";
-div.style.height = "50px";
+div.style.height = "54px";
 
-div.style.background = "#ff9900";
-div.style.color = "#000000";
+div.style.background = "linear-gradient(to bottom, rgba(0,0,0,0.9) 50%,rgba(0,0,0,0.7) 100%)";
+div.style.color = "#ffffff";
 div.style.textAlign = "center";
 div.style.lineHeight = "25px";
 div.style.zIndex = 300;
