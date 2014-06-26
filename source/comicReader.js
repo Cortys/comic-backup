@@ -30,12 +30,34 @@ overlay.style.width = overlay.style.height = "auto";
 overlay.style.background = "rgba(0,0,0,0.3)";
 overlay.style.display = "none";
 
-chrome.storage.local.get(null, function(data) {
-	settings = data;
-	chrome.runtime.sendMessage({ what:"empty_cache" }, readGithubVersion);
+//ENTRANCE POINT FOR READER BACKUP LOGIC:
+chrome.runtime.sendMessage({ what:"tab_info" }, function(info) { // get tab information
+	var tab = info.tab,
+		openerTab = info.opener; // was this tab opened by the extension itself (by clicking DOWNLOAD in the library)
+	
+	chrome.storage.local.get(null, function(data) { // get user settings
+		settings = data;
+		
+		// delete cached uncompleted zip-backups for this tab:
+		chrome.runtime.sendMessage({ what:"empty_cache" }, openerTab?function() { // tab opened by extension -> autorun
+			
+			displayMainBar(2); // Just show overlay.
+			
+			chrome.runtime.sendMessage({ what:"tab_message", tab:openerTab.id, message:{ what:"ready_to_download", tab:tab } }, function(start) {
+				if(start && start.download) {
+					loadComic(function() {
+						chrome.runtime.sendMessage({ what:"tab_message", tab:openerTab.id, message:{ what:"finished_download", tab:tab } });
+					}, function(perc) {
+						chrome.runtime.sendMessage({ what:"tab_message", tab:openerTab.id, message:{ what:"download_progress", tab:tab, data:perc } });
+					});
+				}
+			});
+		}:checkVersion); // tab opened by user -> check for updates and show orange panel (asking to update or to backup)
+	});
 });
 
-function readGithubVersion() {
+// check for updates if possible:
+function checkVersion() {
 	var xhr = new XMLHttpRequest();
 	if(settings.updateServer) {
 		xhr.open("GET", settings.updateServer+"/version", true);
@@ -44,8 +66,8 @@ function readGithubVersion() {
 		xhr.onreadystatechange = function() {
 	
 			if (xhr.readyState == 4 && xhr.status == 200) {
-				var githubVersion = this.response*1;
-				if (githubVersion > current_version)
+				var version = this.response*1;
+				if (version > current_version)
 					displayMainBar(1);
 				else
 					displayMainBar(0);
@@ -55,6 +77,33 @@ function readGithubVersion() {
 	}
 	else
 		displayMainBar(0);
+}
+
+// show orange bar: asking for update (isUpdateNeeded = 1), backup (isUpdateNeeded = 0) or nothing/grayed-out overlay shown (isUpdateNeeded = 2)
+function displayMainBar(isUpdateNeeded) {
+	if(isUpdateNeeded == 1)
+		div.innerHTML = "The extension is outdated, download new version<br><a href=\""+settings.updateServer+"/download.zip\" style='"+linkStyle+"' target='_blank'>here</a>";
+	else if(!isUpdateNeeded) {
+		div.innerHTML = "This looks like a Comixology comic. Do you want to backup it as "+(settings.compression==2?"pictures":(settings.container?"ZIP":"CBZ"))+" ("+(settings.compression?(settings.compression==1?"deflated":"multiple"):"stored")+" "+(settings.page?"PNGs":"JPEGs")+")?<br><a href=\"javascript:document.documentElement.removeChild(document.getElementById('"+div.id+"'))\" style='"+linkStyle+"'>No</a> ";
+		var a = document.createElement("a");
+		a.innerHTML = "Yes";
+		a.href = "#";
+		a.addEventListener('click', function(e) {
+			e.stopPropagation();
+			if(settings.selectors)
+				loadComic();
+			else
+				setupSelectors();
+		}, false);
+		a.setAttribute("style", linkStyle);
+		div.appendChild(a);
+	}
+
+	div.style.lineHeight = "25px";
+	if(!div.parentNode) {
+		document.documentElement.appendChild(div);
+		document.documentElement.appendChild(overlay);
+	}
 }
 
 function getPathFor(e, tryE) { // returns css selector that matches e and tryE as well (if that is possible, without two comma seperated selectors) - only tags, ids and classes are used
@@ -147,7 +196,7 @@ function wordDiff(text1, text2) { // word wise difference of two strings (using 
 	return result;
 }
 
-function realClick(e) {
+function realClick(e) { // simulate a "real" click on given DOMElement e (can't be distinguished from a user click)
 	var evt = document.createEvent("MouseEvents"),
 		rect = e.getBoundingClientRect(),
 		doc = e.ownerDocument,
@@ -158,32 +207,7 @@ function realClick(e) {
 	e.dispatchEvent(evt);
 }
 
-function displayMainBar(isUpdateNeeded) {
-	if (isUpdateNeeded == 1) div.innerHTML = "The extension is outdated, download new version<br><a href=\""+settings.updateServer+"/download.zip\" style='"+linkStyle+"' target='_blank'>here</a>";
-	else {
-		div.innerHTML = "This looks like a Comixology comic. Do you want to backup it as "+(settings.compression==2?"pictures":(settings.container?"ZIP":"CBZ"))+" ("+(settings.compression?(settings.compression==1?"deflated":"multiple"):"stored")+" "+(settings.page?"PNGs":"JPEGs")+")?<br><a href=\"javascript:document.documentElement.removeChild(document.getElementById('"+div.id+"'))\" style='"+linkStyle+"'>No</a> ";
-		var a = document.createElement("a");
-		a.innerHTML = "Yes";
-		a.href = "#";
-		a.addEventListener('click', function(e) {
-			e.stopPropagation();
-			if(settings.selectors)
-				loadComic();
-			else
-				setupSelectors();
-		}, false);
-		a.setAttribute("style", linkStyle);
-		div.appendChild(a);
-	}
-
-	div.style.lineHeight = "25px";
-	if(!div.parentNode) {
-		document.documentElement.appendChild(div);
-		document.documentElement.appendChild(overlay);
-	}
-}
-
-var dom = {
+var dom = { // stores DOM elements of the reader page. All DOM calls go here. No queries elsewhere to make it easier to adapt to reader changes.
 	pagesCached: null,
 	canvasContainerCached: null,
 	browseButtonCached: null,
@@ -196,7 +220,10 @@ var dom = {
 		return document.querySelector(settings.selectorActivePage);
 	},
 	get canvasContainer() {
-		return document.querySelector("div.view");
+		return this.canvasContainerCached = document.contains(this.canvasContainerCached) && this.canvasContainerCached || document.querySelector("div.view");
+	},
+	get canvasElements() {
+		return this.canvasContainer.querySelectorAll("canvas");
 	},
 	get browseButton() {
 		return this.browseButtonCached = this.browseButtonCached || document.querySelector(settings.selectorBrowseButton);
@@ -213,15 +240,24 @@ var dom = {
 	get pagenumCorrection() {
 		return settings.pagenumCorrection;
 	},
+	get loader() {
+		return document.querySelector(".loading");
+	},
+	loaderVisible: function() {
+		return this.loader && this.loader.style.display != "none";
+	},
 	isActivePage: function(page) {
 		return page.matches(settings.selectorActivePage);
 	},
 	isActiveOnepageButton: function() {
 		return this.onepageButton.matches(settings.selectorActiveOnepageButton);
+	},
+	countCanvas: function() {
+		return this.canvasElements.length;
 	}
 };
 
-function setupSelectors() {
+function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree is structured and how it should be backuped
 	/*
 		- click single page button
 		- click dual page button
@@ -230,7 +266,7 @@ function setupSelectors() {
 		- click second page
 		- click on opened comic page
 	*/
-	window.alert("A new exploit scan has to be made.\nPlease follow the upcoming instructions, or the extension may stop working for you.");
+	window.alert("A new exploit scan has to be made.\nPlease follow the upcoming instructions or the extension may stop working for you.");
 	var step = -1, // counter: where are we in the setup process?
 		level = function(s, a) { // toggle between two activatable elements (e.g. opened pages) s and a. Goes up the DOM starting at s until the toggle causes a change of the class-attr of the current ascendant of s. -> the ascendant and the added/removed classes per toggle are returned.
 			if(!s)
@@ -334,13 +370,13 @@ function setupSelectors() {
 		},
 		
 		end = function() {
-			window.alert("Scan completed.\nIf the backup still does not work you should force a new scan in the options.");
+			window.alert("Scan completed.\nIf the backup still does not work, you should force a new scan in the options.");
 			document.documentElement.removeAttribute("scanning");
 			document.documentElement.removeEventListener("click", listener, false);
 			chrome.storage.local.set(write, function() {
 				for (var key in write)
 					settings[key] = write[key];
-				displayMainBar(false);
+				displayMainBar(0);
 			});
 		}, fail = function() {
 			window.alert("Sorry. The scan failed.\nMaybe you should try again.");
@@ -358,21 +394,23 @@ function setupSelectors() {
 	nextStep(); // start with first setup instruction
 }
 
+// download the opened comic. a callback and a step function can be used.
 function loadComic(callback, step) {
 
 	div.innerHTML = "Downloading comic... <span>0</span>%";
 	div.style.lineHeight = "50px";
+	overlay.style.display = "block";
 	
 	if(typeof callback != "function")
 		callback = function() {};
 	if(typeof step != "function")
 		step = function() {};
 	
-	if(!dom.canvasContainer)
+	if(!dom.canvasContainer || dom.loaderVisible())
 		return setTimeout(function() {
 			loadComic(callback, step);
 		}, 100);
-	
+	console.log(dom.countCanvas(), dom.loaderVisible());
 	var pos = -1,
 		l = dom.pages.length,
 		numLength = String(l-1).length,
@@ -384,18 +422,22 @@ function loadComic(callback, step) {
 				return;
 			}
 			var fig = dom.pages[pos];
+			console.log("got page opener", fig);
 			if (dom.isActivePage(fig)) {
 				changeWaiter = null;
 				callback();
 			}
 			else {
+				console.log("click", fig, dom.countCanvas(), dom.loaderVisible());
 				changeWaiter = callback;
 				realClick(fig);
+				console.log("click happened", fig, dom.countCanvas(), dom.loaderVisible());
 			}
 		}, changeWaiter = null,
 		interval = function() {
 			nextPage(function() {
 				getOpenedPage(function(page) {
+					console.log("got page", pos);
 					chrome.runtime.sendMessage({ what:"add_page", page:(settings.compression!=2?page:""), i:pos, len:numLength, extension:(settings.page?"png":"jpeg"), toZip:(settings.compression!=2) }, function(result) {
 						var c = function() {
 							var perc = Math.round((pos + 1) / l * 100);
@@ -403,7 +445,7 @@ function loadComic(callback, step) {
 							step(perc);
 							interval();
 						};
-						if(settings.compression==2)
+						if(settings.compression == 2)
 							downloadData(getName()+"/"+result.name, page, true, c);
 						else
 							c();
@@ -418,17 +460,18 @@ function loadComic(callback, step) {
 			zipImages(function() {
 				document.documentElement.removeChild(div);
 				document.documentElement.removeChild(overlay);
-				callback();
 				realClick(firstPageFig);
+				callback();
 			});
-		}, firstPage = 0, firstPageFig = null, rmListener = function() {
-			var t = changeWaiter;
-			changeWaiter = null;
-			if (typeof t === "function")
-				setTimeout(t, 5);
+		}, rmListener = function() {
+			console.log("rm", dom.countCanvas(), changeWaiter);
+			if (typeof changeWaiter === "function" && !dom.countCanvas()) {
+				changeWaiter();
+				changeWaiter = null;
+			}
 			else
 				start();
-		};
+		}, firstPage = 0, firstPageFig = null;
 
 	chrome.runtime.sendMessage({ what:"new_zip", user:getUsername() }, function() {
 		dom.canvasContainer.parentElement.addEventListener("DOMNodeRemoved", rmListener, false);
@@ -440,11 +483,16 @@ function loadComic(callback, step) {
 			start();
 		else {
 			realClick(dom.onepageButton);
-			setTimeout(function() {
-				start();
-			}, 1000);
+			var check = function() {
+				setTimeout(function() {
+					if(dom.isActiveOnepageButton())
+						start();
+					else
+						check();
+				}, 100);
+			};
+			check();
 		}
-		overlay.style.display = "block";
 	});
 }
 
@@ -493,6 +541,7 @@ function downloadData(name, data, overwrite, callback) { // overwrite is not use
 	downloadFile(name, URL.createObjectURL(dataURLtoBlob(data)), overwrite, callback);
 }
 
+// compress and download all pages that were backuped by this tab in the loadComic function
 function zipImages(callback) {
 	if(settings.compression == 2)
 		return typeof callback === "function"?callback():undefined;
@@ -505,12 +554,12 @@ function zipImages(callback) {
 	});
 }
 
+// get data URL of the currently opened page in the reader (async! result is given to callback)
 function getOpenedPage(callback) {
 	var view = dom.canvasContainer,
-		loader = document.querySelector('div.loading'),
-		doneLoading = view && (view.style.webkitTransform || view.style.transform) && (!loader || loader.style.display == "none");
+		doneLoading = view && (view.style.webkitTransform || view.style.transform) && !dom.loaderVisible();
 	if(doneLoading) {
-		var canvasOnThisPage = view.childNodes,
+		var canvasOnThisPage = dom.canvasElements,
 			w = parseInt(view.style.width),
 			h = parseInt(view.style.height),
 			outCanvas = document.createElement('canvas'),
@@ -520,7 +569,7 @@ function getOpenedPage(callback) {
 		outCanvas.height = h;
 		for (var i = 0; i < canvasOnThisPage.length; i++) {
 			canvas = canvasOnThisPage[i];
-			ctx.drawImage(canvas, parseInt(canvas.style.left), parseInt(canvas.style.top), parseInt(canvas.style.width), parseInt(canvas.style.height));
+			ctx.drawImage(canvas, parseInt(canvas.style.left)||0, parseInt(canvas.style.top)||0, parseInt(canvas.style.width)||0, parseInt(canvas.style.height)||0);
 		}
 		data = getUsernameImage(ctx, w, h);
 		ctx.putImageData(data, w-data.width, h-data.height);
@@ -529,23 +578,7 @@ function getOpenedPage(callback) {
 	}
 	else {
 		setTimeout(function() {
-			realClick(dom.activePage);
 			getOpenedPage(callback);
 		}, 300);
 	}
 }
-
-chrome.runtime.sendMessage({ what:"tab_info" }, function(info) {
-	var tab = info.tab,
-		openerTab = info.opener;
-	if(openerTab)
-		chrome.runtime.sendMessage({ what:"tab_message", tab:openerTab.id, message:{ what:"ready_to_download", tab:tab } }, function(start) {
-			if(start && start.download) {
-				loadComic(function() {
-					chrome.runtime.sendMessage({ what:"tab_message", tab:openerTab.id, message:{ what:"finished_download", tab:tab } });
-				}, function(perc) {
-					chrome.runtime.sendMessage({ what:"tab_message", tab:openerTab.id, message:{ what:"download_progress", tab:tab, data:perc } });
-				});
-			}
-		});
-});
