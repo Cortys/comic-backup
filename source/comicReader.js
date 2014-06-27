@@ -457,6 +457,7 @@ function loadComic(callback, step) {
 			interval();
 		}, end = function() {
 			dom.canvasContainer.parentElement.removeEventListener("DOMNodeRemoved", rmListener, false);
+			step("zip");
 			zipImages(function() {
 				document.documentElement.removeChild(div);
 				document.documentElement.removeChild(overlay);

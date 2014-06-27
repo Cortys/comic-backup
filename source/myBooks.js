@@ -18,11 +18,14 @@ if(!exceptions[location.pathname.split("/", 1)[1]]) {
 			this.readButton = button;
 			var clone = this.downloadButton = button.cloneNode(false),
 				t = this,
+				buttonComputedStyle = window.getComputedStyle(button),
 				hasGiftButton = false,
 				giftButton = button.nextSibling,
 				giftComputedStyle;
+				
+			// create clone:
 			clone.innerHTML = "Download";
-			clone.style.width = (parseInt(button.style.width = window.getComputedStyle(button).width) + (giftButton && typeof giftButton.className == "string" && (hasGiftButton = giftButton.className.match(/gift_link/g)) && (giftComputedStyle = window.getComputedStyle(giftButton)) && parseInt(giftComputedStyle.width)+parseInt(giftComputedStyle.marginLeft)+parseInt(giftComputedStyle.marginRight) || 0)) + "px";
+			clone.style.width = (parseInt(button.style.width = buttonComputedStyle.width) + (giftButton && typeof giftButton.className == "string" && (hasGiftButton = giftButton.className.match(/gift_link/g)) && (giftComputedStyle = window.getComputedStyle(giftButton)) && parseInt(giftComputedStyle.width)+parseInt(giftComputedStyle.marginLeft)+parseInt(giftComputedStyle.marginRight) || 0)) + "px";
 			clone.style.textAlign = button.style.textAlign = "center";
 			clone.style.marginTop = giftComputedStyle?giftComputedStyle.marginLeft:"1px";
 			clone.href = "javascript:";
@@ -30,6 +33,16 @@ if(!exceptions[location.pathname.split("/", 1)[1]]) {
 				t.events["start_download"].call(t);
 			}, false);
 			clone.classList.add(cssClass);
+			
+			// create colors:
+			console.log(buttonComputedStyle.background);
+			this.buttonBGs = {
+				green: buttonComputedStyle.background.replace(/#([a-f0-9]{6,6})|#([a-f0-9]{3,3})/gi, function(match, hex) {
+					console.log(hex);
+					return match;
+				})
+			};
+			
 			button.parentNode.insertBefore(clone, giftButton);
 			if(hasGiftButton)
 				button.parentNode.insertBefore(giftButton, clone);
@@ -39,23 +52,55 @@ if(!exceptions[location.pathname.split("/", 1)[1]]) {
 		readButton: null,
 		downloadButton: null,
 		tab: null,
+		downloading: false,
+		buttonBGs: null,
 		events: {
 			"ready_to_download": function(sendResponse) {
 				sendResponse({download: true});
-			}, "finished_download": function() {
+				this.showProgress(0);
+			},
+			"finished_download": function() {
 				chrome.runtime.sendMessage({ what: "close_background_tab", tab: this.tab });
-			}, "closed_background_tab": function() {
+				this.downlading = false;
+				this.showDone();
+			},
+			"closed_background_tab": function() {
 				delete downloadEvents[this.tab.id];
 				this.tab = null;
-			}, "start_download": function() {
+				this.downlading = false;
+				this.showDefault();
+			},
+			"start_download": function() {
 				var t = this;
+				if(t.downloading)
+					return;
 				chrome.runtime.sendMessage({what: "open_background_tab", url: this.readButton.href}, function(tab) {
 					t.tab = tab;
 					downloadEvents[tab.id] = t;
 				});
-			}, "download_progress": function(sendResponse, percentage) {
-				this.downloadButton.innerHTML = percentage + "%";
+				this.downlading = true;
+			},
+			"download_progress": function(sendResponse, percentage) {
+				this["show"+(percentage=="zip"?"Zipping":"Progress")](percentage);
 			}
+		},
+		showProgress: function(percentage) {
+			this.downloadButton.innerHTML = percentage + "%";
+			this.downloadButton.style.cursor = "default";
+		},
+		showDefault: function() {
+			this.downloadButton.style.cursor = "pointer";
+			this.downloadButton.style.removeProperty("background");
+			this.downloadButton.innerHTML = "Download";
+		},
+		showDone: function() {
+			this.downloadButton.style.cursor = "default";
+			this.downloadButton.style.background = this.buttonBGs.green;
+			this.downloadButton.innerHTML = "Done";
+		},
+		showZipping: function() {
+			this.downloadButton.style.cursor = "default";
+			this.downloadButton.innerHTML = "Zipping...";
 		}
 	};
 	
