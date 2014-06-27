@@ -406,7 +406,7 @@ function loadComic(callback, step) {
 	if(typeof step != "function")
 		step = function() {};
 	
-	if(!dom.canvasContainer || dom.loaderVisible() || !dom.countCanvas()) // delay download if comic isn't displayed yet => 
+	if(!dom.canvasContainer || dom.loaderVisible() || !dom.countCanvas()) // delay download if comic isn't displayed yet => reader not ready, first page is not loaded yet, first page is not displayed yet
 		return setTimeout(function() {
 			loadComic(callback, step);
 		}, 100);
