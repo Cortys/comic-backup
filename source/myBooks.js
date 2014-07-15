@@ -6,7 +6,7 @@ var exceptions = {
 
 if(!exceptions[location.pathname.split("/", 1)[1]]) {
 	var cssClass = randomString(20, 40),
-		injectCss = function(){
+		injectCss = function() {
 			var style = document.createElement("style");
 			style.type = "text/css";
 			style.innerHTML = "." + cssClass + "{}";
@@ -56,37 +56,46 @@ if(!exceptions[location.pathname.split("/", 1)[1]]) {
 		buttonBGs: null,
 		events: {
 			"ready_to_download": function(sendResponse) {
-				sendResponse({download: true});
+				sendResponse({ download:true });
 				this.showProgress(0);
 			},
 			"finished_download": function() {
 				chrome.runtime.sendMessage({ what: "close_background_tab", tab: this.tab });
-				this.downlading = false;
+				delete downloadEvents[this.tab.id];
+				this.tab = null;
+				this.downloading = false;
 				this.showDone();
 			},
 			"closed_background_tab": function() {
+				if(!this.downloading)
+					return;
 				delete downloadEvents[this.tab.id];
 				this.tab = null;
-				this.downlading = false;
+				this.downloading = false;
 				this.showDefault();
 			},
 			"start_download": function() {
 				var t = this;
 				if(t.downloading)
 					return;
-				chrome.runtime.sendMessage({what: "open_background_tab", url: this.readButton.href}, function(tab) {
+				chrome.runtime.sendMessage({what: "open_background_tab", url: t.readButton.href}, function(tab) {
 					t.tab = tab;
 					downloadEvents[tab.id] = t;
 				});
-				this.downlading = true;
+				t.downloading = true;
+				t.showPrepare();
 			},
 			"download_progress": function(sendResponse, percentage) {
 				this["show"+(percentage=="zip"?"Zipping":"Progress")](percentage);
 			}
 		},
-		showProgress: function(percentage) {
-			this.downloadButton.innerHTML = percentage + "%";
+		showPrepare: function() {
 			this.downloadButton.style.cursor = "default";
+			this.downloadButton.innerHTML = "...";
+		},
+		showProgress: function(percentage) {
+			this.downloadButton.style.cursor = "default";
+			this.downloadButton.innerHTML = percentage + "%";
 		},
 		showDefault: function() {
 			this.downloadButton.style.cursor = "pointer";
