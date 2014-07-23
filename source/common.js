@@ -1,8 +1,8 @@
-function randomString(min, max) {
+function randomString(min, max) { // generates random alphanumeric string with a length between min and max - it never starts with a number so that results can be used as class names etc.
 	var poss = "abcdefghijklmnopqrstuvwxyz0123456789",
 		l = Math.round(Math.random()*(max-min))+min;
 	for (var r = ""; r.length < l;)
-		r += poss.charAt(Math.round(Math.random()*(poss.length-1)));
+		r += poss.charAt(Math.round(Math.random()*(poss.length-(r.length?1:11))));
 	return r;
 }
 
@@ -135,3 +135,58 @@ function dataURLtoBlob(dataURI) {
 	// Write the ArrayBuffer (or ArrayBufferView) to a blob:
 	return new Blob([intArray], {type: mimeString});
 }
+
+// Queue implementation by code.stephenmorley.org
+function Queue(){var a=[],b=0;this.getLength=function(){return a.length-b};this.isEmpty=function(){return 0==a.length};this.enqueue=function(b){a.push(b)};this.dequeue=function(){if(0!=a.length){var c=a[b];2*++b>=a.length&&(a=a.slice(b),b=0);return c}};this.peek=function(){return 0<a.length?a[b]:void 0}};
+
+// Custom communication API to enable callbacks in continous connections between content and background scripts:
+
+var connector = Object.create(chrome.runtime);
+
+connector.mutatePort = function(port) {
+	
+	var c = 1, l = new Queue(), callbacks = {}
+	
+	port.send = function(msg, callback) {
+		var id = l.dequeue() || c++;
+		callbacks[id] = callback;
+		this.postMessage({ id:id, type:0, message:msg }); // type0 message: A transmits msg to B
+	};
+	
+	port.receive = function(callback) {
+		var t = this, called = false;
+		t.onMessage.addListener(function(msg) {
+			if(msg.id !== undefined && !msg.type && !callback(msg.message, function(response) { // if callback returns true => B's response will be sent asynchronous (A will wait for a response as long as B requires => RISK this could be endless!)
+				called = true;
+				t.postMessage({ id:msg.id, type:1, message:response }); // type1 message: B responds to A with response
+			}) && !called)
+				t.postMessage({ id:msg.id, type:2 }); // type2 message: B chose to not respond to A => A is notified, that no response will come
+		});
+	};
+	
+	port.onMessage.addListener(function(msg) {
+		if(msg.id !== undefined && msg.type) {
+			var f = callbacks[msg.id];
+			delete callbacks[msg.id];
+			if(typeof f === "function" && msg.type != 2)
+				f(msg.message);
+			l.enqueue(msg.id);
+		}
+	});
+	
+	return port;
+};
+
+connector.connect = function() {
+	var p = chrome.tabs || chrome.runtime,
+		port = p.connect.apply(p, arguments);
+	return this.mutatePort(port);
+};
+
+connector.onConnect = {
+	addListener: function(callback) {
+		return chrome.runtime.onConnect.addListener(function(port) {
+			callback.call(this, connector.mutatePort(port));
+		});
+	}
+};

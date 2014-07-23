@@ -2,8 +2,8 @@
 	"manifest_version": 2,
 
 	"name": "Comixology Backup",
-	"description": "Save your Comixology comics as standard CBZ files",
-	"version": "1.6.0",
+	"description": "Save your Comixology comics as standard CBZ files.",
+	"version": "2.0.0",
 	"minimum_chrome_version": "26",
 	
 	"icons": {
@@ -12,8 +12,6 @@
 	},
 	
 	"permissions": [
-		"webRequest",
-		"webRequestBlocking",
 		"tabs",
 		"activeTab",
 		"storage",
@@ -24,8 +22,9 @@
 		"scripts": [
 			"jszip.min.js",
 			"common.js",
-			"bgPage.js"
-		]
+			"backgroundManager.js"
+		],
+		"persistent": false
 	},
 	
 	"content_scripts": [
@@ -39,6 +38,7 @@
 			"run_at": "document_idle"
 		}, {
 			"matches": ["*://www.comixology.com/*","*://www.comixology.eu/*","*://www.comixology.co.uk/*","*://www.comixology.fr/*","*://www.comixology.de/*"],
+			"exclude_matches": ["*://www.comixology.com/comic-reader/*","*://www.comixology.eu/comic-reader/*","*://www.comixology.co.uk/comic-reader/*","*://www.comixology.fr/comic-reader/*","*://www.comixology.de/comic-reader/*"],
 			"js": ["common.js", "myBooks.js"],
 			"run_at": "document_end"
 		}

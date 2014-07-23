@@ -4,6 +4,12 @@
 	<meta charset="utf-8">
 	<title>ComiXology Backup</title>
 	<style type="text/css">
+		
+		@font-face {
+			font-family: League-Gothic;
+			src: url("League-Gothic.otf") format("opentype");
+		}
+		
 		body {
 			text-align: center;
 			font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -12,7 +18,48 @@
 			font-size: 14px;
 			margin: 0;
 			padding: 0;
+			padding-bottom: 40px;
+			color: #3b3a3a;
 		}
+		
+		h1 {
+			margin-top: 0;
+			margin-bottom: 20px;
+			padding: 0;
+			height: 200px;
+			background-image: linear-gradient(-180deg, #3583AE 0%, #2DAF7E 100%);
+		}
+		
+		h1 img {
+			width: 200px;
+			height: 200px;
+		}
+		
+		h2 {
+			color: #3583ae;
+			font-size: 35px;
+			text-transform: uppercase;
+			letter-spacing: 1px;
+			font-family: League-Gothic, Courier;
+			text-shadow: 1px 1px 0 #ffffff, 3px 3px 0 #2daf7e;
+			margin-top: 30px;
+			margin-bottom: 10px;
+		}
+		
+		select, input {
+			background: #eddfca;
+			border-radius: 5px;
+			background-image: linear-gradient(-180deg, #FCF8F2 0%, #DDBA89 61%);
+			border: 2px solid #3B3A3A;
+			font-size: 13px;
+			outline: none;
+			padding: 5px;
+			text-align: center;
+		}
+		select:active, input:active {
+			box-shadow: 0 0 10px #3b3a3a;
+		}
+		
 		p {
 			position: relative;
 			width: 500px;
@@ -22,7 +69,7 @@
 	</style>
 </head>
 <body>
-	<h1><img src="logo128.png" alt="Comixology Backup Settings"></h1>
+	<h1><img src="logoOptions@2x.png" alt="Comixology Backup Settings"></h1>
 	<h2>Backup behaviour</h2>
 	Page format: <select id="page">
 		<option value="0">jpg</option>
@@ -41,15 +88,35 @@
 		<option value="0">first page</option>
 		<option value="1">currently opened page</option>
 	</select>
-	<h2>Solve problems</h2>
+	<h2>User Interface</h2>
+	Show backup dialog in the reader: <select id="readerDialog">
+		<option value="0">Yes</option>
+		<option value="1">No</option>
+	</select><br>
+	Show "Download" button in "My Books": <select id="fastDownload">
+	 	<option value="0">Yes</option>
+	 	<option value="1">No</option>
+	</select><br>
+	Max. parallel downloads per tab*: <select id="queueLength">
+	 	<option value="1">1</option>
+	 	<option value="2">2</option>
+	 	<option value="3">3</option>
+	 	<option value="4">4</option>
+	 	<option value="5">5</option>
+	 	<option value="10">10</option>
+	 	<option value="-1">Unlimited</option>
+	</select><br>
+	<p>* <i>If the limit is reached, every new download will be queued.<br>Only affects downloads started from a "My Books".</i></p>
+	<h2>Updates</h2>
 	<p>To get notifications about extension updates, you have to add an update server.</p>
 	<input value="Set update server" type="button" id="setServer">
-	<p>Sometimes ComiXology changes their reader code. If that happens you can force a new exploit scan and the plugin will try to detect a new way to backup your comics. In order to do that you will be asked to perform some actions the next time you open a comic.</p>
+	<h2>I need help!</h2>
+	<p><b>The backup does not work anymore!</b> Sometimes ComiXology changes their reader code. If that happens you can force a new exploit scan and the plugin will try to detect a new way to backup your comics. In order to do that you will be asked to perform some actions the next time you open a comic.</p>
 	Force new exploit scan: <select id="selectors">
 		<option value="0">Yes</option>
 		<option value="1">No</option>
 	</select>
-	<p><b>Series feature:</b> To use the series download feature make sure you disabled the <i>Prompt to continue</i> message in the settings (click the gear to get there) of the web reader.</p>
+	<p><b>The fast download feature does not work!</b> To use the fast download feature make sure you disabled the <i>Prompt to continue</i> message in the settings (click the gear to get there) of the web reader.</p>
 	<script src="options.js" type="text/javascript"></script>
 </body>
 </html>

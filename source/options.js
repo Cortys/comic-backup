@@ -33,6 +33,6 @@ document.getElementById("setServer").addEventListener("click", function() {
 	chrome.storage.local.get(["updateServer"], function(a) {
 		var r = window.prompt("Enter update server URL:", a.updateServer||"");
 		if(r || r === "")
-			chrome.storage.local.set({ updateServer:r });
+			chrome.storage.local.set({ updateServer:(r.charAt(r.length-1) == "/"?r.substr(0, r.length-1):r) });
 	});
 }, false);

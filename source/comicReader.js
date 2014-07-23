@@ -31,29 +31,29 @@ overlay.style.background = "rgba(0,0,0,0.3)";
 overlay.style.display = "none";
 
 //ENTRANCE POINT FOR READER BACKUP LOGIC:
-chrome.runtime.sendMessage({ what:"tab_info" }, function(info) { // get tab information
-	var tab = info.tab,
-		openerTab = info.opener; // was this tab opened by the extension itself (by clicking DOWNLOAD in the library)
+
+var port = connector.connect({ name:"reader" });
+
+chrome.storage.local.get(null, function(data) { // get user settings
+	settings = data;
 	
-	chrome.storage.local.get(null, function(data) { // get user settings
-		settings = data;
+	// delete cached uncompleted zip-backups for this tab:
+	port.send({ what:"is_child" }, function(isChild) { // tab opened by extension -> autorun / else -> show bar
+		if(!isChild)
+			return checkVersion();
 		
-		// delete cached uncompleted zip-backups for this tab:
-		chrome.runtime.sendMessage({ what:"empty_cache" }, openerTab?function() { // tab opened by extension -> autorun
-			
-			displayMainBar(2); // Just show overlay.
-			
-			chrome.runtime.sendMessage({ what:"tab_message", tab:openerTab.id, message:{ what:"ready_to_download", tab:tab } }, function(start) {
-				if(start && start.download) {
-					loadComic(function() {
-						chrome.runtime.sendMessage({ what:"tab_message", tab:openerTab.id, message:{ what:"finished_download", tab:tab } });
-					}, function(perc) {
-						chrome.runtime.sendMessage({ what:"tab_message", tab:openerTab.id, message:{ what:"download_progress", tab:tab, data:perc } });
-					});
-				}
-			});
-		}:checkVersion); // tab opened by user -> check for updates and show orange panel (asking to update or to backup)
-	});
+		displayMainBar(2); // Just show overlay.
+		
+		port.send({ what:"message_to_opener", message:{ what:"ready_to_download" } }, function(start) {
+			if(start && start.download) {
+				loadComic(function() {
+					port.send({ what:"message_to_opener", message:{ what:"finished_download" } });
+				}, function(perc) {
+					port.send({ what:"message_to_opener", message:{ what:"download_progress", data:perc } });
+				});
+			}
+		});
+	}); // tab opened by user -> check for updates and show orange panel (asking to update or to backup)
 });
 
 // check for updates if possible:
@@ -84,7 +84,10 @@ function displayMainBar(isUpdateNeeded) {
 	if(isUpdateNeeded == 1)
 		div.innerHTML = "The extension is outdated, download new version<br><a href=\""+settings.updateServer+"/download.zip\" style='"+linkStyle+"' target='_blank'>here</a>";
 	else if(!isUpdateNeeded) {
-		div.innerHTML = "This looks like a Comixology comic. Do you want to backup it as "+(settings.compression==2?"pictures":(settings.container?"ZIP":"CBZ"))+" ("+(settings.compression?(settings.compression==1?"deflated":"multiple"):"stored")+" "+(settings.page?"PNGs":"JPEGs")+")?<br><a href=\"javascript:document.documentElement.removeChild(document.getElementById('"+div.id+"'))\" style='"+linkStyle+"'>No</a> ";
+		if(settings.selectors)
+			div.innerHTML = "Do you want to backup this comic as "+(settings.compression==2?"images":(settings.container?"ZIP":"CBZ"))+" ("+(settings.compression?(settings.compression==1?"deflated":"multiple"):"stored")+" "+(settings.page?"PNGs":"JPEGs")+")?<br><a href=\"javascript:document.documentElement.removeChild(document.getElementById('"+div.id+"'))\" style='"+linkStyle+"'>No</a> ";
+		else
+			div.innerHTML = "Do you want to start an exploit scan? This is required to backup comics.<br><a href=\"javascript:document.documentElement.removeChild(document.getElementById('"+div.id+"'))\" style='"+linkStyle+"'>No</a> ";
 		var a = document.createElement("a");
 		a.innerHTML = "Yes";
 		a.href = "#";
@@ -410,7 +413,6 @@ function loadComic(callback, step) {
 		return setTimeout(function() {
 			loadComic(callback, step);
 		}, 100);
-	console.log(dom.countCanvas(), dom.loaderVisible());
 	var pos = -1,
 		l = dom.pages.length,
 		numLength = String(l-1).length,
@@ -422,23 +424,19 @@ function loadComic(callback, step) {
 				return;
 			}
 			var fig = dom.pages[pos];
-			console.log("got page opener", fig);
 			if (dom.isActivePage(fig)) {
 				changeWaiter = null;
 				callback();
 			}
 			else {
-				console.log("click", fig, dom.countCanvas(), dom.loaderVisible());
 				changeWaiter = callback;
 				realClick(fig);
-				console.log("click happened", fig, dom.countCanvas(), dom.loaderVisible());
 			}
 		}, changeWaiter = null,
 		interval = function() {
 			nextPage(function() {
 				getOpenedPage(function(page) {
-					console.log("got page", pos);
-					chrome.runtime.sendMessage({ what:"add_page", page:(settings.compression!=2?page:""), i:pos, len:numLength, extension:(settings.page?"png":"jpeg"), toZip:(settings.compression!=2) }, function(result) {
+					port.send({ what:"add_page", page:(settings.compression!=2?page:""), i:pos, len:numLength, extension:(settings.page?"png":"jpeg"), toZip:(settings.compression!=2) }, function(result) {
 						var c = function() {
 							var perc = Math.round((pos + 1) / l * 100);
 							div.getElementsByTagName("span")[0].innerHTML = perc;
@@ -465,7 +463,6 @@ function loadComic(callback, step) {
 				callback();
 			});
 		}, rmListener = function() {
-			console.log("rm", dom.countCanvas(), changeWaiter);
 			if (typeof changeWaiter === "function" && !dom.countCanvas()) {
 				changeWaiter();
 				changeWaiter = null;
@@ -474,7 +471,7 @@ function loadComic(callback, step) {
 				start();
 		}, firstPage = 0, firstPageFig = null;
 
-	chrome.runtime.sendMessage({ what:"new_zip", user:getUsername() }, function() {
+	port.send({ what:"new_zip", user:getUsername() }, function() {
 		dom.canvasContainer.parentElement.addEventListener("DOMNodeRemoved", rmListener, false);
 		realClick(dom.browseButton);
 		firstPageFig = dom.activePage;
@@ -536,7 +533,7 @@ function getUsernameImage(ctx, w, h) {
 
 function downloadBlob(name, data, overwrite, callback) { // overwrite is not used currently
 	// blobs have to be downloaded from background page (same origin policy)
-	chrome.runtime.sendMessage({ what:"download_blob", name:name, data:data, overwrite:overwrite }, callback);
+	port.send({ what:"download_blob", name:name, data:data, overwrite:overwrite }, callback);
 }
 function downloadData(name, data, overwrite, callback) { // overwrite is not used currently
 	downloadFile(name, URL.createObjectURL(dataURLtoBlob(data)), overwrite, callback);
@@ -549,7 +546,7 @@ function zipImages(callback) {
 	div.innerHTML = "Zipping images...";
 	div.style.lineHeight = "50px";
 
-	chrome.runtime.sendMessage({ what:"start_zipping", compress:settings.compression }, function(result) {
+	port.send({ what:"start_zipping", compress:settings.compression }, function(result) {
 		div.innerHTML = "Saving comic...";
 		downloadBlob(getName()+"."+(settings.container?"zip":"cbz"), result.url, false, callback);
 	});

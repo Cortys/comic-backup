@@ -73,3 +73,5 @@ Project started by SpergLord Enterprises, LLC and continued by other awesome con
 If you have problems with the software/have an idea, add an issue on Github via Issues.
 
 The code is under GPLv3 licence. Code uses JSZip by Stuart Knightley and JavaScript-Canvas-to-Blob by Sebastian Tschan.
+
+[League Gothic](https://github.com/theleagueof/league-gothic) by Caroline Hadilaksono, Micah Rich, & Tyler Finck is used.
