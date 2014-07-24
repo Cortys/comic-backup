@@ -56,7 +56,7 @@ connector.onConnect.addListener(function(port) {
 		port.receive(function(request, callback) {
 			console.log(port.name, request);
 			if(request.what == "open_background_tab") {
-				chrome.tabs.create({"url": request.url, "active": false}, function(tab) {
+				chrome.tabs.create({ url:request.url, active:false }, function(tab) {
 					openers[tab.id] = sender;
 					port.children[tab.id] = true;
 					callback(tab.id);
@@ -91,4 +91,10 @@ connector.onConnect.addListener(function(port) {
 		disconnectAction();
 		port = sender = null;
 	});
+});
+
+chrome.tabs.onActivated.addListener(function(info) {
+	var o = openers[info.tabId];
+	if(o)
+		chrome.tabs.highlight({ tabs:o }, function() {});
 });
