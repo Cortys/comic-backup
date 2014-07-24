@@ -1,6 +1,13 @@
 Comixology Backup
 ======
 
+IMPORTANT MESSAGE
+-----
+
+As you may have noticed Comixology now offers backups themselves. [Read more](http://cmxlgy.wordpress.com/2014/07/24/the-road-ahead/) and share your thoughts on it. Thanks!
+
+------------------
+
 Do you like [Comixology](http://comixology.com)? Me too!
 
 Are you annoyed that you can't download the comics you bought in a standard format, readable by all possible software? Me too!
