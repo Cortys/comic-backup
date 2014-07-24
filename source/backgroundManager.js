@@ -74,7 +74,7 @@ connector.onConnect.addListener(function(port) {
 	var disconnectAction = port.name == "controller"?function() {
 		for (var tab in port.children)
 			if(ports.reader[tab])
-				chrome.tabs.remove(tab);
+				chrome.tabs.remove(tab*1);
 	}:function() {
 		if(typeof openers[sender] !== "undefined") {
 			var opener = ports.controller[openers[sender]];

@@ -10,7 +10,7 @@ if(!exceptions[location.pathname.split("/", 1)[1]]) {
 		injectCss = function() {
 			var style = document.createElement("style");
 			style.type = "text/css";
-			style.innerHTML = "."+cssClass+" span { transition:display 0s; transition-delay:1s; }\n."+cssClass+" .cancel { display:none; }\n."+cssClass+".cancel:hover .cancel { display:block; }\n."+cssClass+".cancel:hover .text { display:none; }";
+			style.innerHTML = "."+cssClass+" span { transition:all 0s linear 1s; }\n."+cssClass+" .cancel { display:none; }\n."+cssClass+".cancel:hover .cancel { display:block; }\n."+cssClass+".cancel:hover .text { display:none; }";
 			document.head.insertBefore(style);
 		},
 		readButtons = document.body.querySelectorAll(".read-comic.titleBtn, .read_link"),
