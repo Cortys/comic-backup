@@ -2,8 +2,8 @@
 	"manifest_version": 2,
 
 	"name": "Comixology Backup",
-	"description": "Save your Comixology comics as standard CBZ files",
-	"version": "1.5.4",
+	"description": "Save your Comixology comics as standard CBZ files.",
+	"version": "2.0.0",
 	"minimum_chrome_version": "26",
 	
 	"icons": {
@@ -12,8 +12,6 @@
 	},
 	
 	"permissions": [
-		"webRequest",
-		"webRequestBlocking",
 		"tabs",
 		"activeTab",
 		"storage",
@@ -24,18 +22,23 @@
 		"scripts": [
 			"jszip.min.js",
 			"common.js",
-			"bgPage.js"
-		]
+			"backgroundManager.js"
+		],
+		"persistent": false
 	},
 	
 	"content_scripts": [
 		{
 			"matches": ["*://www.comixology.com/comic-reader/*","*://www.comixology.eu/comic-reader/*","*://www.comixology.co.uk/comic-reader/*","*://www.comixology.fr/comic-reader/*","*://www.comixology.de/comic-reader/*"],
-			"js": ["common.js", "reactivate_dom.js"],
+			"js": ["common.js", "reactivateDom.js"],
 			"run_at": "document_start"
 		}, {
 			"matches": ["*://www.comixology.com/comic-reader/*","*://www.comixology.eu/comic-reader/*","*://www.comixology.co.uk/comic-reader/*","*://www.comixology.fr/comic-reader/*","*://www.comixology.de/comic-reader/*"],
-			"js": ["diff_match_patch.js", "common.js", "myscript.js"],
+			"js": ["diffMatchPatch.js", "common.js", "comicReader.js"],
+			"run_at": "document_idle"
+		}, {
+			"matches": ["*://www.comixology.com/my-books*","*://www.comixology.eu/my-books*","*://www.comixology.co.uk/my-books*","*://www.comixology.fr/my-books*","*://www.comixology.de/my-books*","*://www.comixology.com/my-comics*","*://www.comixology.eu/my-comics*","*://www.comixology.co.uk/my-comics*","*://www.comixology.fr/my-comics*","*://www.comixology.de/my-comics*"],
+			"js": ["common.js", "myBooks.js"],
 			"run_at": "document_end"
 		}
 	],

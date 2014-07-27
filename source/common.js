@@ -1,8 +1,19 @@
-function randomString(min, max) {
+var current_version = 110,
+	div, linkStyle = "color:#ffffff;font-weight:bold;background:linear-gradient(to bottom, rgb(115, 152, 200) 0%,rgb(179, 206, 233) 1%,rgb(82, 142, 204) 5%,rgb(79, 137, 200) 20%,rgb(66, 120, 184) 50%,rgb(49, 97, 161) 100%);padding:3px;text-decoration:none;display:inline-block;width:70px;text-align:center;height:22px;box-sizing:border-box;line-height:14px;border:1px solid rgb(49,96,166);",
+	settings;
+
+function getSettings(callback) {
+	chrome.storage.local.get(null, function(data) {
+		settings = data;
+		callback();
+	});
+}
+
+function randomString(min, max) { // generates random alphanumeric string with a length between min and max - it never starts with a number so that results can be used as class names etc.
 	var poss = "abcdefghijklmnopqrstuvwxyz0123456789",
 		l = Math.round(Math.random()*(max-min))+min;
 	for (var r = ""; r.length < l;)
-		r += poss.charAt(Math.round(Math.random()*(poss.length-1)));
+		r += poss.charAt(Math.round(Math.random()*(poss.length-(r.length?1:11))));
 	return r;
 }
 
@@ -13,21 +24,72 @@ function nullFill(num, len) {
 	return num;
 }
 
+// checks for updates and calls callback with true = new update available or false = no updates
+function checkVersion(callback) {
+	var xhr = new XMLHttpRequest();
+	if(settings.updateServer) {
+		xhr.open("GET", settings.updateServer+"/version", true);
+		xhr.responseType = 'text';
+
+		xhr.onreadystatechange = function() {
+
+			if (xhr.readyState == 4) {
+				if(xhr.status != 200)
+					callback(false);
+				var version = this.response*1;
+				if (version > current_version)
+					callback(true);
+				else
+					callback(false);
+			}
+		};
+		xhr.send();
+	}
+	else
+		callback(false);
+}
+
+function addTopBar() {
+	if(div)
+		return;
+	
+	div = document.createElement("div");
+	
+	div.id = randomString(20,40);
+	
+	div.style.fontSize = "13px";
+	div.style.top = "50%";
+	div.style.width = "100%";
+	div.style.height = "54px";
+	div.style.marginTop = "-150px";
+	div.style.paddingTop = "4px";
+	
+	div.style.background = "linear-gradient(to bottom, rgba(0,0,0,0.9) 50%,rgba(0,0,0,0.7) 100%)";
+	div.style.color = "#ffffff";
+	div.style.textAlign = "center";
+	div.style.lineHeight = "25px";
+	div.style.zIndex = 2147483648;
+	div.style.cursor = "default";
+	div.style.overflow = "hidden";
+	
+	div.style.position = "fixed";
+	
+	document.documentElement.appendChild(div);
+}
+
+function updateDialog() {
+	checkVersion(function(update) {
+		if(update) {
+			addTopBar();
+			div.innerHTML = "This version of the \"Comixology Backup\" extension is outdated.<br><a href=\""+settings.updateServer+"/download.zip\" style='"+linkStyle+"' target='_blank'>Update</a>";
+		}
+	});
+}
+
 if(typeof Element.prototype.matches !== "function")
 	Element.prototype.matches = Element.prototype.webkitMatchesSelector;
 
-/**
- * Converts an RGB color value to HSL. Conversion formula
- * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
- * Assumes r, g, and b are contained in the set [0, 255] and
- * returns h, s, and l in the set [0, 1].
- *
- * @param   Number  r       The red color value
- * @param   Number  g       The green color value
- * @param   Number  b       The blue color value
- * @return  Array           The HSL representation
- */
-
+// Converts an RGB (0-255) color value to HSL (0-1)
 function rgbToHsl(r, g, b) {
 	r /= 255, g /= 255, b /= 255;
 
@@ -59,18 +121,7 @@ function rgbToHsl(r, g, b) {
 	return [h, s, l];
 }
 
-/**
- * Converts an HSL color value to RGB. Conversion formula
- * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
- * Assumes h, s, and l are contained in the set [0, 1] and
- * returns r, g, and b in the set [0, 255].
- *
- * @param   Number  h       The hue
- * @param   Number  s       The saturation
- * @param   Number  l       The lightness
- * @return  Array           The RGB representation
- */
-
+// Converts an HSL (0-1) color value to RGB (0-255)
 function hslToRgb(h, s, l) {
 	var r, g, b;
 
@@ -135,3 +186,58 @@ function dataURLtoBlob(dataURI) {
 	// Write the ArrayBuffer (or ArrayBufferView) to a blob:
 	return new Blob([intArray], {type: mimeString});
 }
+
+// Queue implementation by code.stephenmorley.org
+function Queue(){var a=[],b=0;this.getLength=function(){return a.length-b};this.isEmpty=function(){return 0==a.length};this.enqueue=function(b){a.push(b)};this.dequeue=function(){if(0!=a.length){var c=a[b];2*++b>=a.length&&(a=a.slice(b),b=0);return c}};this.peek=function(){return 0<a.length?a[b]:void 0}};
+
+// Custom communication API to enable callbacks in continous connections between content and background scripts:
+
+var connector = Object.create(chrome.runtime);
+
+connector.mutatePort = function(port) {
+	
+	var c = 1, l = new Queue(), callbacks = {}
+	
+	port.send = function(msg, callback) {
+		var id = l.dequeue() || c++;
+		callbacks[id] = callback;
+		this.postMessage({ id:id, type:0, message:msg }); // type0 message: A transmits msg to B
+	};
+	
+	port.receive = function(callback) {
+		var t = this, called = false;
+		t.onMessage.addListener(function(msg) {
+			if(msg.id !== undefined && !msg.type && !callback(msg.message, function(response) { // if callback returns true => B's response will be sent asynchronous (A will wait for a response as long as B requires => RISK this could be endless!)
+				called = true;
+				t.postMessage({ id:msg.id, type:1, message:response }); // type1 message: B responds to A with response
+			}) && !called)
+				t.postMessage({ id:msg.id, type:2 }); // type2 message: B chose to not respond to A => A is notified, that no response will come
+		});
+	};
+	
+	port.onMessage.addListener(function(msg) {
+		if(msg.id !== undefined && msg.type) {
+			var f = callbacks[msg.id];
+			delete callbacks[msg.id];
+			if(typeof f === "function" && msg.type != 2)
+				f(msg.message);
+			l.enqueue(msg.id);
+		}
+	});
+	
+	return port;
+};
+
+connector.connect = function() {
+	var p = chrome.tabs || chrome.runtime,
+		port = p.connect.apply(p, arguments);
+	return this.mutatePort(port);
+};
+
+connector.onConnect = {
+	addListener: function(callback) {
+		return chrome.runtime.onConnect.addListener(function(port) {
+			callback.call(this, connector.mutatePort(port));
+		});
+	}
+};
