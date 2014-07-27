@@ -6,7 +6,7 @@ getSettings(function() {
 		injectCss = function() {
 			var style = document.createElement("style");
 			style.type = "text/css";
-			style.innerHTML = "."+cssClass+" span { transition:all 0s linear 1s; }\n."+cssClass+" .cancel { display:none; }\n."+cssClass+".cancel:hover .cancel { display:block; }\n."+cssClass+".cancel:hover .text { display:none; }";
+			style.innerHTML = "."+cssClass+" span { position:absolute; width:auto; top:50%; margin-top:-0.5em; line-height:1em; left:0; right:0; transition:opacity 0.1s linear 0s; opacity:1; }\n."+cssClass+".cancel:hover span { transition-delay:0.3s; }\n."+cssClass+" .cancel { opacity:0; }\n."+cssClass+".cancel:hover .cancel { opacity:1; }\n."+cssClass+".cancel:hover .text { opacity:0; }";
 			document.head.insertBefore(style);
 		},
 		readButtons = document.body.querySelectorAll(".read-comic.titleBtn, .read_link"),
@@ -24,7 +24,8 @@ getSettings(function() {
 			};
 			
 			// create clone:
-			clone.innerHTML = "<span class='text'>Scan Comic</span><span class='cancel'>Cancel?</span>";
+			clone.innerHTML = "<span class='text'>Scan Comic</span><span class='cancel'>Stop</span>";
+			clone.style.position = "relative";
 			clone.style.width = parseInt(button.style.width = buttonComputedStyle.width) + "px";
 			clone.style.textAlign = button.style.textAlign = "center";
 			clone.href = "javascript:";
@@ -36,7 +37,10 @@ getSettings(function() {
 			
 			if(settings.selectors)
 				clone.addEventListener("click", function() {
-					t.start();
+					if(!t.cancelable)
+						t.start();
+					else
+						t.cancel();
 				}, false);
 			else {
 				t.inactive = true;
@@ -50,8 +54,13 @@ getSettings(function() {
 	Download.activeDownloads = 0;
 	Download.queue = new Queue();
 	Download.queue.resume = function() {
-		var d = this.dequeue();
-		if(d) d.start();
+		var d;
+		while(d = this.dequeue()) {
+			if(d.canceled)
+				continue;
+			d.start();
+			break;
+		}
 	};
 	
 	Download.prototype = {
@@ -61,6 +70,7 @@ getSettings(function() {
 		tab: null,
 		downloading: false,
 		cancelable: false,
+		canceled: false,
 		buttonBGs: null,
 	
 		setDownloading: function(bool) {
@@ -91,12 +101,24 @@ getSettings(function() {
 			if(t.downloading)
 				return;
 			if(Download.activeDownloads >= settings.queueLength && settings.queueLength > 0) {
+				t.canceled = false;
 				t.showQueued();
 				return Download.queue.enqueue(t);
 			}
 			t.openTab(false);
 			t.setDownloading(true);
 			t.showPrepare();
+		},
+		
+		cancel: function() {
+			this.canceled = true;
+			this.showDefault();
+			if(!this.downloading)
+				return;
+			port.send({ what:"close_background_tab", tab:this.tab });
+			delete downloadEvents[this.tab];
+			this.tab = null;
+			this.setDownloading(false);
 		},
 	
 		// event handlers (receiving messages from the downloading tab):
