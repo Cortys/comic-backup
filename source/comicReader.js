@@ -1,27 +1,8 @@
 //(C) 2013 Sperglord Enterprises
 //Code is under GNUGPLv3 - read http://www.gnu.org/licenses/gpl.html
 
-var current_version = 110,
-	div = document.createElement("div"),
-	overlay = document.createElement("div"),
-	settings = {},
-	linkStyle = "color:#ffffff;font-weight:bold;background:linear-gradient(to bottom, rgb(115, 152, 200) 0%,rgb(179, 206, 233) 1%,rgb(82, 142, 204) 5%,rgb(79, 137, 200) 20%,rgb(66, 120, 184) 50%,rgb(49, 97, 161) 100%);padding:3px;text-decoration:none;display:inline-block;width:60px;text-align:center;height:22px;box-sizing:border-box;line-height:14px;border:1px solid rgb(49,96,166);";
-
-div.id = randomString(20,40);
-
-div.style.fontSize = "13px";
-div.style.top = "0px";
-div.style.width = "100%";
-div.style.height = "54px";
-
-div.style.background = "linear-gradient(to bottom, rgba(0,0,0,0.9) 50%,rgba(0,0,0,0.7) 100%)";
-div.style.color = "#ffffff";
-div.style.textAlign = "center";
-div.style.lineHeight = "25px";
-div.style.zIndex = 300;
-div.style.cursor = "default";
-
-div.style.position = "absolute";
+var overlay = document.createElement("div"),
+	settings = {};
 
 overlay.style.position = "fixed";
 overlay.style.zIndex = 299;
@@ -29,6 +10,7 @@ overlay.style.top = overlay.style.left = overlay.style.bottom = overlay.style.ri
 overlay.style.width = overlay.style.height = "auto";
 overlay.style.background = "rgba(0,0,0,0.3)";
 overlay.style.display = "none";
+document.documentElement.appendChild(overlay);
 
 //ENTRANCE POINT FOR READER BACKUP LOGIC:
 
@@ -39,74 +21,43 @@ chrome.storage.local.get(null, function(data) { // get user settings
 	
 	// delete cached uncompleted zip-backups for this tab:
 	port.send({ what:"is_child" }, function(isChild) { // tab opened by extension -> autorun / else -> show bar
-		if(!isChild)
-			return checkVersion();
-		
-		displayMainBar(2); // Just show overlay.
+		if(!isChild) {
+			if(!settings.selectors)
+				displayExploitBar();
+			return;
+		}
 		
 		port.send({ what:"message_to_opener", message:{ what:"ready_to_download" } }, function(start) {
-			if(start && start.download) {
-				loadComic(function() {
-					port.send({ what:"message_to_opener", message:{ what:"finished_download" } });
-				}, function(perc) {
-					port.send({ what:"message_to_opener", message:{ what:"download_progress", data:perc } });
-				});
-			}
+			if(start)
+				if(start.download)
+					loadComic(function() {
+						port.send({ what:"message_to_opener", message:{ what:"finished_download" } });
+					}, function(perc) {
+						port.send({ what:"message_to_opener", message:{ what:"download_progress", data:perc } });
+					});
+				else if(start.exploit) {
+					port.send({ what:"unlink_from_opener" });
+					setupSelectors();
+				}
+					
 		});
-	}); // tab opened by user -> check for updates and show orange panel (asking to update or to backup)
+	});
 });
 
-// check for updates if possible:
-function checkVersion() {
-	var xhr = new XMLHttpRequest();
-	if(settings.updateServer) {
-		xhr.open("GET", settings.updateServer+"/version", true);
-		xhr.responseType = 'text';
-	
-		xhr.onreadystatechange = function() {
-	
-			if (xhr.readyState == 4 && xhr.status == 200) {
-				var version = this.response*1;
-				if (version > current_version)
-					displayMainBar(1);
-				else
-					displayMainBar(0);
-			}
-		};
-		xhr.send();
-	}
-	else
-		displayMainBar(0);
-}
-
-// show orange bar: asking for update (isUpdateNeeded = 1), backup (isUpdateNeeded = 0) or nothing/grayed-out overlay shown (isUpdateNeeded = 2)
-function displayMainBar(isUpdateNeeded) {
-	if(isUpdateNeeded == 1)
-		div.innerHTML = "The extension is outdated, download new version<br><a href=\""+settings.updateServer+"/download.zip\" style='"+linkStyle+"' target='_blank'>here</a>";
-	else if(!isUpdateNeeded) {
-		if(settings.selectors)
-			div.innerHTML = "Do you want to backup this comic as "+(settings.compression==2?"images":(settings.container?"ZIP":"CBZ"))+" ("+(settings.compression?(settings.compression==1?"deflated":"multiple"):"stored")+" "+(settings.page?"PNGs":"JPEGs")+")?<br><a href=\"javascript:document.documentElement.removeChild(document.getElementById('"+div.id+"'))\" style='"+linkStyle+"'>No</a> ";
-		else
-			div.innerHTML = "Do you want to start an exploit scan? This is required to backup comics.<br><a href=\"javascript:document.documentElement.removeChild(document.getElementById('"+div.id+"'))\" style='"+linkStyle+"'>No</a> ";
-		var a = document.createElement("a");
-		a.innerHTML = "Yes";
-		a.href = "#";
-		a.addEventListener('click', function(e) {
-			e.stopPropagation();
-			if(settings.selectors)
-				loadComic();
-			else
-				setupSelectors();
-		}, false);
-		a.setAttribute("style", linkStyle);
-		div.appendChild(a);
-	}
-
+// show orange bar: asking for exploit scan
+function displayExploitBar() {
+	addTopBar();
 	div.style.lineHeight = "25px";
-	if(!div.parentNode) {
-		document.documentElement.appendChild(div);
-		document.documentElement.appendChild(overlay);
-	}
+	div.innerHTML = "Do you want to start an exploit scan? This is required to backup comics.<br><a href=\"javascript:document.documentElement.removeChild(document.getElementById('"+div.id+"'))\" style='"+linkStyle+"'>No</a> ";
+	var a = document.createElement("a");
+	a.innerHTML = "Yes";
+	a.href = "#";
+	a.addEventListener('click', function(e) {
+		e.stopPropagation();
+		setupSelectors();
+	}, false);
+	a.setAttribute("style", linkStyle);
+	div.appendChild(a);
 }
 
 function getPathFor(e, tryE) { // returns css selector that matches e and tryE as well (if that is possible, without two comma seperated selectors) - only tags, ids and classes are used
@@ -269,6 +220,7 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 		- click second page
 		- click on opened comic page
 	*/
+	addTopBar();
 	window.alert("A new exploit scan has to be made.\nPlease follow the upcoming instructions or the extension may stop working for you.");
 	var step = -1, // counter: where are we in the setup process?
 		level = function(s, a) { // toggle between two activatable elements (e.g. opened pages) s and a. Goes up the DOM starting at s until the toggle causes a change of the class-attr of the current ascendant of s. -> the ascendant and the added/removed classes per toggle are returned.
@@ -379,7 +331,10 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 			chrome.storage.local.set(write, function() {
 				for (var key in write)
 					settings[key] = write[key];
-				displayMainBar(0);
+				div.style.height = "auto";
+				div.style.lineHeight = "18px";
+				div.innerHTML = "<b style='font-size:1.2em;display:block;margin-bottom:15px;margin-top:15px;'>Just one more thing!</b>Make sure you disabled the <i>Prompt to continue</i> message in the settings.<br>Click the gear on the bottom of this page to check.<br>If you do not disable that message, backups won't work.<br><a href=\"javascript:document.documentElement.removeChild(document.getElementById('"+div.id+"'))\" style='"+linkStyle+"width:auto;margin-bottom:10px;margin-top:10px;'>OK. I checked it.</a>";
+				port.send({ what:"broadcast_to_openers", message:{ what:"finished_scan" } });
 			});
 		}, fail = function() {
 			window.alert("Sorry. The scan failed.\nMaybe you should try again.");
@@ -399,10 +354,12 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 
 // download the opened comic. a callback and a step function can be used.
 function loadComic(callback, step) {
-
+	
+	addTopBar();
+	overlay.style.display = "block";
+	
 	div.innerHTML = "Downloading comic... <span>0</span>%";
 	div.style.lineHeight = "50px";
-	overlay.style.display = "block";
 	
 	if(typeof callback != "function")
 		callback = function() {};

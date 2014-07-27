@@ -1,11 +1,7 @@
-var exceptions = {
-	"": true,
-	"comic-reader": true
-}, settings = {
-	queueLength: 2
-};
-
-if(!exceptions[location.pathname.split("/", 1)[1]]) {
+getSettings(function() {
+	
+	updateDialog();
+	
 	var cssClass = randomString(20, 40),
 		injectCss = function() {
 			var style = document.createElement("style");
@@ -19,33 +15,36 @@ if(!exceptions[location.pathname.split("/", 1)[1]]) {
 			this.readButton = button;
 			var clone = this.downloadButton = button.cloneNode(false),
 				t = this,
-				buttonComputedStyle = window.getComputedStyle(button),
-				hasGiftButton = false,
-				giftButton = button.nextSibling,
-				giftComputedStyle;
-				
-			// create clone:
-			clone.innerHTML = "<span class='text'>Download</span><span class='cancel'>Cancel?</span>";
-			clone.style.width = (parseInt(button.style.width = buttonComputedStyle.width) + (giftButton && typeof giftButton.className == "string" && (hasGiftButton = giftButton.className.match(/gift_link/g)) && (giftComputedStyle = window.getComputedStyle(giftButton)) && parseInt(giftComputedStyle.width)+parseInt(giftComputedStyle.marginLeft)+parseInt(giftComputedStyle.marginRight) || 0)) + "px";
-			clone.style.textAlign = button.style.textAlign = "center";
-			clone.style.marginTop = giftComputedStyle?giftComputedStyle.marginLeft:"1px";
-			clone.href = "javascript:";
-			clone.addEventListener("click", function() {
-				t.start();
-			}, false);
-			clone.classList.add(cssClass);
-			
-			this.text = clone.firstChild;
+				buttonComputedStyle = window.getComputedStyle(button);
 			
 			// create colors:
-			this.buttonBGs = {
+			t.buttonBGs = {
 				normal: buttonComputedStyle.background,
 				progress: "linear-gradient(to right, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.4) {X}%, rgba(0,0,0,0) {X}%, rgba(0,0,0,0) 100%), "+buttonComputedStyle.background
 			};
 			
-			button.parentNode.insertBefore(clone, giftButton);
-			if(hasGiftButton)
-				button.parentNode.insertBefore(giftButton, clone);
+			// create clone:
+			clone.innerHTML = "<span class='text'>Scan Comic</span><span class='cancel'>Cancel?</span>";
+			clone.style.width = parseInt(button.style.width = buttonComputedStyle.width) + "px";
+			clone.style.textAlign = button.style.textAlign = "center";
+			clone.href = "javascript:";
+			clone.classList.add(cssClass);
+	
+			t.text = clone.firstChild;
+	
+			button.parentNode.insertBefore(clone);
+			
+			if(settings.selectors)
+				clone.addEventListener("click", function() {
+					t.start();
+				}, false);
+			else {
+				t.inactive = true;
+				clone.addEventListener("click", function() {
+					t.openTab(true);
+				}, false);
+				t.showInactive();
+			}
 		};
 	
 	Download.activeDownloads = 0;
@@ -63,7 +62,7 @@ if(!exceptions[location.pathname.split("/", 1)[1]]) {
 		downloading: false,
 		cancelable: false,
 		buttonBGs: null,
-		
+	
 		setDownloading: function(bool) {
 			if(bool && !this.downloading)
 				Download.activeDownloads++;
@@ -73,37 +72,46 @@ if(!exceptions[location.pathname.split("/", 1)[1]]) {
 			}
 			this.downloading = bool;
 		},
-		
+	
 		setCancelable: function(bool) {
 			this.cancelable = bool;
 			this.downloadButton.classList.toggle("cancel", bool);
+		},
+		
+		openTab: function(active) {
+			var t = this;
+			port.send({ what:"open_background_tab", url:t.readButton.href, active:active }, function(tab) {
+				t.tab = tab;
+				downloadEvents[tab] = t;
+			});
 		},
 		
 		start: function() {
 			var t = this;
 			if(t.downloading)
 				return;
-			if(Download.activeDownloads >= settings.queueLength) {
+			if(Download.activeDownloads >= settings.queueLength && settings.queueLength > 0) {
 				t.showQueued();
 				return Download.queue.enqueue(t);
 			}
-			port.send({what: "open_background_tab", url: t.readButton.href}, function(tab) {
-				t.tab = tab;
-				downloadEvents[tab] = t;
-			});
+			t.openTab(false);
 			t.setDownloading(true);
 			t.showPrepare();
 		},
-		
+	
 		// event handlers (receiving messages from the downloading tab):
-		
+	
 		events: {
 			"ready_to_download": function(callback) {
-				callback({ download:true });
-				this.showProgress(0);
+				if(this.inactive)
+					callback({ exploit:true });
+				else {
+					callback({ download:true });
+					this.showProgress(0);
+				}
 			},
 			"finished_download": function() {
-				port.send({ what: "close_background_tab", tab: this.tab });
+				port.send({ what:"close_background_tab", tab:this.tab });
 				delete downloadEvents[this.tab];
 				this.tab = null;
 				this.setDownloading(false);
@@ -121,9 +129,9 @@ if(!exceptions[location.pathname.split("/", 1)[1]]) {
 				this["show"+(percentage=="zip"?"Zipping":"Progress")](percentage);
 			}
 		},
-		
+	
 		// UI behaviour:
-		
+	
 		showQueued: function() {
 			this.text.innerHTML = "Queued...";
 			this.downloadButton.style.background = this.buttonBGs.normal;
@@ -146,13 +154,13 @@ if(!exceptions[location.pathname.split("/", 1)[1]]) {
 			this.downloadButton.style.removeProperty("background");
 			this.downloadButton.style.removeProperty("filter");
 			this.downloadButton.style.removeProperty("-webkit-filter");
-			this.text.innerHTML = "Download";
+			this.text.innerHTML = "Scan Comic";
 			this.setCancelable(false);
 		},
 		showDone: function() {
 			this.downloadButton.style.removeProperty("background");
 			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(230deg)";
-			this.text.innerHTML = "Redownload";
+			this.text.innerHTML = "Scan Again";
 			this.setCancelable(false);
 		},
 		showZipping: function() {
@@ -160,6 +168,12 @@ if(!exceptions[location.pathname.split("/", 1)[1]]) {
 			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(200deg)";
 			this.text.innerHTML = "Zipping...";
 			this.setCancelable(true);
+		},
+		showInactive: function() {
+			this.downloadButton.style.removeProperty("background");
+			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(135deg)";
+			this.text.innerHTML = "Activate Scan";
+			this.setCancelable(false);
 		}
 	};
 	
@@ -176,8 +190,11 @@ if(!exceptions[location.pathname.split("/", 1)[1]]) {
 				callback,
 				request.message.data
 			);
+		else if(request.what = "child_broadcast" && request.message.what == "finished_scan")
+			location.reload();
 	});
 	
 	for(var i = 0; i < readButtons.length; i++)
 		new Download(readButtons[i]);
-}
+	
+});
