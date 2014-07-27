@@ -18,13 +18,16 @@ getSettings(function() {
 		
 		Download = function(button) {
 			this.readButton = button;
-			var clone = this.downloadButton = button.cloneNode(false),
-				t = this,
+			var t = this,
+				clone = t.downloadButton = button.cloneNode(false),
 				buttonComputedStyle = window.getComputedStyle(button);
+			
+			t.id = Download.counter++;
 			
 			// create colors:
 			t.buttonBGs = {
 				normal: buttonComputedStyle.background,
+				gray: "#777777",
 				progress: "linear-gradient(to right, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.4) {X}%, rgba(0,0,0,0) {X}%, rgba(0,0,0,0) 100%), "+buttonComputedStyle.background
 			};
 			
@@ -54,15 +57,20 @@ getSettings(function() {
 				clone.addEventListener("click", function() {
 					t[t.cancelable?"cancel":"start"]();
 				}, false);
-			else {
+			else if(!this.id) {
 				t.inactive = true;
 				clone.addEventListener("click", function() {
 					t.openTab(true);
 				}, false);
 				t.showInactive();
 			}
+			else {
+				clone.href = "#";
+				t.showUnusable();
+			}
 		};
 	
+	Download.counter = 0;
 	Download.activeDownloads = 0;
 	Download.queue = new Queue();
 	Download.queue.resume = function() {
@@ -76,6 +84,7 @@ getSettings(function() {
 	};
 	
 	Download.prototype = {
+		id: 0,
 		readButton: null,
 		downloadButton: null,
 		text: null,
@@ -207,6 +216,15 @@ getSettings(function() {
 			this.downloadButton.style.removeProperty("background");
 			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(135deg)";
 			this.text.innerHTML = "Setup Scanner";
+			this.setCancelable(false);
+		},
+		showUnusable: function() {
+			this.downloadButton.style.background = this.buttonBGs.gray;
+			this.downloadButton.style.border = "1px solid #555555";
+			this.downloadButton.style.cursor = "default";
+			this.downloadButton.style.removeProperty("filter");
+			this.downloadButton.style.removeProperty("-webkit-filter");
+			this.text.innerHTML = "Setup Required";
 			this.setCancelable(false);
 		}
 	};
