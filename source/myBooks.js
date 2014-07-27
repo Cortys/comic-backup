@@ -11,6 +11,11 @@ getSettings(function() {
 		},
 		readButtons = document.body.querySelectorAll(".read-comic.titleBtn, .read_link"),
 		downloadEvents = {},
+		backupText = (function() {
+			var c = document.querySelector("section.backup-container h1");
+			return c && c.innerHTML || "DRM-Free Backup";
+		})(),
+		
 		Download = function(button) {
 			this.readButton = button;
 			var clone = this.downloadButton = button.cloneNode(false),
@@ -35,12 +40,19 @@ getSettings(function() {
 	
 			button.parentNode.insertBefore(clone);
 			
+			if(clone.previousElementSibling == button) {
+				var fragment = document.createDocumentFragment(),
+					cont = document.createElement("section");
+				fragment.appendChild(document.createElement("hr"));
+				cont.setAttribute("class", "backup-container");
+				cont.innerHTML = "<h1>"+backupText+"</h1>";
+				fragment.appendChild(cont);
+				clone.parentNode.insertBefore(fragment, clone);
+			}
+			
 			if(settings.selectors)
 				clone.addEventListener("click", function() {
-					if(!t.cancelable)
-						t.start();
-					else
-						t.cancel();
+					t[t.cancelable?"cancel":"start"]();
 				}, false);
 			else {
 				t.inactive = true;
