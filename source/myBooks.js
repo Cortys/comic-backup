@@ -216,7 +216,6 @@ getSettings(function() {
 	var port = connector.connect({ name:"controller" });
 	
 	port.receive(function(request, callback) {
-		console.log(request);
 		if(request.what == "child_message")
 			return downloadEvents[request.tab] && typeof downloadEvents[request.tab].events[request.message.what] == "function" &&
 			downloadEvents[request.tab].events[request.message.what].call(
