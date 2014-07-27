@@ -1,26 +1,8 @@
 //(C) 2013 Sperglord Enterprises
 //Code is under GNUGPLv3 - read http://www.gnu.org/licenses/gpl.html
-var current_version = 109,
-	div = document.createElement("div"),
-	overlay = document.createElement("div"),
-	settings = {},
-	linkStyle = "color:#ffffff;font-weight:bold;background-color:#345190;padding:3px;text-decoration:none;display:inline-block;width:60px;text-align:center;height:20px;box-sizing:border-box;line-height:14px;";
 
-div.id = randomString(5,10);
-
-div.style.fontSize = "13px";
-div.style.top = "0px";
-div.style.width = "100%";
-div.style.height = "50px";
-
-div.style.background = "#ff9900";
-div.style.color = "#000000";
-div.style.textAlign = "center";
-div.style.lineHeight = "25px";
-div.style.zIndex = 300;
-div.style.cursor = "default";
-
-div.style.position = "absolute";
+var overlay = document.createElement("div"),
+	settings = {};
 
 overlay.style.position = "fixed";
 overlay.style.zIndex = 299;
@@ -28,32 +10,54 @@ overlay.style.top = overlay.style.left = overlay.style.bottom = overlay.style.ri
 overlay.style.width = overlay.style.height = "auto";
 overlay.style.background = "rgba(0,0,0,0.3)";
 overlay.style.display = "none";
+document.documentElement.appendChild(overlay);
 
-chrome.storage.local.get(null, function(data) {
+//ENTRANCE POINT FOR READER BACKUP LOGIC:
+
+var port = connector.connect({ name:"reader" });
+
+chrome.storage.local.get(null, function(data) { // get user settings
 	settings = data;
-	chrome.runtime.sendMessage({ what:"empty_cache" }, readGithubVersion);
+	
+	// delete cached uncompleted zip-backups for this tab:
+	port.send({ what:"is_child" }, function(isChild) { // tab opened by extension -> autorun / else -> show bar
+		if(!isChild) {
+			if(!settings.selectors)
+				displayExploitBar();
+			return;
+		}
+		
+		port.send({ what:"message_to_opener", message:{ what:"ready_to_download" } }, function(start) {
+			if(start)
+				if(start.download)
+					loadComic(function() {
+						port.send({ what:"message_to_opener", message:{ what:"finished_download" } });
+					}, function(perc) {
+						port.send({ what:"message_to_opener", message:{ what:"download_progress", data:perc } });
+					});
+				else if(start.exploit) {
+					port.send({ what:"unlink_from_opener" });
+					setupSelectors();
+				}
+					
+		});
+	});
 });
 
-function readGithubVersion() {
-	var xhr = new XMLHttpRequest();
-	if(settings.updateServer) {
-		xhr.open("GET", settings.updateServer+"/version", true);
-		xhr.responseType = 'text';
-	
-		xhr.onreadystatechange = function() {
-	
-			if (xhr.readyState == 4 && xhr.status == 200) {
-				var githubVersion = this.response*1;
-				if (githubVersion > current_version)
-					displayMainBar(1);
-				else
-					displayMainBar(0);
-			}
-		};
-		xhr.send();
-	}
-	else
-		displayMainBar(0);
+// show orange bar: asking for exploit scan
+function displayExploitBar() {
+	addTopBar();
+	div.style.lineHeight = "25px";
+	div.innerHTML = "Do you want to start an exploit scan? This is required to backup comics.<br><a href=\"javascript:document.documentElement.removeChild(document.getElementById('"+div.id+"'))\" style='"+linkStyle+"'>No</a> ";
+	var a = document.createElement("a");
+	a.innerHTML = "Yes";
+	a.href = "#";
+	a.addEventListener('click', function(e) {
+		e.stopPropagation();
+		setupSelectors();
+	}, false);
+	a.setAttribute("style", linkStyle);
+	div.appendChild(a);
 }
 
 function getPathFor(e, tryE) { // returns css selector that matches e and tryE as well (if that is possible, without two comma seperated selectors) - only tags, ids and classes are used
@@ -146,7 +150,7 @@ function wordDiff(text1, text2) { // word wise difference of two strings (using 
 	return result;
 }
 
-function realClick(e) {
+function realClick(e) { // simulate a "real" click on given DOMElement e (can't be distinguished from a user click)
 	var evt = document.createEvent("MouseEvents"),
 		rect = e.getBoundingClientRect(),
 		doc = e.ownerDocument,
@@ -157,32 +161,7 @@ function realClick(e) {
 	e.dispatchEvent(evt);
 }
 
-function displayMainBar(isUpdateNeeded) {
-	if (isUpdateNeeded == 1) div.innerHTML = "The extension is outdated, download new version<br><a href=\""+settings.updateServer+"/download.zip\" style='"+linkStyle+"' target='_blank'>here</a>";
-	else {
-		div.innerHTML = "This looks like a Comixology comic. Do you want to backup it as "+(settings.compression==2?"pictures":(settings.container?"ZIP":"CBZ"))+" ("+(settings.compression?(settings.compression==1?"deflated":"multiple"):"stored")+" "+(settings.page?"PNGs":"JPEGs")+")?<br><a href=\"javascript:document.documentElement.removeChild(document.getElementById('"+div.id+"'))\" style='"+linkStyle+"'>No</a> ";
-		var a = document.createElement("a");
-		a.innerHTML = "Yes";
-		a.href = "#";
-		a.addEventListener('click', function(e) {
-			e.stopPropagation();
-			if(settings.selectors)
-				loadComic();
-			else
-				setupSelectors();
-		}, false);
-		a.setAttribute("style", linkStyle);
-		div.appendChild(a);
-	}
-
-	div.style.lineHeight = "25px";
-	if(!div.parentNode) {
-		document.documentElement.appendChild(div);
-		document.documentElement.appendChild(overlay);
-	}
-}
-
-var dom = {
+var dom = { // stores DOM elements of the reader page. All DOM calls go here. No queries elsewhere to make it easier to adapt to reader changes.
 	pagesCached: null,
 	canvasContainerCached: null,
 	browseButtonCached: null,
@@ -195,7 +174,10 @@ var dom = {
 		return document.querySelector(settings.selectorActivePage);
 	},
 	get canvasContainer() {
-		return document.querySelector("div.view");
+		return this.canvasContainerCached = document.contains(this.canvasContainerCached) && this.canvasContainerCached || document.querySelector("div.view");
+	},
+	get canvasElements() {
+		return this.canvasContainer.querySelectorAll("canvas");
 	},
 	get browseButton() {
 		return this.browseButtonCached = this.browseButtonCached || document.querySelector(settings.selectorBrowseButton);
@@ -212,15 +194,24 @@ var dom = {
 	get pagenumCorrection() {
 		return settings.pagenumCorrection;
 	},
+	get loader() {
+		return document.querySelector(".loading");
+	},
+	loaderVisible: function() {
+		return this.loader && this.loader.style.display != "none";
+	},
 	isActivePage: function(page) {
 		return page.matches(settings.selectorActivePage);
 	},
 	isActiveOnepageButton: function() {
 		return this.onepageButton.matches(settings.selectorActiveOnepageButton);
+	},
+	countCanvas: function() {
+		return this.canvasElements.length;
 	}
 };
 
-function setupSelectors() {
+function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree is structured and how it should be backuped
 	/*
 		- click single page button
 		- click dual page button
@@ -229,7 +220,8 @@ function setupSelectors() {
 		- click second page
 		- click on opened comic page
 	*/
-	window.alert("A new exploit scan has to be made.\nPlease follow the upcoming instructions, or the extension may stop working for you.");
+	addTopBar();
+	window.alert("A new exploit scan has to be made.\nPlease follow the upcoming instructions or the extension may stop working for you.");
 	var step = -1, // counter: where are we in the setup process?
 		level = function(s, a) { // toggle between two activatable elements (e.g. opened pages) s and a. Goes up the DOM starting at s until the toggle causes a change of the class-attr of the current ascendant of s. -> the ascendant and the added/removed classes per toggle are returned.
 			if(!s)
@@ -279,7 +271,7 @@ function setupSelectors() {
 					return inactive && active;
 				}
 			}, {
-				text: "Click the browse button, that shows all pages.",
+				text: "Click the browse button that shows all pages.",
 				callback: function(element) {
 					var btn = getPathFor(element);
 					write.selectorBrowseButton = btn;
@@ -333,13 +325,18 @@ function setupSelectors() {
 		},
 		
 		end = function() {
-			window.alert("Scan completed.\nIf the backup still does not work you should force a new scan in the options.");
+			window.alert("Scan completed.\nIf the backup still does not work, you should force a new scan in the options.");
 			document.documentElement.removeAttribute("scanning");
 			document.documentElement.removeEventListener("click", listener, false);
 			chrome.storage.local.set(write, function() {
 				for (var key in write)
 					settings[key] = write[key];
-				displayMainBar(false);
+				div.style.height = "auto";
+				div.style.lineHeight = "18px";
+				div.style.top = 0;
+				div.style.marginTop = 0;
+				div.innerHTML = "<b style='font-size:1.2em;display:block;margin-bottom:15px;margin-top:15px;'>Just one more thing!</b>Make sure you disabled the <i>Prompt to continue</i> message in the settings.<br>Click the gear on the bottom of this page to check.<br>If you do not disable that message, backups won't work.<br><a href=\"javascript:document.documentElement.removeChild(document.getElementById('"+div.id+"'))\" style='"+linkStyle+"width:auto;margin-bottom:10px;margin-top:10px;'>OK. I checked it.</a>";
+				port.send({ what:"broadcast_to_openers", message:{ what:"finished_scan" } });
 			});
 		}, fail = function() {
 			window.alert("Sorry. The scan failed.\nMaybe you should try again.");
@@ -357,11 +354,24 @@ function setupSelectors() {
 	nextStep(); // start with first setup instruction
 }
 
-function loadComic() {
-
+// download the opened comic. a callback and a step function can be used.
+function loadComic(callback, step) {
+	
+	addTopBar();
+	overlay.style.display = "block";
+	
 	div.innerHTML = "Downloading comic... <span>0</span>%";
 	div.style.lineHeight = "50px";
-
+	
+	if(typeof callback != "function")
+		callback = function() {};
+	if(typeof step != "function")
+		step = function() {};
+	
+	if(!dom.canvasContainer || dom.loaderVisible() || !dom.countCanvas()) // delay download if comic isn't displayed yet => reader not ready, first page is not loaded yet, first page is not displayed yet
+		return setTimeout(function() {
+			loadComic(callback, step);
+		}, 100);
 	var pos = -1,
 		l = dom.pages.length,
 		numLength = String(l-1).length,
@@ -385,12 +395,14 @@ function loadComic() {
 		interval = function() {
 			nextPage(function() {
 				getOpenedPage(function(page) {
-					chrome.runtime.sendMessage({ what:"add_page", page:(settings.compression!=2?page:""), i:pos, len:numLength, extension:(settings.page?"png":"jpeg"), toZip:(settings.compression!=2) }, function(result) {
+					port.send({ what:"add_page", page:(settings.compression!=2?page:""), i:pos, len:numLength, extension:(settings.page?"png":"jpeg"), toZip:(settings.compression!=2) }, function(result) {
 						var c = function() {
-							div.getElementsByTagName("span")[0].innerHTML = Math.round((pos + 1) / l * 100);
+							var perc = Math.round((pos + 1) / l * 100);
+							div.getElementsByTagName("span")[0].innerHTML = perc;
+							step(perc);
 							interval();
 						};
-						if(settings.compression==2)
+						if(settings.compression == 2)
 							downloadData(getName()+"/"+result.name, page, true, c);
 						else
 							c();
@@ -402,21 +414,23 @@ function loadComic() {
 			interval();
 		}, end = function() {
 			dom.canvasContainer.parentElement.removeEventListener("DOMNodeRemoved", rmListener, false);
+			step("zip");
 			zipImages(function() {
 				document.documentElement.removeChild(div);
 				document.documentElement.removeChild(overlay);
 				realClick(firstPageFig);
+				callback();
 			});
-		}, firstPage = 0, firstPageFig = null, rmListener = function() {
-			var t = changeWaiter;
-			changeWaiter = null;
-			if (typeof t === "function")
-				setTimeout(t, 5);
+		}, rmListener = function() {
+			if (typeof changeWaiter === "function" && !dom.countCanvas()) {
+				changeWaiter();
+				changeWaiter = null;
+			}
 			else
 				start();
-		};
+		}, firstPage = 0, firstPageFig = null;
 
-	chrome.runtime.sendMessage({ what:"new_zip", user:getUsername() }, function() {
+	port.send({ what:"new_zip", user:getUsername() }, function() {
 		dom.canvasContainer.parentElement.addEventListener("DOMNodeRemoved", rmListener, false);
 		realClick(dom.browseButton);
 		firstPageFig = dom.activePage;
@@ -426,11 +440,16 @@ function loadComic() {
 			start();
 		else {
 			realClick(dom.onepageButton);
-			setTimeout(function() {
-				start();
-			}, 1000);
+			var check = function() {
+				setTimeout(function() {
+					if(dom.isActiveOnepageButton())
+						start();
+					else
+						check();
+				}, 100);
+			};
+			check();
 		}
-		overlay.style.display = "block";
 	});
 }
 
@@ -473,32 +492,33 @@ function getUsernameImage(ctx, w, h) {
 
 function downloadBlob(name, data, overwrite, callback) { // overwrite is not used currently
 	// blobs have to be downloaded from background page (same origin policy)
-	chrome.runtime.sendMessage({ what:"download_blob", name:name, data:data, overwrite:overwrite }, callback);
+	port.send({ what:"download_blob", name:name, data:data, overwrite:overwrite }, callback);
 }
 function downloadData(name, data, overwrite, callback) { // overwrite is not used currently
 	downloadFile(name, URL.createObjectURL(dataURLtoBlob(data)), overwrite, callback);
 }
 
+// compress and download all pages that were backuped by this tab in the loadComic function
 function zipImages(callback) {
 	if(settings.compression == 2)
 		return typeof callback === "function"?callback():undefined;
 	div.innerHTML = "Zipping images...";
 	div.style.lineHeight = "50px";
 
-	chrome.runtime.sendMessage({ what:"start_zipping", compress:settings.compression }, function(result) {
+	port.send({ what:"start_zipping", compress:settings.compression }, function(result) {
 		div.innerHTML = "Saving comic...";
 		downloadBlob(getName()+"."+(settings.container?"zip":"cbz"), result.url, false, callback);
 	});
 }
 
+// get data URL of the currently opened page in the reader (async! result is given to callback)
 function getOpenedPage(callback) {
 	var view = dom.canvasContainer,
-		loader = document.querySelector('div.loading'),
-		doneLoading = view && (view.style.webkitTransform || view.style.transform) && (!loader || loader.style.display == "none");
+		doneLoading = view && (view.style.webkitTransform || view.style.transform) && !dom.loaderVisible();
 	if(doneLoading) {
-		var canvasOnThisPage = view.childNodes,
-			w = view.style.width.split('p')[0],
-			h = view.style.height.split('p')[0],
+		var canvasOnThisPage = dom.canvasElements,
+			w = parseInt(view.style.width),
+			h = parseInt(view.style.height),
 			outCanvas = document.createElement('canvas'),
 			ctx = outCanvas.getContext('2d'),
 			canvas, data;
@@ -506,7 +526,7 @@ function getOpenedPage(callback) {
 		outCanvas.height = h;
 		for (var i = 0; i < canvasOnThisPage.length; i++) {
 			canvas = canvasOnThisPage[i];
-			ctx.drawImage(canvas, canvas.style.left.split('p')[0]*1, canvas.style.top.split('p')[0]*1, canvas.style.width.split('p')[0]*1, canvas.style.height.split('p')[0]*1);
+			ctx.drawImage(canvas, parseInt(canvas.style.left)||0, parseInt(canvas.style.top)||0, parseInt(canvas.style.width)||0, parseInt(canvas.style.height)||0);
 		}
 		data = getUsernameImage(ctx, w, h);
 		ctx.putImageData(data, w-data.width, h-data.height);
@@ -515,7 +535,6 @@ function getOpenedPage(callback) {
 	}
 	else {
 		setTimeout(function() {
-			realClick(dom.activePage);
 			getOpenedPage(callback);
 		}, 300);
 	}

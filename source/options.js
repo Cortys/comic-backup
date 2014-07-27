@@ -1,5 +1,6 @@
 var selects = document.getElementsByTagName("select");
-for(var i in selects)
+
+for(var i = 0; i< selects.length; i++)
 	(function(e) {
 		if(typeof e.addEventListener === "undefined")
 			return;
@@ -14,6 +15,7 @@ for(var i in selects)
 					e.getElementsByTagName("option")[a[e.id]*1].selected = "selected";
 			});
 		};
+		
 		if(e.id == "selectors")
 			chrome.storage.local.get(["scannedOnce"], function(a) {
 				if(!a["scannedOnce"]) {
@@ -33,6 +35,6 @@ document.getElementById("setServer").addEventListener("click", function() {
 	chrome.storage.local.get(["updateServer"], function(a) {
 		var r = window.prompt("Enter update server URL:", a.updateServer||"");
 		if(r || r === "")
-			chrome.storage.local.set({ updateServer:r });
+			chrome.storage.local.set({ updateServer:(r.charAt(r.length-1) == "/"?r.substr(0, r.length-1):r) });
 	});
 }, false);
