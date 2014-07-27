@@ -3,9 +3,9 @@ Comixology Backup
 
 Do you like [Comixology](http://comixology.com)? Me too!
 
-Are you annoyed that you can't download the comics you bought in a standard format, readable by all possible software? Me too!
+Are you annoyed that you can't download all the comics you bought in a standard format? Me too!
 
-This is a Chrome/Chromium extension, that allows you to do just that. It should work on any OS where Chrome works.
+This is a Chrome/Chromium extension, that allows you to do just that. After installation you are able to download comics from any publisher. It should work on any OS where Chrome works.
 
 *IMPORTANT:* Do not use the extension for piracy! Only create private backups! We do not intent to compromise ComiXology. **Downloaded comics always have your username included. Distributed comics can be tracked back to you!**
 
@@ -56,9 +56,15 @@ I am fairly certain Comixology will, unfortunately, try to remove this extension
 How to use
 -----
 
-* Open a ComiXology comic (with at least two pages) in the web reader. An orange bar should appear, asking you if you want to backup.
-* Click "Yes". Because this is the first time you use the extension a scan has to be created. This basically means that the extension will ask you to click on some element of the reader. The things you are asked to do (switch view mode, open thumbnails...) are operations you can accomplish with one click. So only perform ONE click in each step or the setup won't work.
+* Open your ComiXology library by clicking on "My Books" in the menu.
+* If this is your first time using the extension you will see a red "Activate Scan" button next to each comic.
+* Click one of the red buttons and a new tab should be opened.
+* In there a scan will be created. This basically means that the extension will ask you to click on some element of the reader. The things you are asked to do (switch view mode, open thumbnails...) are operations you can accomplish with one click. So only perform ONE click in each step or the setup won't work.
+* After you completed all tasks the extension will use this information to determine how to exploit the reader for backups.
+* Then you are asked to modify a setting in the web reader. **Please do so!**
 * If everything worked fine you will get a success message and may start to backup your comic library now.
+* To start a backup simply click the "Scan Comic" button, that should now appear next to each comic.
+* Some comics also offer a direct PDF and CBZ download. Those are official high quality downloads available for a selection of publishers.
 * Sometimes backups of comics with many pages (~200+) fail. To circumvent that you can enable *single image* container compression in the options and all the pages of the comic will be downloaded as separate images. To get a CBZ you then have to zip the images manually.
 
 How it works
