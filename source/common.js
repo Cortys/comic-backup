@@ -58,9 +58,11 @@ function addTopBar() {
 	div.id = randomString(20,40);
 	
 	div.style.fontSize = "13px";
-	div.style.top = "0px";
+	div.style.top = "50%";
 	div.style.width = "100%";
 	div.style.height = "54px";
+	div.style.marginTop = "-150px";
+	div.style.paddingTop = "4px";
 	
 	div.style.background = "linear-gradient(to bottom, rgba(0,0,0,0.9) 50%,rgba(0,0,0,0.7) 100%)";
 	div.style.color = "#ffffff";
@@ -68,6 +70,7 @@ function addTopBar() {
 	div.style.lineHeight = "25px";
 	div.style.zIndex = 2147483648;
 	div.style.cursor = "default";
+	div.style.overflow = "hidden";
 	
 	div.style.position = "fixed";
 	

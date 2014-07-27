@@ -206,7 +206,7 @@ getSettings(function() {
 		showInactive: function() {
 			this.downloadButton.style.removeProperty("background");
 			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(135deg)";
-			this.text.innerHTML = "Activate Scan";
+			this.text.innerHTML = "Setup Scanner";
 			this.setCancelable(false);
 		}
 	};
