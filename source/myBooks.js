@@ -1,5 +1,8 @@
 getSettings(function() {
 	
+	if(!settings.queueLength)
+		settings.queueLength = 1;
+	
 	updateDialog();
 	
 	var cssClass = randomString(20, 40),
