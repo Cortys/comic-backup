@@ -10,7 +10,7 @@ getSettings(function() {
 			var style = document.createElement("style");
 			style.type = "text/css";
 			style.innerHTML = "."+cssClass+" span { position:absolute; width:auto; top:50%; margin-top:-0.5em; line-height:1em; left:0; right:0; transition:opacity 0.1s linear 0s; opacity:1; }\n."+cssClass+".cancel:hover span { transition-delay:0.3s; }\n."+cssClass+" .cancel { opacity:0; }\n."+cssClass+".cancel:hover .cancel { opacity:1; }\n."+cssClass+".cancel:hover .text { opacity:0; }";
-			document.head.insertBefore(style);
+			document.head.appendChild(style);
 		},
 		readButtons = document.body.querySelectorAll(".read-comic.titleBtn, .read_link"),
 		downloadEvents = {},
@@ -44,7 +44,7 @@ getSettings(function() {
 	
 			t.text = clone.firstChild;
 	
-			button.parentNode.insertBefore(clone);
+			button.parentNode.appendChild(clone);
 			
 			if(clone.previousElementSibling == button) {
 				var fragment = document.createDocumentFragment(),

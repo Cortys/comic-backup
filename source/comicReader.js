@@ -151,6 +151,8 @@ function wordDiff(text1, text2) { // word wise difference of two strings (using 
 }
 
 function realClick(e) { // simulate a "real" click on given DOMElement e (can't be distinguished from a user click)
+	if(!e)
+		return;
 	var evt = document.createEvent("MouseEvents"),
 		rect = e.getBoundingClientRect(),
 		doc = e.ownerDocument,
