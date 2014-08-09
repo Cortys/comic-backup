@@ -42,6 +42,8 @@ chrome.storage.local.get(null, function(data) { // get user settings
 					
 		});
 	});
+	
+	loadComic();
 });
 
 // show orange bar: asking for exploit scan
@@ -168,6 +170,10 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 	canvasContainerCached: null,
 	browseButtonCached: null,
 	onepageButtonCached: null,
+	
+	isVisible: function(e) {
+		return e.style.display != "none" && e.style.visibility != "hidden";
+	},
 
 	get pages() {
 		return this.pagesCached = this.pagesCached || document.querySelectorAll(settings.selectorPages);
@@ -176,7 +182,16 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 		return document.querySelector(settings.selectorActivePage);
 	},
 	get canvasContainer() {
-		return this.canvasContainerCached = document.contains(this.canvasContainerCached) && this.canvasContainerCached || document.querySelector("div.view");
+		var t = this;
+		if(t.canvasContainerCached && document.contains(t.canvasContainerCached) && t.isVisible(t.canvasContainerCached))
+			return this.canvasContainerCached;
+		
+		return t.canvasContainerCached = (function(a) {
+			for (var i = 0; i < a.length; i++)
+				if(t.isVisible(a[i]))
+					return a[i];
+			return null;
+		})(document.querySelectorAll("div.view"));
 	},
 	get canvasElements() {
 		return this.canvasContainer.querySelectorAll("canvas");
@@ -397,6 +412,7 @@ function loadComic(callback, step) {
 		interval = function() {
 			nextPage(function() {
 				getOpenedPage(function(page) {
+					console.log(page);
 					port.send({ what:"add_page", page:(settings.compression!=2?page:""), i:pos, len:numLength, extension:(settings.page?"png":"jpeg"), toZip:(settings.compression!=2) }, function(result) {
 						var c = function() {
 							var perc = Math.round((pos + 1) / l * 100);
