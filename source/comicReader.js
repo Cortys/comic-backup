@@ -42,8 +42,6 @@ chrome.storage.local.get(null, function(data) { // get user settings
 					
 		});
 	});
-	
-	//loadComic();
 });
 
 // show orange bar: asking for exploit scan
@@ -167,7 +165,7 @@ function realClick(e) { // simulate a "real" click on given DOMElement e (can't 
 
 var dom = { // stores DOM elements of the reader page. All DOM calls go here. No queries elsewhere to make it easier to adapt to reader changes.
 	pagesCached: null,
-	canvasContainerCached: null,
+	canvasContainer: null,
 	browseButtonCached: null,
 	onepageButtonCached: null,
 	
@@ -181,17 +179,23 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 	get activePage() {
 		return document.querySelector(settings.selectorActivePage);
 	},
-	get canvasContainer() {
+	
+	loopCanvasContainers: function(f) {
+		var a = document.querySelectorAll("div.view"),
+			v;
+		for (var i = 0; i < a.length; i++)
+			if(this.isVisible(a[i]) && (v = f(a[i])))
+				return v;
+		return null;
+	},
+	
+	getCanvasContainer: function() {
 		var t = this;
-		if(t.canvasContainerCached && document.contains(t.canvasContainerCached) && t.isVisible(t.canvasContainerCached))
-			return this.canvasContainerCached;
-		
-		return t.canvasContainerCached = (function(a) {
-			for (var i = 0; i < a.length; i++)
-				if(t.isVisible(a[i]))
-					return a[i];
-			return null;
-		})(document.querySelectorAll("div.view"));
+		if(t.canvasContainer && document.contains(t.canvasContainer) && t.isVisible(t.canvasContainer))
+			return this.canvasContainer;
+		return t.canvasContainer = t.loopCanvasContainers(function(a) {
+			return a;
+		});
 	},
 	get canvasElements() {
 		return this.canvasContainer.querySelectorAll("canvas");
@@ -225,6 +229,14 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 	},
 	countCanvas: function() {
 		return this.canvasElements.length;
+	},
+	countCanvasContainers: function() {
+		var i = 0;
+		this.loopCanvasContainers(function() {
+			i++;
+			return false;
+		});
+		return i;
 	}
 };
 
@@ -371,11 +383,27 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 	nextStep(); // start with first setup instruction
 }
 
+var delayMeasurement = {
+	timestamp: null,
+	delay: 0,
+	start: function() {
+		this.timestamp = Date.now();
+	},
+	stop: function() {
+		if(!this.timestamp)
+			return;
+		var diff = Date.now()-this.timestamp;
+		if(diff > this.delay)
+			this.delay = diff;
+		this.timestamp = null;
+	}
+};
+
 // download the opened comic. a callback and a step function can be used.
 function loadComic(callback, step) {
 	
 	addTopBar();
-	overlay.style.display = "block";
+	//overlay.style.display = "block";
 	
 	div.innerHTML = "Downloading comic... <span>0</span>%";
 	div.style.lineHeight = "50px";
@@ -385,7 +413,7 @@ function loadComic(callback, step) {
 	if(typeof step != "function")
 		step = function() {};
 	
-	if(!dom.canvasContainer || dom.loaderVisible() || !dom.countCanvas()) // delay download if comic isn't displayed yet => reader not ready, first page is not loaded yet, first page is not displayed yet
+	if(!dom.getCanvasContainer() || dom.loaderVisible() || !dom.countCanvas()) // delay download if comic isn't displayed yet => reader not ready, first page is not loaded yet, first page is not displayed yet
 		return setTimeout(function() {
 			loadComic(callback, step);
 		}, 100);
@@ -406,13 +434,17 @@ function loadComic(callback, step) {
 			}
 			else {
 				changeWaiter = callback;
-				realClick(fig);
+				setTimeout(function() {
+					delayMeasurement.start();
+					realClick(fig);
+				}, delayMeasurement.delay);
 			}
 		}, changeWaiter = null,
 		interval = function() {
 			nextPage(function() {
+				var bef = dom.canvasContainer;
+				dom.getCanvasContainer();
 				getOpenedPage(function(page) {
-					console.log(page);
 					port.send({ what:"add_page", page:(settings.compression!=2?page:""), i:pos, len:numLength, extension:(settings.page?"png":"jpeg"), toZip:(settings.compression!=2) }, function(result) {
 						var c = function() {
 							var perc = Math.round((pos + 1) / l * 100);
@@ -431,7 +463,7 @@ function loadComic(callback, step) {
 			start = function() {};
 			interval();
 		}, end = function() {
-			dom.canvasContainer.parentElement.removeEventListener("DOMNodeRemoved", rmListener, false);
+			dom.getCanvasContainer().parentElement.removeEventListener("DOMNodeRemoved", rmListener, false);
 			step("zip");
 			zipImages(function() {
 				document.documentElement.removeChild(div);
@@ -439,8 +471,9 @@ function loadComic(callback, step) {
 				realClick(firstPageFig);
 				callback();
 			});
-		}, rmListener = function() {
-			if (typeof changeWaiter === "function" && !dom.countCanvas()) {
+		}, rmListener = function(e) {
+			delayMeasurement.stop();
+			if (typeof changeWaiter === "function" && (!dom.countCanvas() || !dom.isVisible(dom.canvasContainer))) {
 				changeWaiter();
 				changeWaiter = null;
 			}
@@ -449,7 +482,7 @@ function loadComic(callback, step) {
 		}, firstPage = 0, firstPageFig = null;
 
 	port.send({ what:"new_zip", user:getUsername() }, function() {
-		dom.canvasContainer.parentElement.addEventListener("DOMNodeRemoved", rmListener, false);
+		dom.getCanvasContainer().parentElement.addEventListener("DOMNodeRemoved", rmListener, false);
 		realClick(dom.browseButton);
 		firstPageFig = dom.activePage;
 		firstPage = (firstPageFig && firstPageFig.getAttribute(dom.pagenumAttr)*1+dom.pagenumCorrection) || 0;
@@ -531,7 +564,7 @@ function zipImages(callback) {
 
 // get data URL of the currently opened page in the reader (async! result is given to callback)
 function getOpenedPage(callback) {
-	var view = dom.canvasContainer,
+	var view = dom.getCanvasContainer(),
 		doneLoading = view && (view.style.webkitTransform || view.style.transform) && !dom.loaderVisible();
 	if(doneLoading) {
 		var canvasOnThisPage = dom.canvasElements,
