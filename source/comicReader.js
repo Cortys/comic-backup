@@ -403,7 +403,7 @@ var delayMeasurement = {
 function loadComic(callback, step) {
 	
 	addTopBar();
-	//overlay.style.display = "block";
+	overlay.style.display = "block";
 	
 	div.innerHTML = "Downloading comic... <span>0</span>%";
 	div.style.lineHeight = "50px";
