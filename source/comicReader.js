@@ -43,7 +43,7 @@ chrome.storage.local.get(null, function(data) { // get user settings
 		});
 	});
 	
-	loadComic();
+	//loadComic();
 });
 
 // show orange bar: asking for exploit scan
