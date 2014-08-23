@@ -47,7 +47,6 @@ getSettings(function() {
 			t.text = clone.firstChild;
 			
 			this.show = function(b) {
-				console.log(this, document.contains(clone));
 				if(document.contains(clone))
 					return;
 				
@@ -261,13 +260,12 @@ getSettings(function() {
 				callback,
 				request.message.data
 			);
-		else if(request.what = "child_broadcast" && request.message.what == "finished_scan")
+		else if(request.what == "child_broadcast" && request.message.what == "finished_scan")
 			location.reload();
 	});
 	
 	function init() {
 		var readButtons = document.body.querySelectorAll(readButtonSelector);
-		console.log(readButtons);
 		for(var i = 0; i < readButtons.length; i++)
 			Download.get(readButtons[i]).show(readButtons[i]);
 	}
