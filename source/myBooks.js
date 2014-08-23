@@ -6,13 +6,13 @@ getSettings(function() {
 	updateDialog();
 	
 	var cssClass = randomString(20, 40),
+		readButtonSelector = ".read-comic.titleBtn:not(."+cssClass+")",
 		injectCss = function() {
 			var style = document.createElement("style");
 			style.type = "text/css";
 			style.innerHTML = "."+cssClass+" span { position:absolute; width:auto; top:50%; margin-top:-0.5em; line-height:1em; left:0; right:0; transition:opacity 0.1s linear 0s; opacity:1; }\n."+cssClass+".cancel:hover span { transition-delay:0.3s; }\n."+cssClass+" .cancel { opacity:0; }\n."+cssClass+".cancel:hover .cancel { opacity:1; }\n."+cssClass+".cancel:hover .text { opacity:0; }";
 			document.head.appendChild(style);
 		},
-		readButtons = document.body.querySelectorAll(".read-comic.titleBtn, .read_link"),
 		downloadEvents = {},
 		backupText = (function() {
 			var c = document.querySelector("section.backup-container h1");
@@ -26,6 +26,8 @@ getSettings(function() {
 				buttonComputedStyle = window.getComputedStyle(button);
 			
 			t.id = Download.counter++;
+			
+			Download.connections[this.readButton.href] = this;
 			
 			// create colors:
 			t.buttonBGs = {
@@ -43,18 +45,27 @@ getSettings(function() {
 			clone.classList.add(cssClass);
 	
 			t.text = clone.firstChild;
-	
-			button.parentNode.appendChild(clone);
 			
-			if(clone.previousElementSibling == button) {
-				var fragment = document.createDocumentFragment(),
-					cont = document.createElement("section");
-				fragment.appendChild(document.createElement("hr"));
-				cont.setAttribute("class", "backup-container");
-				cont.innerHTML = "<h1>"+backupText+"</h1>";
-				fragment.appendChild(cont);
-				clone.parentNode.insertBefore(fragment, clone);
-			}
+			this.show = function(b) {
+				console.log(this, document.contains(clone));
+				if(document.contains(clone))
+					return;
+				
+				if(b && b.href == button.href && b !== button)
+					button = this.readButton = b;
+				
+				button.parentNode.appendChild(clone);
+				
+				if(clone.previousElementSibling == button) {
+					var fragment = document.createDocumentFragment(),
+						cont = document.createElement("section");
+					fragment.appendChild(document.createElement("hr"));
+					cont.setAttribute("class", "backup-container");
+					cont.innerHTML = "<h1>"+backupText+"</h1>";
+					fragment.appendChild(cont);
+					clone.parentNode.insertBefore(fragment, clone);
+				}
+			};
 			
 			if(settings.selectors)
 				clone.addEventListener("click", function() {
@@ -72,6 +83,12 @@ getSettings(function() {
 				t.showUnusable();
 			}
 		};
+	
+	Download.connections = {};
+	
+	Download.get = function(readButton) {
+		return this.connections[readButton.href] || new Download(readButton);
+	};
 	
 	Download.counter = 0;
 	Download.activeDownloads = 0;
@@ -248,7 +265,25 @@ getSettings(function() {
 			location.reload();
 	});
 	
-	for(var i = 0; i < readButtons.length; i++)
-		new Download(readButtons[i]);
+	function init() {
+		var readButtons = document.body.querySelectorAll(readButtonSelector);
+		console.log(readButtons);
+		for(var i = 0; i < readButtons.length; i++)
+			Download.get(readButtons[i]).show(readButtons[i]);
+	}
 	
+	init();
+	
+	new MutationObserver(function(mutations) {
+		var reinit = false;
+		mutations.forEach(function(mutation) {
+			if(mutation.addedNodes && mutation.addedNodes.length)
+				reinit = true;
+		});
+		if(reinit)
+			init();
+	}).observe(document.getElementById("page_content_container"), {
+		childList: true,
+		subtree: true
+	});
 });
