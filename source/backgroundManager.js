@@ -6,7 +6,9 @@ var ports = { // stores all opened connections of tabs to bg page
 		controller: {} // controller tab connections
 	},
 	openers = {}, // contains the opener tab id as value for each child tab id as key
-	closedReader = function(sender) {
+	closedReader = function(port) {
+		var sender = port.senderId;
+		URL.revokeObjectURL(port.zipUrl);
 		if(typeof openers[sender] !== "undefined") {
 			var opener = ports.controller[openers[sender]];
 			if(opener) {
@@ -18,7 +20,7 @@ var ports = { // stores all opened connections of tabs to bg page
 	};
 
 connector.onConnect.addListener(function(port) {
-	var sender = port.sender.tab.id;
+	var sender = port.senderId = port.sender.tab.id;
 	
 	ports[port.name][sender] = port;
 	
@@ -44,10 +46,11 @@ connector.onConnect.addListener(function(port) {
 					compression: request.compress?"DEFLATE":"STORE"
 				});
 				port.zip = null;
-				callback({ what:"completed_zipping", url:URL.createObjectURL(result) });
+				port.zipUrl = URL.createObjectURL(result);
+				callback({ what:"completed_zipping", url:port.zipUrl });
 			}
 			else if(request.what == "download_blob") {
-				downloadFile(request.name, request.data, request.overwrite, function() {
+				downloadFile(request.name, port.zipUrl, request.overwrite, function() {
 					callback({ what:"download_started" });
 				});
 				return true;
@@ -97,7 +100,7 @@ connector.onConnect.addListener(function(port) {
 	
 	port.onDisconnect.addListener(function() {
 		delete ports[port.name][sender];
-		disconnectAction(sender);
+		disconnectAction(port);
 		port = sender = null;
 	});
 });

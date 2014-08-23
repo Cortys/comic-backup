@@ -154,6 +154,7 @@ function downloadFile(name, data, overwrite, callback) { // overwrite is not use
 		a.download = a.innerHTML = name;
 		a.href = data;
 		a.click();
+		URL.revokeObjectURL(data);
 		if(typeof callback === "function")
 			callback();
 	}, 0);

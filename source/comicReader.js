@@ -543,7 +543,7 @@ function getUsernameImage(ctx, w, h) {
 
 function downloadBlob(name, data, overwrite, callback) { // overwrite is not used currently
 	// blobs have to be downloaded from background page (same origin policy)
-	port.send({ what:"download_blob", name:name, data:data, overwrite:overwrite }, callback);
+	port.send({ what:"download_blob", name:name, overwrite:overwrite }, callback);
 }
 function downloadData(name, data, overwrite, callback) { // overwrite is not used currently
 	downloadFile(name, URL.createObjectURL(dataURLtoBlob(data)), overwrite, callback);

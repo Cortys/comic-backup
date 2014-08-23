@@ -15,6 +15,7 @@
 		"tabs",
 		"activeTab",
 		"storage",
+		"downloads",
 		"*://*/"
 	],
 	
