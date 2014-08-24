@@ -148,17 +148,6 @@ function hslToRgb(h, s, l) {
 	return [r * 255, g * 255, b * 255];
 }
 
-function downloadFile(name, data, overwrite, callback) { // overwrite is not used currently
-	setTimeout(function() {
-		var a = document.createElement("a");
-		a.download = a.innerHTML = name;
-		a.href = data;
-		a.click();
-		URL.revokeObjectURL(data);
-		if(typeof callback === "function")
-			callback();
-	}, 0);
-}
 /**
  * dataURLtoBlob by github.com/blueimp/JavaScript-Canvas-to-Blob
  * Released under the MIT License
@@ -242,3 +231,38 @@ connector.onConnect = {
 		});
 	}
 };
+
+// Download files:
+function downloadFile(name, data, overwrite, callback) { // overwrite is not used currently
+	if(chrome.downloads) {
+		chrome.downloads.download({
+			url: data,
+			filename: name,
+			method: "GET",
+			conflictAction: (overwrite?"overwrite":"uniquify")
+		}, function(downloadId) {
+			downloadFile.handlers[downloadId] = function(delta) {
+				if(!delta.state || delta.state.current == "in_progress")
+					return;
+				delete downloadFile.handlers[downloadId];
+				URL.revokeObjectURL(data);
+			};
+		});
+	}
+	else
+		downloadFile.port.send({ name:name, data:data, overwrite:overwrite });
+	if(typeof callback === "function")
+		setTimeout(callback, 0);
+}
+
+if(chrome.downloads) {
+	downloadFile.handlers = {};
+	chrome.downloads.onChanged.addListener(function(downloadDelta) {
+		console.log(downloadDelta);
+		var a = downloadFile.handlers[downloadDelta.id];
+		if(typeof a === "function")
+			a(downloadDelta);
+	});
+}
+else
+	downloadFile.port = connector.connect({ name:"download" });

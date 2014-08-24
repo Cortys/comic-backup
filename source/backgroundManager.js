@@ -20,6 +20,14 @@ var ports = { // stores all opened connections of tabs to bg page
 	};
 
 connector.onConnect.addListener(function(port) {
+	
+	if(port.name == "download") {
+		port.receive(function(request, callback) {
+			downloadFile(request.name, request.data, request.overwrite, callback);
+		});
+		return;
+	}
+	
 	var sender = port.senderId = port.sender.tab.id;
 	
 	ports[port.name][sender] = port;
@@ -50,7 +58,7 @@ connector.onConnect.addListener(function(port) {
 				callback({ what:"completed_zipping", url:port.zipUrl });
 			}
 			else if(request.what == "download_blob") {
-				downloadFile(request.name, port.zipUrl, request.overwrite, function() {
+				downloadFile(request.name, port.zipUrl, false, function() {
 					callback({ what:"download_started" });
 				});
 				return true;

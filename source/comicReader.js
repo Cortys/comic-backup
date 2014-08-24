@@ -541,9 +541,9 @@ function getUsernameImage(ctx, w, h) {
 	return data;
 }
 
-function downloadBlob(name, data, overwrite, callback) { // overwrite is not used currently
+function downloadBlob(name, callback) { // overwrite is not used currently
 	// blobs have to be downloaded from background page (same origin policy)
-	port.send({ what:"download_blob", name:name, overwrite:overwrite }, callback);
+	port.send({ what:"download_blob", name:name }, callback);
 }
 function downloadData(name, data, overwrite, callback) { // overwrite is not used currently
 	downloadFile(name, URL.createObjectURL(dataURLtoBlob(data)), overwrite, callback);
@@ -558,7 +558,7 @@ function zipImages(callback) {
 
 	port.send({ what:"start_zipping", compress:settings.compression }, function(result) {
 		div.innerHTML = "Saving comic...";
-		downloadBlob(getName()+"."+(settings.container?"zip":"cbz"), result.url, false, callback);
+		downloadBlob(getName()+"."+(settings.container?"zip":"cbz"), callback);
 	});
 }
 
