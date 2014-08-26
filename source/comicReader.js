@@ -445,17 +445,14 @@ function loadComic(callback, step) {
 				var bef = dom.canvasContainer;
 				dom.getCanvasContainer();
 				getOpenedPage(function(page) {
-					port.send({ what:"add_page", page:(settings.compression!=2?page:""), i:pos, len:numLength, extension:(settings.page?"png":"jpeg"), toZip:(settings.compression!=2) }, function(result) {
-						var c = function() {
-							var perc = Math.round((pos + 1) / l * 100);
-							div.getElementsByTagName("span")[0].innerHTML = perc;
-							step(perc);
-							interval();
-						};
-						if(settings.compression == 2)
-							downloadData(getName()+"/"+result.name, page, true, c);
-						else
-							c();
+					port.send({ what:"add_page", page:(settings.container!=2?page:null), i:pos, len:numLength, extension:(settings.page?"png":"jpeg"), toZip:(settings.container!=2) }, function(result) {
+						if(settings.container == 2)
+							downloadData(getName()+"/"+result.name, page, true);
+						
+						var perc = Math.round((pos + 1) / l * 100);
+						div.getElementsByTagName("span")[0].innerHTML = perc;
+						step(perc);
+						interval();
 					});
 				});
 			});
@@ -466,10 +463,13 @@ function loadComic(callback, step) {
 			dom.getCanvasContainer().parentElement.removeEventListener("DOMNodeRemoved", rmListener, false);
 			step("zip");
 			zipImages(function() {
-				document.documentElement.removeChild(div);
-				document.documentElement.removeChild(overlay);
-				realClick(firstPageFig);
-				callback();
+				step("save");
+				downloadBlob(getName()+"."+(settings.container?"zip":"cbz"), function() {
+					document.documentElement.removeChild(div);
+					document.documentElement.removeChild(overlay);
+					realClick(firstPageFig);
+					callback();
+				});
 			});
 		}, rmListener = function(e) {
 			delayMeasurement.stop();
@@ -505,11 +505,14 @@ function loadComic(callback, step) {
 }
 
 function getName() {
+	if(getName.title != null)
+		return getName.title;
 	var title = document.getElementsByTagName('title');
 	if(title[0])
-		return title[0].innerHTML.substr(0, title[0].innerHTML.lastIndexOf("-")).trim().replace(/\s/g, "_");
+		return getName.title = title[0].innerHTML.substr(0, title[0].innerHTML.lastIndexOf("-")).trim().replace(/\s/g, "_").replace(/[^a-z0-9#.()\[\]_-]/gi, "");
 	return "comic";
 }
+getName.title = null;
 
 function getUsername() {
 	var reader = document.getElementById("reader");
@@ -551,14 +554,14 @@ function downloadData(name, data, overwrite, callback) { // overwrite is not use
 
 // compress and download all pages that were backuped by this tab in the loadComic function
 function zipImages(callback) {
-	if(settings.compression == 2)
+	if(settings.container == 2)
 		return typeof callback === "function"?callback():undefined;
 	div.innerHTML = "Zipping images...";
 	div.style.lineHeight = "50px";
 
-	port.send({ what:"start_zipping", compress:settings.compression }, function(result) {
+	port.send({ what:"start_zipping" }, function(result) {
 		div.innerHTML = "Saving comic...";
-		downloadBlob(getName()+"."+(settings.container?"zip":"cbz"), callback);
+		callback();
 	});
 }
 

@@ -188,7 +188,7 @@ getSettings(function() {
 				this.showDefault();
 			},
 			"download_progress": function(callback, percentage) {
-				this["show"+(percentage=="zip"?"Zipping":"Progress")](percentage);
+				this["show"+(percentage=="zip"?"Zipping":percentage=="save"?"Saving":"Progress")](percentage);
 			}
 		},
 	
@@ -230,6 +230,12 @@ getSettings(function() {
 			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(200deg)";
 			this.text.innerHTML = "Zipping...";
 			this.setCancelable(true);
+		},
+		showSaving: function() {
+			this.downloadButton.style.background = this.buttonBGs.normal;
+			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(215deg)";
+			this.text.innerHTML = "Saving...";
+			this.setCancelable(false);
 		},
 		showInactive: function() {
 			this.downloadButton.style.removeProperty("background");

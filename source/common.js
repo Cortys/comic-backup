@@ -242,23 +242,22 @@ function downloadFile(name, data, overwrite, callback) { // overwrite is not use
 			conflictAction: (overwrite?"overwrite":"uniquify")
 		}, function(downloadId) {
 			downloadFile.handlers[downloadId] = function(delta) {
-				if(!delta.state || delta.state.current == "in_progress")
+				if(!delta.endTime || !delta.endTime.current)
 					return;
 				delete downloadFile.handlers[downloadId];
 				URL.revokeObjectURL(data);
+				if(typeof callback === "function")
+					callback();
 			};
 		});
 	}
 	else
-		downloadFile.port.send({ name:name, data:data, overwrite:overwrite });
-	if(typeof callback === "function")
-		setTimeout(callback, 0);
+		downloadFile.port.send({ name:name, data:data, overwrite:overwrite }, callback);
 }
 
 if(chrome.downloads) {
 	downloadFile.handlers = {};
 	chrome.downloads.onChanged.addListener(function(downloadDelta) {
-		console.log(downloadDelta);
 		var a = downloadFile.handlers[downloadDelta.id];
 		if(typeof a === "function")
 			a(downloadDelta);

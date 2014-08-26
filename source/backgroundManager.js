@@ -1,6 +1,8 @@
 //(C) 2013 Sperglord Enterprises
 //Code is under GNUGPLv3 - read http://www.gnu.org/licenses/gpl.html
 
+zip.workerScriptsPath = "/zip/";
+
 var ports = { // stores all opened connections of tabs to bg page
 		reader: {}, // reader tab connections
 		controller: {} // controller tab connections
@@ -25,7 +27,7 @@ connector.onConnect.addListener(function(port) {
 		port.receive(function(request, callback) {
 			downloadFile(request.name, request.data, request.overwrite, callback);
 		});
-		return;
+		return true;
 	}
 	
 	var sender = port.senderId = port.sender.tab.id;
@@ -38,28 +40,36 @@ connector.onConnect.addListener(function(port) {
 	if(port.name == "reader") // ZIPPING logic - moved to background script to have a dedicated tab/thread for compression so that it doesn't make the reader tab itself slow
 		port.receive(function(request, callback) {
 			if(request.what == "new_zip") {
-				port.zip = new JSZip();
-				port.zip.file(".meta.asc", "This is a ComiXology backup.\nPlease do not distribute it.\nBackup created by "+(request.user||"[UNKNOWN USER]"));
-				callback({ what:"new_zip_created" });
+				zip.createWriter(new zip.BlobWriter(), function(writer) {
+					port.zip = writer;
+					writer.add(".meta.asc", new zip.TextReader("This is a ComiXology backup.\nPlease do not distribute it.\nBackup created by "+(request.user||"[UNKNOWN USER]")));
+					callback({ what:"new_zip_created" });
+				});
+				return true;
 			}
 			else if(request.what == "add_page") {
-				var name = "page"+nullFill(request.i, request.len)+"."+request.extension;
-				if(request.toZip && port.zip)
-					port.zip.file(name, request.page.substr(request.page.indexOf(",")+1), { base64:true });
-				callback({ what:"page_added", name:name });
+				var name = "page"+nullFill(request.i, request.len)+"."+request.extension,
+					d = callback.bind(null, { what:"page_added", name:name });
+				if(request.toZip && port.zip) {
+					port.zip.add(name, new zip.Data64URIReader(request.page), function() {
+						d();
+						console.log(request);
+					});
+					return true;
+				}
+				d();
 			}
 			else if(request.what == "start_zipping" && port.zip) {
-				var result = port.zip.generate({
-					type: "blob",
-					compression: request.compress?"DEFLATE":"STORE"
+				port.zip.close(function(result) {
+					port.zip = null;
+					port.zipUrl = URL.createObjectURL(result);
+					callback({ what:"completed_zipping", url:port.zipUrl });
 				});
-				port.zip = null;
-				port.zipUrl = URL.createObjectURL(result);
-				callback({ what:"completed_zipping", url:port.zipUrl });
+				return true;
 			}
 			else if(request.what == "download_blob") {
 				downloadFile(request.name, port.zipUrl, false, function() {
-					callback({ what:"download_started" });
+					callback({ what:"download_complete" });
 				});
 				return true;
 			}
@@ -112,5 +122,3 @@ connector.onConnect.addListener(function(port) {
 		port = sender = null;
 	});
 });
-
-chrome.tabs.onRemoved.addListener(closedReader);
