@@ -1,8 +1,7 @@
 //(C) 2013 Sperglord Enterprises
 //Code is under GNUGPLv3 - read http://www.gnu.org/licenses/gpl.html
 
-var overlay = document.createElement("div"),
-	settings = {};
+var overlay = document.createElement("div");
 
 overlay.style.position = "fixed";
 overlay.style.zIndex = 299;
@@ -14,10 +13,40 @@ document.documentElement.appendChild(overlay);
 
 //ENTRANCE POINT FOR READER BACKUP LOGIC:
 
-var port = connector.connect({ name:"reader" });
+var port = connector.connect({ name:"reader" }),
+	delayMeasurement;
 
-chrome.storage.local.get(null, function(data) { // get user settings
-	settings = data;
+getSettings(function() {
+	
+	// Disable delays if measurements for latency compensation were disabled in the settings:
+	if(!settings.latency)
+		delayMeasurement = {
+			start: function() {},
+			stop: function() {},
+			timeout: function(c) { c(); }
+		};
+	else
+		delayMeasurement = {
+			timestamp: null,
+			delay: 0,
+			start: function() {
+				this.timestamp = Date.now();
+			},
+			stop: function() {
+				if(!this.timestamp)
+					return;
+				var diff = Date.now()-this.timestamp;
+				if(diff > this.delay)
+					this.delay = diff;
+				this.timestamp = null;
+			},
+			timeout: function(callback) {
+				if(this.delay)
+					setTimeout(callback, this.delay);
+				else
+					callback();
+			}
+		};
 	
 	// delete cached uncompleted zip-backups for this tab:
 	port.send({ what:"is_child" }, function(isChild) { // tab opened by extension -> autorun / else -> show bar
@@ -383,22 +412,6 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 	nextStep(); // start with first setup instruction
 }
 
-var delayMeasurement = {
-	timestamp: null,
-	delay: 0,
-	start: function() {
-		this.timestamp = Date.now();
-	},
-	stop: function() {
-		if(!this.timestamp)
-			return;
-		var diff = Date.now()-this.timestamp;
-		if(diff > this.delay)
-			this.delay = diff;
-		this.timestamp = null;
-	}
-};
-
 // download the opened comic. a callback and a step function can be used.
 function loadComic(callback, step) {
 	
@@ -434,10 +447,10 @@ function loadComic(callback, step) {
 			}
 			else {
 				changeWaiter = callback;
-				setTimeout(function() {
+				delayMeasurement.timeout(function() {
 					delayMeasurement.start();
 					realClick(fig);
-				}, delayMeasurement.delay);
+				});
 			}
 		}, changeWaiter = null,
 		interval = function() {

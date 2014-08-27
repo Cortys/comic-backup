@@ -5,7 +5,8 @@ var current_version = 111,
 function getSettings(callback) {
 	chrome.storage.local.get(null, function(data) {
 		settings = data;
-		callback();
+		if(typeof callback === "function")
+			callback();
 	});
 }
 
