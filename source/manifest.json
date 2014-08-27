@@ -21,8 +21,9 @@
 	
 	"background": {
 		"scripts": [
-			"jszip.min.js",
 			"zip/zip.js",
+			"zip/zip-ext.js",
+			"zip/zip-fs.js",
 			"common.js",
 			"backgroundManager.js"
 		],

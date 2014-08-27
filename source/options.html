@@ -22,6 +22,12 @@
 			color: #3b3a3a;
 		}
 		
+		#content {
+			margin: 0;
+			padding: 0;
+			visibility: hidden;
+		}
+		
 		h1 {
 			margin-top: 0;
 			margin-bottom: 20px;
@@ -81,41 +87,52 @@
 </head>
 <body>
 	<h1><img src="logoOptions@2x.png" alt="Comixology Backup Settings"></h1>
-	<h2>Backup behaviour</h2>
-	<div class="aligner">Page format:</div><div class="aligner r"><select id="page">
-		<option value="0">jpg</option>
-		<option value="1">png</option>
-	</select></div><br>
-	<div class="aligner">Container format:</div><div class="aligner r"><select id="container">
-		<option value="0">cbz</option>
-		<option value="1">zip</option>
-		<option value="2">single images</option>
-	</select></div><br>
-	<div class="aligner">Start backup at:</div><div class="aligner r"><select id="start">
-		<option value="0">first page</option>
-		<option value="1">currently opened page</option>
-	</select></div><br>
-	<div class="aligner">Max. parallel downloads per tab*:</div><div class="aligner r"><select id="queueLength">
-	 	<option value="1">1</option>
-	 	<option value="2">2</option>
-	 	<option value="3">3</option>
-	 	<option value="4">4</option>
-	 	<option value="5">5</option>
-	 	<option value="10">10</option>
-	 	<option value="-1">Unlimited</option>
-	</select></div><br>
-	<p>* <i>If the limit is reached, every new download will be queued.<br>Only affects downloads started from a "My Books"/"My Series" page.</i></p>
-	<h2>Updates</h2>
-	<p>To get notifications about extension updates, you have to add an update server.</p>
-	<input value="Set update server" type="button" id="setServer">
-	<h2>I need help!</h2>
-	<p><b>How is "Scan" different from the official backup options?</b> When you backup a comic with this extension, it takes high quality screenshots from the web reader. Those are quite good but do not match the quality of the official downloads. You should use "Scan" if you want to have smaller files or a comic is not officially available for download.</p>
-	<p><b>The download never starts!</b> To use the extension make sure you disabled the <i>Prompt to continue</i> message in the settings of the web reader (click the gear to get there).</p>
-	<p><b>The download does not work anymore!</b> Sometimes ComiXology changes their reader code. If that happens you can force a new exploit scan and the plugin will try to detect a new way to backup your comics. In order to do that you will be asked to perform some actions the next time you open a comic.</p>
-	Force new exploit scan: <select id="selectors">
-		<option value="0">Yes</option>
-		<option value="1">No</option>
-	</select>
+	<div id="content">
+		<h2>Backup behaviour</h2>
+		<div class="aligner">Page format:</div><div class="aligner r"><select id="page">
+			<option value="0">jpg</option>
+			<option value="1">png</option>
+		</select></div><br>
+		<div class="aligner">Container format:</div><div class="aligner r"><select id="container">
+			<option value="0">cbz</option>
+			<option value="1">zip</option>
+			<option value="2">single images</option>
+		</select></div><br>
+		<div class="aligner">Start backup at:</div><div class="aligner r"><select id="start">
+			<option value="0">first page</option>
+			<option value="1">currently opened page</option>
+		</select></div><br>
+		<div class="aligner">Temporary memory:</div><div class="aligner r"><select id="tempMemory">
+			<option value="0">RAM (fast, smaller comics)</option>
+			<option value="1">FS (slow, big comics)</option>
+		</select></div><br>
+		<div class="aligner">Latency compensation:</div><div class="aligner r"><select id="latency">
+			<option value="0">Enabled</option>
+			<option value="1">Disabled</option>
+		</select></div><br>
+		<p><i>Only disable latency compensation if you disabled page animations in the reader settings. This will speed up the backup performance.</i></p>
+		<div class="aligner">Max. parallel downloads per tab:</div><div class="aligner r"><select id="queueLength">
+		 	<option value="1">1</option>
+		 	<option value="2">2</option>
+		 	<option value="3">3</option>
+		 	<option value="4">4</option>
+		 	<option value="5">5</option>
+		 	<option value="10">10</option>
+		 	<option value="-1">Unlimited</option>
+		</select></div><br>
+		<p><i>If the limit is reached, every new download will be queued.</i></p>
+		<h2>Updates</h2>
+		<p>To get notifications about extension updates, you have to add an update server.</p>
+		<input value="Set update server" type="button" id="setServer">
+		<h2>I need help!</h2>
+		<p><b>How is "Scan" different from the official backup options?</b> When you backup a comic with this extension, it takes high quality screenshots from the web reader. Those are quite good but do not match the quality of the official downloads. You should use "Scan" if you want to have smaller files or a comic is not officially available for download.</p>
+		<p><b>The download never starts!</b> To use the extension make sure you disabled the <i>Prompt to continue</i> message in the settings of the web reader (click the gear to get there).</p>
+		<p><b>The download does not work anymore!</b> Sometimes ComiXology changes their reader code. If that happens you can force a new exploit scan and the plugin will try to detect a new way to backup your comics. In order to do that you will be asked to perform some actions the next time you open a comic.</p>
+		Force new exploit scan: <select id="selectors">
+			<option value="0">Yes</option>
+			<option value="1">No</option>
+		</select>
+	</div>
 	<script src="options.js" type="text/javascript"></script>
 </body>
 </html>

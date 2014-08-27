@@ -549,7 +549,11 @@ function downloadBlob(name, callback) { // overwrite is not used currently
 	port.send({ what:"download_blob", name:name }, callback);
 }
 function downloadData(name, data, overwrite, callback) { // overwrite is not used currently
-	downloadFile(name, URL.createObjectURL(dataURLtoBlob(data)), overwrite, callback);
+	var url = URL.createObjectURL(dataURLtoBlob(data));
+	downloadFile(name, url, overwrite, function() {
+		URL.revokeObjectURL(url);
+		callback();
+	});
 }
 
 // compress and download all pages that were backuped by this tab in the loadComic function

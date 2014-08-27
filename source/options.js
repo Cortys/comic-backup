@@ -1,6 +1,11 @@
 var selects = document.getElementsByTagName("select");
 
-for(var i = 0; i< selects.length; i++)
+function check() {
+	if(i >= selects.length)
+		document.getElementById("content").style.visibility = "visible";
+}
+
+for(var i = 0; i < selects.length; i++)
 	(function(e) {
 		if(typeof e.addEventListener === "undefined")
 			return;
@@ -8,11 +13,14 @@ for(var i = 0; i< selects.length; i++)
 			e.addEventListener("change", function() {
 				var o = {};
 				o[e.id] = e.value*1;
-				chrome.storage.local.set(o);
+				chrome.storage.local.set(o, 	function() {
+					chrome.runtime.sendMessage("update_settings");
+				});
 			}, false);
 			chrome.storage.local.get([e.id], function(a) {
 				if(a[e.id])
-					e.getElementsByTagName("option")[a[e.id]*1].selected = "selected";
+					e.querySelector("option[value='"+a[e.id]+"']").selected = "selected";
+				check();
 			});
 		};
 		
@@ -26,6 +34,7 @@ for(var i = 0; i< selects.length; i++)
 				}
 				else
 					f();
+				check();
 			});
 		else
 			f();

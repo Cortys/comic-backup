@@ -245,7 +245,6 @@ function downloadFile(name, data, overwrite, callback) { // overwrite is not use
 				if(!delta.endTime || !delta.endTime.current)
 					return;
 				delete downloadFile.handlers[downloadId];
-				URL.revokeObjectURL(data);
 				if(typeof callback === "function")
 					callback();
 			};
