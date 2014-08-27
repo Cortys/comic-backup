@@ -82,6 +82,8 @@ function updateDialog() {
 	checkVersion(function(update) {
 		if(update) {
 			addTopBar();
+			div.style.top = 0;
+			div.style.marginTop = 0;
 			div.innerHTML = "This version of the \"Comixology Backup\" extension is outdated.<br><a href=\""+settings.updateServer+"/download.zip\" style='"+linkStyle+"' target='_blank'>Update</a>";
 		}
 	});
