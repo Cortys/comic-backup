@@ -1,11 +1,12 @@
-var current_version = 110,
+var current_version = 111,
 	div, linkStyle = "color:#ffffff;font-weight:bold;background:linear-gradient(to bottom, rgb(115, 152, 200) 0%,rgb(179, 206, 233) 1%,rgb(82, 142, 204) 5%,rgb(79, 137, 200) 20%,rgb(66, 120, 184) 50%,rgb(49, 97, 161) 100%);padding:3px;text-decoration:none;display:inline-block;width:70px;text-align:center;height:22px;box-sizing:border-box;line-height:14px;border:1px solid rgb(49,96,166);",
 	settings;
 
 function getSettings(callback) {
 	chrome.storage.local.get(null, function(data) {
 		settings = data;
-		callback();
+		if(typeof callback === "function")
+			callback();
 	});
 }
 
@@ -81,6 +82,8 @@ function updateDialog() {
 	checkVersion(function(update) {
 		if(update) {
 			addTopBar();
+			div.style.top = 0;
+			div.style.marginTop = 0;
 			div.innerHTML = "This version of the \"Comixology Backup\" extension is outdated.<br><a href=\""+settings.updateServer+"/download.zip\" style='"+linkStyle+"' target='_blank'>Update</a>";
 		}
 	});
@@ -148,16 +151,6 @@ function hslToRgb(h, s, l) {
 	return [r * 255, g * 255, b * 255];
 }
 
-function downloadFile(name, data, overwrite, callback) { // overwrite is not used currently
-	setTimeout(function() {
-		var a = document.createElement("a");
-		a.download = a.innerHTML = name;
-		a.href = data;
-		a.click();
-		if(typeof callback === "function")
-			callback();
-	}, 0);
-}
 /**
  * dataURLtoBlob by github.com/blueimp/JavaScript-Canvas-to-Blob
  * Released under the MIT License
@@ -241,3 +234,36 @@ connector.onConnect = {
 		});
 	}
 };
+
+// Download files:
+function downloadFile(name, data, overwrite, callback) { // overwrite is not used currently
+	if(chrome.downloads) {
+		chrome.downloads.download({
+			url: data,
+			filename: name,
+			method: "GET",
+			conflictAction: (overwrite?"overwrite":"uniquify")
+		}, function(downloadId) {
+			downloadFile.handlers[downloadId] = function(delta) {
+				if(!delta.endTime || !delta.endTime.current)
+					return;
+				delete downloadFile.handlers[downloadId];
+				if(typeof callback === "function")
+					callback();
+			};
+		});
+	}
+	else
+		downloadFile.port.send({ name:name, data:data, overwrite:overwrite }, callback);
+}
+
+if(chrome.downloads) {
+	downloadFile.handlers = {};
+	chrome.downloads.onChanged.addListener(function(downloadDelta) {
+		var a = downloadFile.handlers[downloadDelta.id];
+		if(typeof a === "function")
+			a(downloadDelta);
+	});
+}
+else
+	downloadFile.port = connector.connect({ name:"download" });

@@ -3,8 +3,8 @@
 
 	"name": "Comixology Backup",
 	"description": "Save your Comixology comics as standard CBZ files.",
-	"version": "2.0.0",
-	"minimum_chrome_version": "26",
+	"version": "2.0.1",
+	"minimum_chrome_version": "31",
 	
 	"icons": {
 		"128": "logo128.png",
@@ -15,12 +15,15 @@
 		"tabs",
 		"activeTab",
 		"storage",
+		"downloads",
 		"*://*/"
 	],
 	
 	"background": {
 		"scripts": [
-			"jszip.min.js",
+			"zip/zip.js",
+			"zip/zip-ext.js",
+			"zip/zip-fs.js",
 			"common.js",
 			"backgroundManager.js"
 		],
@@ -37,7 +40,7 @@
 			"js": ["diffMatchPatch.js", "common.js", "comicReader.js"],
 			"run_at": "document_idle"
 		}, {
-			"matches": ["*://www.comixology.com/my-books*","*://www.comixology.eu/my-books*","*://www.comixology.co.uk/my-books*","*://www.comixology.fr/my-books*","*://www.comixology.de/my-books*","*://www.comixology.com/my-comics*","*://www.comixology.eu/my-comics*","*://www.comixology.co.uk/my-comics*","*://www.comixology.fr/my-comics*","*://www.comixology.de/my-comics*"],
+			"matches": ["*://www.comixology.com/my-*","*://www.comixology.eu/my-*","*://www.comixology.co.uk/my-*","*://www.comixology.fr/my-*","*://www.comixology.de/my-*", "*://www.comixology.com/wishlists*","*://www.comixology.eu/wishlists","*://www.comixology.co.uk/wishlists","*://www.comixology.fr/wishlists","*://www.comixology.de/wishlists"],
 			"js": ["common.js", "myBooks.js"],
 			"run_at": "document_end"
 		}
