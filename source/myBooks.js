@@ -6,7 +6,7 @@ getSettings(function() {
 	updateDialog();
 	
 	var cssClass = randomString(20, 40),
-		readButtonSelector = ".read-comic.titleBtn:not(."+cssClass+")",
+		readButtonSelector = ".action-title:not(."+cssClass+")",
 		injectCss = function() {
 			var style = document.createElement("style");
 			style.type = "text/css";
@@ -273,7 +273,8 @@ getSettings(function() {
 	function init() {
 		var readButtons = document.body.querySelectorAll(readButtonSelector);
 		for(var i = 0; i < readButtons.length; i++)
-			Download.get(readButtons[i]).show(readButtons[i]);
+			if(readButtons[i].innerHTML == "Read Comic")
+				Download.get(readButtons[i]).show(readButtons[i]);
 	}
 	
 	init();
