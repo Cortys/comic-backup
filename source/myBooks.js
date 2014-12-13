@@ -1,12 +1,12 @@
 getSettings(function() {
-	
+
 	if(!settings.queueLength)
 		settings.queueLength = 1;
-	
+
 	updateDialog();
-	
+
 	var cssClass = randomString(20, 40),
-		readButtonSelector = ".read-comic.titleBtn:not(."+cssClass+")",
+		readButtonSelector = ".action-button.read-action:not(."+cssClass+")",
 		injectCss = function() {
 			var style = document.createElement("style");
 			style.type = "text/css";
@@ -18,24 +18,24 @@ getSettings(function() {
 			var c = document.querySelector("section.backup-container h1");
 			return c && c.innerHTML || "DRM-Free Backup";
 		})(),
-		
+
 		Download = function(button) {
 			this.readButton = button;
 			var t = this,
 				clone = t.downloadButton = button.cloneNode(false),
 				buttonComputedStyle = window.getComputedStyle(button);
-			
+
 			t.id = Download.counter++;
-			
+
 			Download.connections[this.readButton.href] = this;
-			
+
 			// create colors:
 			t.buttonBGs = {
 				normal: buttonComputedStyle.background,
 				gray: "#777777",
 				progress: "linear-gradient(to right, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.4) {X}%, rgba(0,0,0,0) {X}%, rgba(0,0,0,0) 100%), "+buttonComputedStyle.background
 			};
-			
+
 			// create clone:
 			clone.innerHTML = "<span class='text'>Scan Comic</span><span class='cancel'>Stop</span>";
 			clone.style.position = "relative";
@@ -43,18 +43,18 @@ getSettings(function() {
 			clone.style.textAlign = button.style.textAlign = "center";
 			clone.href = "javascript:";
 			clone.classList.add(cssClass);
-	
+
 			t.text = clone.firstChild;
-			
+
 			this.show = function(b) {
 				if(document.contains(clone))
 					return;
-				
+
 				if(b && b.href == button.href && b !== button)
 					button = this.readButton = b;
-				
+
 				button.parentNode.appendChild(clone);
-				
+
 				if(clone.previousElementSibling == button) {
 					var fragment = document.createDocumentFragment(),
 						cont = document.createElement("section");
@@ -65,7 +65,7 @@ getSettings(function() {
 					clone.parentNode.insertBefore(fragment, clone);
 				}
 			};
-			
+
 			if(settings.selectors)
 				clone.addEventListener("click", function() {
 					t[t.cancelable?"cancel":"start"]();
@@ -82,26 +82,26 @@ getSettings(function() {
 				t.showUnusable();
 			}
 		};
-	
+
 	Download.connections = {};
-	
+
 	Download.get = function(readButton) {
 		return this.connections[readButton.href] || new Download(readButton);
 	};
-	
+
 	Download.counter = 0;
 	Download.activeDownloads = 0;
 	Download.queue = new Queue();
 	Download.queue.resume = function() {
 		var d;
-		while(d = this.dequeue()) {
+		while((d = this.dequeue())) {
 			if(d.canceled)
 				continue;
 			d.start();
 			break;
 		}
 	};
-	
+
 	Download.prototype = {
 		id: 0,
 		readButton: null,
@@ -112,7 +112,7 @@ getSettings(function() {
 		cancelable: false,
 		canceled: false,
 		buttonBGs: null,
-	
+
 		setDownloading: function(bool) {
 			if(bool && !this.downloading)
 				Download.activeDownloads++;
@@ -122,12 +122,12 @@ getSettings(function() {
 			}
 			this.downloading = bool;
 		},
-	
+
 		setCancelable: function(bool) {
 			this.cancelable = bool;
 			this.downloadButton.classList.toggle("cancel", bool);
 		},
-		
+
 		openTab: function(active) {
 			var t = this;
 			port.send({ what:"open_background_tab", url:t.readButton.href, active:active }, function(tab) {
@@ -135,7 +135,7 @@ getSettings(function() {
 				downloadEvents[tab] = t;
 			});
 		},
-		
+
 		start: function() {
 			var t = this;
 			if(t.downloading)
@@ -149,7 +149,7 @@ getSettings(function() {
 			t.setDownloading(true);
 			t.showPrepare();
 		},
-		
+
 		cancel: function() {
 			this.canceled = true;
 			this.showDefault();
@@ -160,9 +160,9 @@ getSettings(function() {
 			this.tab = null;
 			this.setDownloading(false);
 		},
-	
+
 		// event handlers (receiving messages from the downloading tab):
-	
+
 		events: {
 			"ready_to_download": function(callback) {
 				if(this.inactive)
@@ -191,9 +191,9 @@ getSettings(function() {
 				this["show"+(percentage=="zip"?"Zipping":percentage=="save"?"Saving":"Progress")](percentage);
 			}
 		},
-	
+
 		// UI behaviour:
-	
+
 		showQueued: function() {
 			this.text.innerHTML = "Queued...";
 			this.downloadButton.style.background = this.buttonBGs.normal;
@@ -253,11 +253,11 @@ getSettings(function() {
 			this.setCancelable(false);
 		}
 	};
-	
+
 	injectCss();
-	
+
 	var port = connector.connect({ name:"controller" });
-	
+
 	port.receive(function(request, callback) {
 		if(request.what == "child_message")
 			return downloadEvents[request.tab] && typeof downloadEvents[request.tab].events[request.message.what] == "function" &&
@@ -269,15 +269,15 @@ getSettings(function() {
 		else if(request.what == "child_broadcast" && request.message.what == "finished_scan")
 			location.reload();
 	});
-	
+
 	function init() {
 		var readButtons = document.body.querySelectorAll(readButtonSelector);
 		for(var i = 0; i < readButtons.length; i++)
 			Download.get(readButtons[i]).show(readButtons[i]);
 	}
-	
+
 	init();
-	
+
 	new MutationObserver(function(mutations) {
 		var reinit = false;
 		mutations.forEach(function(mutation) {

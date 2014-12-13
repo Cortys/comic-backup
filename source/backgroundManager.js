@@ -47,7 +47,7 @@ var ports = { // stores all opened connections of tabs to bg page
 					run();
 				}, create);
 			};
-			
+
 			if(!fs)
 				requestFileSystem(TEMPORARY, 4 * 1024 * 1024 * 1024, function (f) {
 					fs = f;
@@ -59,23 +59,23 @@ var ports = { // stores all opened connections of tabs to bg page
 	};
 
 getSettings(function() {
-	
+
 	connector.onConnect.addListener(function(port) {
-	
+
 		if(port.name == "download") {
 			port.receive(function(request, callback) {
 				downloadFile(request.name, request.data, request.overwrite, callback);
 			});
 			return true;
 		}
-	
+
 		var sender = port.senderId = port.sender.tab.id;
-	
+
 		ports[port.name][sender] = port;
-	
+
 		if(port.name == "controller")
 			port.children = {}; // each connection stores the ids of the tabs it opened as children; key = tab id, value always true
-	
+
 		if(port.name == "reader") // ZIPPING logic - moved to background script to have a dedicated tab/thread for compression so that it doesn't make the reader tab itself slow
 			port.receive(function(request, callback) {
 				if(request.what == "new_zip") {
@@ -121,16 +121,12 @@ getSettings(function() {
 					return true;
 				}
 				else if(request.what == "message_to_opener" && openers[sender] !== "undefined" && ports.controller[openers[sender]]) {
-					ports.controller[openers[sender]].send({ what:"child_message", tab:sender, message:request.message }, function(data) {
-						callback(data);
-					});
+					ports.controller[openers[sender]].send({ what:"child_message", tab:sender, message:request.message }, callback);
 					return true;
 				}
 				else if(request.what == "broadcast_to_openers") {
 					for(var tab in ports.controller) {
-						ports.controller[tab].send({ what:"child_broadcast", tab:sender, message:request.message }, function(data) {
-							callback(data);
-						});
+						ports.controller[tab].send({ what:"child_broadcast", tab:sender, message:request.message }, callback);
 					}
 					return true;
 				}
@@ -156,20 +152,20 @@ getSettings(function() {
 					return true;
 				}
 			});
-	
+
 		var disconnectAction = port.name == "controller"?function() {
 			for (var tab in port.children)
 				if(ports.reader[tab] && !ports.reader[tab].unlinked)
 					chrome.tabs.remove(tab*1);
 		}:closedReader;
-	
+
 		port.onDisconnect.addListener(function() {
 			delete ports[port.name][sender];
 			disconnectAction(port);
 			port = sender = null;
 		});
 	});
-	
+
 });
 
 chrome.runtime.onMessage.addListener(function(message) {
