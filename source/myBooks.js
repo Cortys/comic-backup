@@ -37,14 +37,15 @@ getSettings(function() {
 			};
 
 			// create clone:
-			clone.innerHTML = "<span class='text'>Scan Comic</span><span class='cancel'>Stop</span>";
+			var randomId = randomString(20, 40); // make sure cmxlgy can not break button text rendering by changing class names
+			clone.innerHTML = button.innerHTML.replace(button.innerText.trim(), "<span class='text "+randomId+"'>Scan Comic</span><span class='cancel'>Stop</span>");
 			clone.style.position = "relative";
 			clone.style.width = parseInt(button.style.width = buttonComputedStyle.width) + "px";
 			clone.style.textAlign = button.style.textAlign = "center";
 			clone.href = "javascript:";
 			clone.classList.add(cssClass);
 
-			t.text = clone.firstChild;
+			t.text = clone.querySelector("span.text."+randomId);
 
 			this.show = function(b) {
 				if(document.contains(clone))
