@@ -51,7 +51,7 @@ getSettings(function() {
 				if(document.contains(clone))
 					return;
 
-				if(b && b.href == button.href && b !== button)
+				if(b && b.href == button.href && b !== button) // after switching pages via ajax new button html elements are created, those will be linked to the internal download object
 					button = this.readButton = b;
 
 				button.parentNode.appendChild(clone);
