@@ -54,17 +54,29 @@ getSettings(function() {
 				if(b && b.href == button.href && b !== button) // after switching pages via ajax new button html elements are created, those will be linked to the internal download object
 					button = this.readButton = b;
 
-				button.parentNode.appendChild(clone);
+				var parent = function goUp(button) { // recursively search for right parent element of read button
+					if(button == null)
+						return null;
+					if(button.matches(".item-actions"))
+						return button;
+					return goUp(button.parentElement);
+				}(button), backupContainer = parent?parent.querySelector(".backup-container"):null;
 
-				if(clone.previousElementSibling == button) {
+				if(!parent)
+					return;
+
+				if(!backupContainer) {
 					var fragment = document.createDocumentFragment(),
 						cont = document.createElement("section");
 					fragment.appendChild(document.createElement("hr"));
 					cont.setAttribute("class", "backup-container");
 					cont.innerHTML = "<h1>"+backupText+"</h1>";
+					cont.appendChild(clone);
 					fragment.appendChild(cont);
-					clone.parentNode.insertBefore(fragment, clone);
+					parent.insertBefore(fragment, parent.querySelector(".archive-actions"));
 				}
+				else
+					backupContainer.appendChild(clone);
 			};
 
 			if(settings.selectors)
@@ -198,18 +210,18 @@ getSettings(function() {
 		showQueued: function() {
 			this.text.innerHTML = "Queued...";
 			this.downloadButton.style.background = this.buttonBGs.normal;
-			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(160deg)";
+			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(220deg)";
 			this.setCancelable(true);
 		},
 		showPrepare: function() {
 			this.text.innerHTML = "Preparing...";
 			this.downloadButton.style.background = this.buttonBGs.normal;
-			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(190deg)";
+			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(245deg)";
 			this.setCancelable(true);
 		},
 		showProgress: function(percentage) {
 			this.downloadButton.style.background = this.buttonBGs.progress.replace(/\{X\}/g, percentage);
-			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(190deg)";
+			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(245deg)";
 			this.text.innerHTML = percentage + "%";
 			this.setCancelable(true);
 		},
@@ -222,25 +234,25 @@ getSettings(function() {
 		},
 		showDone: function() {
 			this.downloadButton.style.removeProperty("background");
-			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(230deg)";
+			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(280deg)";
 			this.text.innerHTML = "Scan Again";
 			this.setCancelable(false);
 		},
 		showZipping: function() {
 			this.downloadButton.style.background = this.buttonBGs.normal;
-			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(200deg)";
+			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(260deg)";
 			this.text.innerHTML = "Zipping...";
 			this.setCancelable(true);
 		},
 		showSaving: function() {
 			this.downloadButton.style.background = this.buttonBGs.normal;
-			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(215deg)";
+			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(270deg)";
 			this.text.innerHTML = "Saving...";
 			this.setCancelable(false);
 		},
 		showInactive: function() {
 			this.downloadButton.style.removeProperty("background");
-			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(135deg)";
+			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(195deg)";
 			this.text.innerHTML = "Setup Scanner";
 			this.setCancelable(false);
 		},
