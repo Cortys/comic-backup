@@ -51,6 +51,9 @@ getSettings(function() {
 				if(document.contains(clone))
 					return;
 
+				if(button.parentNode.parentNode.querySelectorAll('.backup-container').length) // do not add scan for comics that already have DRM-free Backup option
+					return;
+
 				if(b && b.href == button.href && b !== button) // after switching pages via ajax new button html elements are created, those will be linked to the internal download object
 					button = this.readButton = b;
 
@@ -83,16 +86,12 @@ getSettings(function() {
 				clone.addEventListener("click", function() {
 					t[t.cancelable?"cancel":"start"]();
 				}, false);
-			else if(!this.id) {
+			else {
 				t.inactive = true;
 				clone.addEventListener("click", function() {
 					t.openTab(true);
 				}, false);
 				t.showInactive();
-			}
-			else {
-				clone.href = "#";
-				t.showUnusable();
 			}
 		};
 
@@ -254,15 +253,6 @@ getSettings(function() {
 			this.downloadButton.style.removeProperty("background");
 			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(195deg)";
 			this.text.innerHTML = "Setup Scanner";
-			this.setCancelable(false);
-		},
-		showUnusable: function() {
-			this.downloadButton.style.background = this.buttonBGs.gray;
-			this.downloadButton.style.border = "1px solid #555555";
-			this.downloadButton.style.cursor = "default";
-			this.downloadButton.style.removeProperty("filter");
-			this.downloadButton.style.removeProperty("-webkit-filter");
-			this.text.innerHTML = "Setup Required";
 			this.setCancelable(false);
 		}
 	};
