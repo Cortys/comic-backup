@@ -1,7 +1,13 @@
 //(C) 2013 Sperglord Enterprises
 //Code is under GNUGPLv3 - read http://www.gnu.org/licenses/gpl.html
 
-zip.workerScriptsPath = "/zip/";
+zip.useWebWorkers = true;
+
+zip.workerScriptsPath = "zip/";
+
+zip.workerScripts = {
+	deflater: ["z-worker.js", "deflate.js"]
+};
 
 var ports = { // stores all opened connections of tabs to bg page
 		reader: {}, // reader tab connections
@@ -30,7 +36,7 @@ var ports = { // stores all opened connections of tabs to bg page
 	getWriter = function(callback) {
 		var tmpName, run;
 		if(!settings.tempMemory || !requestFileSystem) {
-			callback(new zip.BlobWriter());
+			callback(new zip.BlobWriter("application/"+(settings.container?"zip":"x-cbz")));
 			fs = null;
 		}
 		else {
