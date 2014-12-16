@@ -498,7 +498,7 @@ function loadComic(callback, step) {
 		dom.getCanvasContainer().parentElement.addEventListener("DOMNodeRemoved", rmListener, false);
 		realClick(dom.browseButton);
 		firstPageFig = dom.activePage;
-		firstPage = (firstPageFig && firstPageFig.getAttribute(dom.pagenumAttr)*1+dom.pagenumCorrection) || 0;
+		firstPage = (firstPageFig && firstPageFig.getAttribute(dom.pagenumAttr)*1+dom.pagenumCorrection) || dom.pagenumCorrection;
 		pos = settings.start?firstPage-1:-1;
 		if(dom.isActiveOnepageButton())
 			start();
