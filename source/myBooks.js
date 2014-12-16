@@ -38,7 +38,7 @@ getSettings(function() {
 
 			// create clone:
 			var randomId = randomString(20, 40); // make sure cmxlgy can not break button text rendering by changing class names
-			clone.innerHTML = button.innerHTML.replace(button.innerText.trim(), "<span class='text "+randomId+"'>Scan Comic</span><span class='cancel'>Stop</span>");
+			clone.innerHTML = button.innerHTML.replace(button.innerText.trim(), "<span class='text "+randomId+"'></span><span class='cancel'>Stop</span>");
 			clone.style.position = "relative";
 			clone.style.width = parseInt(button.style.width = buttonComputedStyle.width) + "px";
 			clone.style.textAlign = button.style.textAlign = "center";
@@ -79,10 +79,12 @@ getSettings(function() {
 					backupContainer.appendChild(clone);
 			};
 
-			if(settings.selectors)
+			if(settings.selectors) {
 				clone.addEventListener("click", function() {
 					t[t.cancelable?"cancel":"start"]();
 				}, false);
+				t.showDefault();
+			}
 			else if(!this.id) {
 				t.inactive = true;
 				clone.addEventListener("click", function() {
@@ -209,13 +211,13 @@ getSettings(function() {
 
 		showQueued: function() {
 			this.text.innerHTML = "Queued...";
-			this.downloadButton.style.background = this.buttonBGs.normal;
+			this.downloadButton.style.removeProperty("background");
 			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(220deg)";
 			this.setCancelable(true);
 		},
 		showPrepare: function() {
 			this.text.innerHTML = "Preparing...";
-			this.downloadButton.style.background = this.buttonBGs.normal;
+			this.downloadButton.style.removeProperty("background");
 			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(245deg)";
 			this.setCancelable(true);
 		},
@@ -227,8 +229,7 @@ getSettings(function() {
 		},
 		showDefault: function() {
 			this.downloadButton.style.removeProperty("background");
-			this.downloadButton.style.removeProperty("filter");
-			this.downloadButton.style.removeProperty("-webkit-filter");
+			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(55deg)";
 			this.text.innerHTML = "Scan Comic";
 			this.setCancelable(false);
 		},
@@ -239,13 +240,13 @@ getSettings(function() {
 			this.setCancelable(false);
 		},
 		showZipping: function() {
-			this.downloadButton.style.background = this.buttonBGs.normal;
+			this.downloadButton.style.removeProperty("background");
 			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(260deg)";
 			this.text.innerHTML = "Zipping...";
 			this.setCancelable(true);
 		},
 		showSaving: function() {
-			this.downloadButton.style.background = this.buttonBGs.normal;
+			this.downloadButton.style.removeProperty("background");
 			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(270deg)";
 			this.text.innerHTML = "Saving...";
 			this.setCancelable(false);
