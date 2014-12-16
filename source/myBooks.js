@@ -51,6 +51,9 @@ getSettings(function() {
 				if(document.contains(clone))
 					return;
 
+				if(button.parentNode.parentNode.querySelectorAll('.backup-container').length) // do not add scan for comics that already have DRM-free Backup option
+					return;
+
 				if(b && b.href == button.href && b !== button) // after switching pages via ajax new button html elements are created, those will be linked to the internal download object
 					button = this.readButton = b;
 
