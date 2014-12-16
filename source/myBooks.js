@@ -74,16 +74,12 @@ getSettings(function() {
 				clone.addEventListener("click", function() {
 					t[t.cancelable?"cancel":"start"]();
 				}, false);
-			else if(!this.id) {
+			else {
 				t.inactive = true;
 				clone.addEventListener("click", function() {
 					t.openTab(true);
 				}, false);
 				t.showInactive();
-			}
-			else {
-				clone.href = "#";
-				t.showUnusable();
 			}
 		};
 
@@ -245,15 +241,6 @@ getSettings(function() {
 			this.downloadButton.style.removeProperty("background");
 			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(135deg)";
 			this.text.innerHTML = "Setup Scanner";
-			this.setCancelable(false);
-		},
-		showUnusable: function() {
-			this.downloadButton.style.background = this.buttonBGs.gray;
-			this.downloadButton.style.border = "1px solid #555555";
-			this.downloadButton.style.cursor = "default";
-			this.downloadButton.style.removeProperty("filter");
-			this.downloadButton.style.removeProperty("-webkit-filter");
-			this.text.innerHTML = "Setup Required";
 			this.setCancelable(false);
 		}
 	};
