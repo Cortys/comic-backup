@@ -382,6 +382,19 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 			};
 		},
 
+		start = function() {
+			div.innerHTML = "Navigate to the first page of this comic.<br>";
+			var a = document.createElement("a");
+			a.setAttribute("style", linkStyle);
+			a.href = "javascript:";
+			a.innerHTML = "OK. I did.";
+			a.addEventListener("click", function(event) {
+				event.stopPropagation();
+				nextStep();
+			}, false);
+			div.appendChild(a);
+		},
+
 		end = function() {
 			window.alert("Scan completed.\nIf the backup still does not work, you should force a new scan in the options.");
 			document.documentElement.removeAttribute("scanning");
@@ -409,7 +422,7 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 		w(e.target);
 	}, false);
 
-	nextStep(); // start with first setup instruction
+	start();
 }
 
 // download the opened comic. a callback and a step function can be used.
