@@ -12,7 +12,7 @@ This is a Chrome/Chromium extension, that allows you to do just that. After inst
 Installation
 -----
 
-The installation is slightly complicated (since I don't want to add this to the Chrome Store). 
+The installation is slightly complicated (since I don't want to add this to the Chrome Store).
 There are two ways of installing the extension.
 
 ### *IMPORTANT* for Windows users
@@ -78,6 +78,6 @@ Project started by SpergLord Enterprises, LLC and continued by other awesome con
 
 If you have problems with the software/have an idea, add an issue on Github via Issues.
 
-The code is under GPLv3 licence. Code uses JSZip by Stuart Knightley and JavaScript-Canvas-to-Blob by Sebastian Tschan.
+The code is under GPLv3 licence. Code uses zip.js by Gildas Lormeau and JavaScript-Canvas-to-Blob by Sebastian Tschan.
 
 [League Gothic](https://github.com/theleagueof/league-gothic) by Caroline Hadilaksono, Micah Rich, & Tyler Finck is used.

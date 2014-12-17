@@ -498,21 +498,20 @@ function loadComic(callback, step) {
 		dom.getCanvasContainer().parentElement.addEventListener("DOMNodeRemoved", rmListener, false);
 		realClick(dom.browseButton);
 		firstPageFig = dom.activePage;
-		firstPage = (firstPageFig && firstPageFig.getAttribute(dom.pagenumAttr)*1+dom.pagenumCorrection) || dom.pagenumCorrection;
-		pos = settings.start?firstPage-1:-1;
+		firstPage = (firstPageFig && firstPageFig.getAttribute(dom.pagenumAttr)*1-settings.pagenumCorrection) || 0;
+		pos = settings.start?Math.max(firstPage-1, -1):-1;
 		if(dom.isActiveOnepageButton())
 			start();
 		else {
 			realClick(dom.onepageButton);
-			var check = function() {
+			(function check() {
 				setTimeout(function() {
 					if(dom.isActiveOnepageButton())
 						start();
 					else
 						check();
 				}, 100);
-			};
-			check();
+			}());
 		}
 	});
 }
