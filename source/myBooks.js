@@ -6,7 +6,8 @@ getSettings(function() {
 	updateDialog();
 
 	var cssClass = randomString(20, 40),
-		readButtonSelector = ".action-button.read-action:not(."+cssClass+")",
+		allButtonSelector = ".action-button.read-action",
+		readButtonSelector = allButtonSelector+":not(."+cssClass+")",
 		injectCss = function() {
 			var style = document.createElement("style");
 			style.type = "text/css";
@@ -40,7 +41,6 @@ getSettings(function() {
 			var randomId = randomString(20, 40); // make sure cmxlgy can not break button text rendering by changing class names
 			clone.innerHTML = button.innerHTML.replace(button.innerText.trim(), "<span class='text "+randomId+"'></span><span class='cancel'>Stop</span>");
 			clone.style.position = "relative";
-			clone.style.width = parseInt(button.style.width = buttonComputedStyle.width) + "px";
 			clone.style.textAlign = button.style.textAlign = "center";
 			clone.href = "javascript:";
 			clone.classList.add(cssClass);
@@ -48,11 +48,14 @@ getSettings(function() {
 			t.text = clone.querySelector("span.text."+randomId);
 
 			this.show = function(b) {
-				if(document.contains(clone))
-					return;
 
 				if(b && b.href == button.href && b !== button) // after switching pages via ajax new button html elements are created, those will be linked to the internal download object
 					button = this.readButton = b;
+
+				clone.style.width = parseInt(button.style.width = window.getComputedStyle(button).width) + "px";
+
+				if(document.contains(clone))
+					return;
 
 				var parent = function goUp(button) { // recursively search for right parent element of read button
 					if(button == null)
@@ -282,13 +285,15 @@ getSettings(function() {
 	new MutationObserver(function(mutations) {
 		var reinit = false;
 		mutations.forEach(function(mutation) {
-			if(mutation.addedNodes && mutation.addedNodes.length)
+			if(mutation.addedNodes && mutation.addedNodes.length || (mutation.attributeName && !mutation.target.matches(allButtonSelector)))
 				reinit = true;
 		});
 		if(reinit)
 			init();
 	}).observe(document.getElementById("page_content_container"), {
 		childList: true,
-		subtree: true
+		subtree: true,
+		attributes: true,
+		attributeFilter: ["style"]
 	});
 });
