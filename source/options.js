@@ -23,10 +23,10 @@ for(var i = 0; i < selects.length; i++)
 				check();
 			});
 		};
-		
+
 		if(e.id == "selectors")
 			chrome.storage.local.get(["scannedOnce"], function(a) {
-				if(!a["scannedOnce"]) {
+				if(!a.scannedOnce) {
 					e.setAttribute("disabled", "1");
 					var p = document.createElement("p");
 					p.innerHTML="You have to do at least one scan before this can be disabled.";
@@ -38,8 +38,8 @@ for(var i = 0; i < selects.length; i++)
 			});
 		else
 			f();
-	})(selects[i]);
-	
+	}(selects[i]));
+
 document.getElementById("setServer").addEventListener("click", function() {
 	chrome.storage.local.get(["updateServer"], function(a) {
 		var r = window.prompt("Enter update server URL:", a.updateServer||"");

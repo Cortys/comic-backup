@@ -17,7 +17,7 @@ var port = connector.connect({ name:"reader" }),
 	delayMeasurement;
 
 getSettings(function() {
-	
+
 	// Disable delays if measurements for latency compensation were disabled in the settings:
 	if(!settings.latency)
 		delayMeasurement = {
@@ -47,7 +47,7 @@ getSettings(function() {
 					callback();
 			}
 		};
-	
+
 	// delete cached uncompleted zip-backups for this tab:
 	port.send({ what:"is_child" }, function(isChild) { // tab opened by extension -> autorun / else -> show bar
 		if(!isChild) {
@@ -55,7 +55,7 @@ getSettings(function() {
 				displayExploitBar();
 			return;
 		}
-		
+
 		port.send({ what:"message_to_opener", message:{ what:"ready_to_download" } }, function(start) {
 			if(start)
 				if(start.download)
@@ -68,7 +68,7 @@ getSettings(function() {
 					port.send({ what:"unlink_from_opener" });
 					setupSelectors();
 				}
-					
+
 		});
 	});
 });
@@ -121,17 +121,17 @@ function getPathFor(e, tryE) { // returns css selector that matches e and tryE a
 }
 
 function wordDiff(text1, text2) { // word wise difference of two strings (using diff_match_patch library)
-	
+
 	text1 = text1.trim()+" ";
 	text2 = text2.trim()+" ";
-	
+
 	var lineArray = [];  // e.g. lineArray[4] == 'Hello\n'
 	var lineHash = {};   // e.g. lineHash['Hello\n'] == 4
-	
+
 	// '\x00' is a valid character, but various debuggers don't like it.
 	// So we'll insert a junk entry to avoid generating a null character.
 	lineArray[0] = '';
-	
+
 	/**
 	* Split a text into an array of strings.  Reduce the texts to a string of
 	* hashes where each Unicode character represents one line.
@@ -156,7 +156,7 @@ function wordDiff(text1, text2) { // word wise difference of two strings (using 
 			}
 			var line = text.substring(lineStart, lineEnd + 1);
 			lineStart = lineEnd + 1;
-			
+
 			if (lineHash.hasOwnProperty ? lineHash.hasOwnProperty(line) :
 				(lineHash[line] !== undefined)) {
 				chars += String.fromCharCode(lineHash[line]);
@@ -168,13 +168,13 @@ function wordDiff(text1, text2) { // word wise difference of two strings (using 
 		}
 		return chars;
 	}
-	
+
 	var chars1 = diff_linesToCharsMunge_(text1);
 	var chars2 = diff_linesToCharsMunge_(text2),
-	
+
 		dmp = new diff_match_patch(),
 		result = dmp.diff_main(chars1, chars2, false);
-		
+
 	dmp.diff_charsToLines_(result, lineArray);
 	return result;
 }
@@ -197,18 +197,18 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 	canvasContainer: null,
 	browseButtonCached: null,
 	onepageButtonCached: null,
-	
+
 	isVisible: function(e) {
 		return e.style.display != "none" && e.style.visibility != "hidden";
 	},
 
 	get pages() {
-		return this.pagesCached = this.pagesCached || document.querySelectorAll(settings.selectorPages);
+		return (this.pagesCached = this.pagesCached) || document.querySelectorAll(settings.selectorPages);
 	},
 	get activePage() {
 		return document.querySelector(settings.selectorActivePage);
 	},
-	
+
 	loopCanvasContainers: function(f) {
 		var a = document.querySelectorAll("div.view"),
 			v;
@@ -217,23 +217,23 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 				return v;
 		return null;
 	},
-	
+
 	getCanvasContainer: function() {
 		var t = this;
 		if(t.canvasContainer && document.contains(t.canvasContainer) && t.isVisible(t.canvasContainer))
 			return this.canvasContainer;
-		return t.canvasContainer = t.loopCanvasContainers(function(a) {
+		return (t.canvasContainer = t.loopCanvasContainers(function(a) {
 			return a;
-		});
+		}));
 	},
 	get canvasElements() {
 		return this.canvasContainer.querySelectorAll("canvas");
 	},
 	get browseButton() {
-		return this.browseButtonCached = this.browseButtonCached || document.querySelector(settings.selectorBrowseButton);
+		return (this.browseButtonCached = this.browseButtonCached) || document.querySelector(settings.selectorBrowseButton);
 	},
 	get onepageButton() {
-		return this.onepageButtonCached = this.onepageButtonCached || document.querySelector(settings.selectorOnepageButton);
+		return (this.onepageButtonCached = this.onepageButtonCached) || document.querySelector(settings.selectorOnepageButton);
 	},
 	get activeOnepageButton() {
 		return document.querySelector(settings.selectorActiveOnepageButton);
@@ -356,7 +356,7 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 						return false;
 					for (var i = 0, v; i < attrs.length; i++) {
 						v = attrs[i].value.trim();
-						if(v != "" && isFinite(v) && !(v%1) && (smallestIntAttr === null || smallestIntAttr.value > v*1))
+						if(v !== "" && isFinite(v) && v%1 === 0 && (smallestIntAttr === null || smallestIntAttr.value > v*1))
 							smallestIntAttr = { value:v*1, name:attrs[i].name };
 					}
 					write.selectorPages = inactive;
@@ -381,7 +381,20 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 					fail();
 			};
 		},
-		
+
+		start = function() {
+			div.innerHTML = "Navigate to the first page of this comic.<br>";
+			var a = document.createElement("a");
+			a.setAttribute("style", linkStyle);
+			a.href = "javascript:";
+			a.innerHTML = "OK. I did.";
+			a.addEventListener("click", function(event) {
+				event.stopPropagation();
+				nextStep();
+			}, false);
+			div.appendChild(a);
+		},
+
 		end = function() {
 			window.alert("Scan completed.\nIf the backup still does not work, you should force a new scan in the options.");
 			document.documentElement.removeAttribute("scanning");
@@ -400,32 +413,32 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 			window.alert("Sorry. The scan failed.\nMaybe you should try again.");
 			window.location.reload();
 		};
-	
+
 	document.documentElement.setAttribute("scanning", "1");
-	
+
 	document.documentElement.addEventListener("click", listener = function(e) {
 		var w = waiter;
 		waiter = function() {};
 		w(e.target);
 	}, false);
-	
-	nextStep(); // start with first setup instruction
+
+	start();
 }
 
 // download the opened comic. a callback and a step function can be used.
 function loadComic(callback, step) {
-	
+
 	addTopBar();
 	overlay.style.display = "block";
-	
+
 	div.innerHTML = "Downloading comic... <span>0</span>%";
 	div.style.lineHeight = "50px";
-	
+
 	if(typeof callback != "function")
 		callback = function() {};
 	if(typeof step != "function")
 		step = function() {};
-	
+
 	if(!dom.getCanvasContainer() || dom.loaderVisible() || !dom.countCanvas()) // delay download if comic isn't displayed yet => reader not ready, first page is not loaded yet, first page is not displayed yet
 		return setTimeout(function() {
 			loadComic(callback, step);
@@ -461,7 +474,7 @@ function loadComic(callback, step) {
 					port.send({ what:"add_page", page:(settings.container!=2?page:null), i:pos, len:numLength, extension:(settings.page?"png":"jpeg"), toZip:(settings.container!=2) }, function(result) {
 						if(settings.container == 2)
 							downloadData(getName()+"/"+result.name, page, true);
-						
+
 						var perc = Math.round((pos + 1) / l * 100);
 						div.getElementsByTagName("span")[0].innerHTML = perc;
 						step(perc);
@@ -498,21 +511,20 @@ function loadComic(callback, step) {
 		dom.getCanvasContainer().parentElement.addEventListener("DOMNodeRemoved", rmListener, false);
 		realClick(dom.browseButton);
 		firstPageFig = dom.activePage;
-		firstPage = (firstPageFig && firstPageFig.getAttribute(dom.pagenumAttr)*1+dom.pagenumCorrection) || 0;
-		pos = settings.start?firstPage-1:-1;
+		firstPage = (firstPageFig && firstPageFig.getAttribute(dom.pagenumAttr)*1-settings.pagenumCorrection) || 0;
+		pos = settings.start?Math.max(firstPage-1, -1):-1;
 		if(dom.isActiveOnepageButton())
 			start();
 		else {
 			realClick(dom.onepageButton);
-			var check = function() {
+			(function check() {
 				setTimeout(function() {
 					if(dom.isActiveOnepageButton())
 						start();
 					else
 						check();
 				}, 100);
-			};
-			check();
+			}());
 		}
 	});
 }
@@ -522,7 +534,7 @@ function getName() {
 		return getName.title;
 	var title = document.getElementsByTagName('title');
 	if(title[0])
-		return getName.title = title[0].innerHTML.substr(0, title[0].innerHTML.lastIndexOf("-")).trim().replace(/\s/g, "_").replace(/[^a-z0-9#.()\[\]_-]/gi, "");
+		return (getName.title = title[0].innerHTML.substr(0, title[0].innerHTML.lastIndexOf("-")).trim().replace(/\s/g, "_").replace(/[^a-z0-9#.()\[\]_-]/gi, ""));
 	return "comic";
 }
 getName.title = null;
@@ -545,7 +557,7 @@ function getUsernameImage(ctx, w, h) {
 			hsl = rgbToHsl(data.data[q], data.data[q+1], data.data[q+2]);
 			if(c.charAt(e)*1 && hsl[2] < 0.65)
 				hsl[2] = 0.65;
-			else if(!(c.charAt(e)*1) && hsl[2] > 0.35)
+			else if(c.charAt(e)*1 === 0 && hsl[2] > 0.35)
 				hsl[2] = 0.35;
 			rgb = hslToRgb(hsl[0], hsl[1], hsl[2]);
 			data.data[q] = rgb[0];
@@ -553,7 +565,7 @@ function getUsernameImage(ctx, w, h) {
 			data.data[q+2] = rgb[2];
 		}
 	}
-	
+
 	return data;
 }
 
@@ -601,7 +613,7 @@ function getOpenedPage(callback) {
 		}
 		data = getUsernameImage(ctx, w, h);
 		ctx.putImageData(data, w-data.width, h-data.height);
-		
+
 		callback(outCanvas.toDataURL("image/"+(settings.page?"png":"jpeg")));
 	}
 	else {

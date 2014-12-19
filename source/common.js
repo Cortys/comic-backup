@@ -1,4 +1,4 @@
-var current_version = 111,
+var current_version = 112,
 	div, linkStyle = "color:#ffffff;font-weight:bold;background:linear-gradient(to bottom, rgb(115, 152, 200) 0%,rgb(179, 206, 233) 1%,rgb(82, 142, 204) 5%,rgb(79, 137, 200) 20%,rgb(66, 120, 184) 50%,rgb(49, 97, 161) 100%);padding:3px;text-decoration:none;display:inline-block;width:70px;text-align:center;height:22px;box-sizing:border-box;line-height:14px;border:1px solid rgb(49,96,166);",
 	settings;
 
@@ -53,18 +53,18 @@ function checkVersion(callback) {
 function addTopBar() {
 	if(div)
 		return;
-	
+
 	div = document.createElement("div");
-	
+
 	div.id = randomString(20,40);
-	
+
 	div.style.fontSize = "13px";
 	div.style.top = "50%";
 	div.style.width = "100%";
 	div.style.height = "54px";
 	div.style.marginTop = "-150px";
 	div.style.paddingTop = "4px";
-	
+
 	div.style.background = "linear-gradient(to bottom, rgba(0,0,0,0.9) 50%,rgba(0,0,0,0.7) 100%)";
 	div.style.color = "#ffffff";
 	div.style.textAlign = "center";
@@ -72,9 +72,9 @@ function addTopBar() {
 	div.style.zIndex = 2147483648;
 	div.style.cursor = "default";
 	div.style.overflow = "hidden";
-	
+
 	div.style.position = "fixed";
-	
+
 	document.documentElement.appendChild(div);
 }
 
@@ -94,7 +94,7 @@ if(typeof Element.prototype.matches !== "function")
 
 // Converts an RGB (0-255) color value to HSL (0-1)
 function rgbToHsl(r, g, b) {
-	r /= 255, g /= 255, b /= 255;
+	r /= 255; g /= 255; b /= 255;
 
 	var max = Math.max(r, g, b),
 		min = Math.min(r, g, b);
@@ -128,28 +128,28 @@ function rgbToHsl(r, g, b) {
 function hslToRgb(h, s, l) {
 	var r, g, b;
 
-	if (s == 0) {
+	if (s === 0) {
 		r = g = b = l; // achromatic
 	} else {
-		function hue2rgb(p, q, t) {
-			if (t < 0) t += 1;
-			if (t > 1) t -= 1;
-			if (t < 1 / 6) return p + (q - p) * 6 * t;
-			if (t < 1 / 2) return q;
-			if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-			return p;
-		}
+		var q = l < 0.5 ? l * (1 + s) : l + s - l * s,
+			p = 2 * l - q;
 
-		var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-		var p = 2 * l - q;
-
-		r = hue2rgb(p, q, h + 1 / 3);
-		g = hue2rgb(p, q, h);
-		b = hue2rgb(p, q, h - 1 / 3);
+		r = hslToRgb.hue2rgb(p, q, h + 1 / 3);
+		g = hslToRgb.hue2rgb(p, q, h);
+		b = hslToRgb.hue2rgb(p, q, h - 1 / 3);
 	}
 
 	return [r * 255, g * 255, b * 255];
 }
+
+hslToRgb.hue2rgb = function hue2rgb(p, q, t) {
+	if (t < 0) t += 1;
+	if (t > 1) t -= 1;
+	if (t < 1 / 6) return p + (q - p) * 6 * t;
+	if (t < 1 / 2) return q;
+	if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+	return p;
+};
 
 /**
  * dataURLtoBlob by github.com/blueimp/JavaScript-Canvas-to-Blob
@@ -188,15 +188,15 @@ function Queue(){var a=[],b=0;this.getLength=function(){return a.length-b};this.
 var connector = Object.create(chrome.runtime);
 
 connector.mutatePort = function(port) {
-	
-	var c = 1, l = new Queue(), callbacks = {}
-	
+
+	var c = 1, l = new Queue(), callbacks = {};
+
 	port.send = function(msg, callback) {
 		var id = l.dequeue() || c++;
 		callbacks[id] = callback;
 		this.postMessage({ id:id, type:0, message:msg }); // type0 message: A transmits msg to B
 	};
-	
+
 	port.receive = function(callback) {
 		var t = this, called = false;
 		t.onMessage.addListener(function(msg) {
@@ -207,7 +207,7 @@ connector.mutatePort = function(port) {
 				t.postMessage({ id:msg.id, type:2 }); // type2 message: B chose to not respond to A => A is notified, that no response will come
 		});
 	};
-	
+
 	port.onMessage.addListener(function(msg) {
 		if(msg.id !== undefined && msg.type) {
 			var f = callbacks[msg.id];
@@ -217,7 +217,7 @@ connector.mutatePort = function(port) {
 			l.enqueue(msg.id);
 		}
 	});
-	
+
 	return port;
 };
 

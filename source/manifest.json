@@ -3,14 +3,14 @@
 
 	"name": "Comixology Backup",
 	"description": "Save your Comixology comics as standard CBZ files.",
-	"version": "2.0.1",
+	"version": "2.0.2",
 	"minimum_chrome_version": "31",
-	
+
 	"icons": {
 		"128": "logo128.png",
 		"48": "logo48.png"
 	},
-	
+
 	"permissions": [
 		"tabs",
 		"activeTab",
@@ -18,10 +18,11 @@
 		"downloads",
 		"*://*/"
 	],
-	
+
 	"background": {
 		"scripts": [
 			"zip/zip.js",
+			"zip/mime-types.js",
 			"zip/zip-ext.js",
 			"zip/zip-fs.js",
 			"common.js",
@@ -29,7 +30,7 @@
 		],
 		"persistent": false
 	},
-	
+
 	"content_scripts": [
 		{
 			"matches": ["*://www.comixology.com/comic-reader/*","*://www.comixology.eu/comic-reader/*","*://www.comixology.co.uk/comic-reader/*","*://www.comixology.fr/comic-reader/*","*://www.comixology.de/comic-reader/*"],
@@ -45,8 +46,8 @@
 			"run_at": "document_end"
 		}
 	],
-	
+
 	"options_page": "options.html",
-		
+
 	"web_accessible_resources": ["ajax-loader.gif"]
 }
