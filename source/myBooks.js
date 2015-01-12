@@ -159,8 +159,8 @@ getSettings(function() {
 				t.showQueued();
 				return Download.queue.enqueue(t);
 			}
-			t.openTab(false);
 			t.setDownloading(true);
+			t.openTab(false);
 			t.showPrepare();
 		},
 
@@ -193,13 +193,20 @@ getSettings(function() {
 				this.setDownloading(false);
 				this.showDone();
 			},
+			"download_failed": function() {
+				port.send({ what:"close_background_tab", tab:this.tab });
+				delete downloadEvents[this.tab];
+				this.tab = null;
+				this.setDownloading(false);
+				this.showError();
+			},
 			"closed_background_tab": function() {
 				if(!this.downloading)
 					return;
 				delete downloadEvents[this.tab];
 				this.tab = null;
 				this.setDownloading(false);
-				this.showDefault();
+				this.showError();
 			},
 			"download_progress": function(callback, percentage) {
 				this["show"+(percentage=="zip"?"Zipping":percentage=="save"?"Saving":"Progress")](percentage);
@@ -236,6 +243,12 @@ getSettings(function() {
 			this.downloadButton.style.removeProperty("background");
 			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(280deg)";
 			this.text.innerHTML = "Scan Again";
+			this.setCancelable(false);
+		},
+		showError: function() {
+			this.downloadButton.style.removeProperty("background");
+			this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(195deg)";
+			this.text.innerHTML = "Scan Failed";
 			this.setCancelable(false);
 		},
 		showZipping: function() {

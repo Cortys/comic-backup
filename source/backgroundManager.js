@@ -6,22 +6,24 @@ zip.useWebWorkers = true;
 zip.workerScriptsPath = "zip/";
 
 zip.workerScripts = {
-	deflater: ["z-worker.js", "deflate.js"]
+	deflater: ["z-worker.js", "zlib-asm/zlib.js", "zlib-asm/codecs.js"]
 };
 
-var ports = { // stores all opened connections of tabs to bg page
+var ports = { // stores all opened connections of tabs to bg page: key = tab id, value = port object
 		reader: {}, // reader tab connections
 		controller: {} // controller tab connections
 	},
 	openers = {}, // contains the opener tab id as value for each child tab id as key
 	closedReader = function(port) {
 		var sender = port.senderId;
-		if(!port.zipFile)
-			URL.revokeObjectURL(port.zipUrl);
-		else
-			port.zipFile.remove(function() {
-				port.zipFile = null;
-			});
+		if(!port.fake) { // used when a reader is closed, that was not yet initialized and connected via its own port.
+			if(!port.zipFile)
+				URL.revokeObjectURL(port.zipUrl);
+			else
+				port.zipFile.remove(function() {
+					port.zipFile = null;
+				});
+		}
 		if(typeof openers[sender] !== "undefined") {
 			var opener = ports.controller[openers[sender]];
 			if(opener) {
@@ -89,9 +91,11 @@ getSettings(function() {
 						port.zipFile = zipFile;
 						zip.createWriter(writer, function(writer) {
 							port.zip = writer;
-							writer.add(".meta.asc", new zip.TextReader("This is a ComiXology backup.\nPlease do not distribute it.\nBackup created by "+(request.user||"[UNKNOWN USER]")));
-							callback({ what:"new_zip_created" });
-						});
+							//writer.add(".meta.asc", new zip.TextReader("This is a ComiXology backup.\nPlease do not distribute it.\nBackup created by "+(request.user||"[UNKNOWN USER]")));
+							callback({ what:"new_zip_created", error:false });
+						}, function() {
+							callback({ what:"zip_creation_failed", error:true });
+						}, !settings.compression);
 					});
 					return true;
 				}
@@ -177,4 +181,9 @@ getSettings(function() {
 chrome.runtime.onMessage.addListener(function(message) {
 	if(message == "update_settings")
 		getSettings();
+});
+
+chrome.tabs.onRemoved.addListener(function(tab) {
+	if(!ports.reader[tab] && tab in openers) // tab is a backup-purpose reader but there is no port connection yet:
+		closedReader({ senderId:tab, fake:true }); // port disconnect wont fire, so it will be "faked".
 });
