@@ -1,4 +1,4 @@
-var current_version = 112,
+var current_version = 113,
 	div, linkStyle = "color:#ffffff;font-weight:bold;background:linear-gradient(to bottom, rgb(115, 152, 200) 0%,rgb(179, 206, 233) 1%,rgb(82, 142, 204) 5%,rgb(79, 137, 200) 20%,rgb(66, 120, 184) 50%,rgb(49, 97, 161) 100%);padding:3px;text-decoration:none;display:inline-block;width:70px;text-align:center;height:22px;box-sizing:border-box;line-height:14px;border:1px solid rgb(49,96,166);",
 	settings;
 
@@ -180,8 +180,78 @@ function dataURLtoBlob(dataURI) {
 	return new Blob([intArray], {type: mimeString});
 }
 
-// Queue implementation by code.stephenmorley.org
-function Queue(){var a=[],b=0;this.getLength=function(){return a.length-b};this.isEmpty=function(){return 0==a.length};this.enqueue=function(b){a.push(b)};this.dequeue=function(){if(0!=a.length){var c=a[b];2*++b>=a.length&&(a=a.slice(b),b=0);return c}};this.peek=function(){return 0<a.length?a[b]:void 0}};
+/*
+
+Queue.js
+
+A function to represent a queue
+
+Created by Stephen Morley - http://code.stephenmorley.org/ - and released under
+the terms of the CC0 1.0 Universal legal code:
+
+http://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+*/
+
+/* Creates a new queue. A queue is a first-in-first-out (FIFO) data structure -
+* items are added to the end of the queue and removed from the front.
+*/
+function Queue(){
+
+	// initialise the queue and offset
+	var queue  = [];
+	var offset = 0;
+
+	// Returns the length of the queue.
+	this.getLength = function() {
+		return (queue.length - offset);
+	};
+
+	// Returns true if the queue is empty, and false otherwise.
+	this.isEmpty = function() {
+		return (queue.length === 0);
+	};
+
+	/* Enqueues the specified item. The parameter is:
+	*
+	* item - the item to enqueue
+	*/
+	this.enqueue = function(item) {
+		queue.push(item);
+	};
+
+	/* Dequeues an item and returns it. If the queue is empty, the value
+	* 'undefined' is returned.
+	*/
+	this.dequeue = function() {
+
+		// if the queue is empty, return immediately
+		if (queue.length === 0) return undefined;
+
+		// store the item at the front of the queue
+		var item = queue[offset];
+		queue[offset] = undefined;
+
+		// increment the offset and remove the free space if necessary
+		if (++ offset * 2 >= queue.length){
+			queue  = queue.slice(offset);
+			offset = 0;
+		}
+
+		// return the dequeued item
+		return item;
+
+	};
+
+	/* Returns the item at the front of the queue (without dequeuing it). If the
+	* queue is empty then undefined is returned.
+	*/
+	this.peek = function() {
+		return (queue.length > 0 ? queue[offset] : undefined);
+	};
+
+}
+// END //
 
 // Custom communication API to enable callbacks in continous connections between content and background scripts:
 

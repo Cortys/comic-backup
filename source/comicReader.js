@@ -59,8 +59,8 @@ getSettings(function() {
 		port.send({ what:"message_to_opener", message:{ what:"ready_to_download" } }, function(start) {
 			if(start)
 				if(start.download)
-					loadComic(function() {
-						port.send({ what:"message_to_opener", message:{ what:"finished_download" } });
+					loadComic(function(err) {
+						port.send({ what:"message_to_opener", message:{ what:err?"download_failed":"finished_download" } });
 					}, function(perc) {
 						port.send({ what:"message_to_opener", message:{ what:"download_progress", data:perc } });
 					});
@@ -507,7 +507,9 @@ function loadComic(callback, step) {
 				start();
 		}, firstPage = 0, firstPageFig = null;
 
-	port.send({ what:"new_zip", user:getUsername() }, function() {
+	port.send({ what:"new_zip", user:getUsername() }, function(result) {
+		if(result.error) // zip creation failed: stop backup immediately.
+			return callback(new Error("Zip creation failed."));
 		dom.getCanvasContainer().parentElement.addEventListener("DOMNodeRemoved", rmListener, false);
 		realClick(dom.browseButton);
 		firstPageFig = dom.activePage;

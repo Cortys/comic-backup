@@ -69,7 +69,7 @@ How to use
 
 How it works
 -----
-You can look at the source code - but basically, it fetches the pixels of the canvas elements that compose the opened page, puts them together, and then it downloads those zipped using JSZip or as single image blobs using JavaScript-Canvas-to-Blob.
+You can look at the source code - but basically, it fetches the pixels of the canvas elements that compose the opened page, puts them together, and then it downloads those zipped using zip.js or as single image blobs using JavaScript-Canvas-to-Blob.
 
 About, licence
 ----

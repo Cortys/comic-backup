@@ -3,7 +3,7 @@
 
 	"name": "Comixology Backup",
 	"description": "Save your Comixology comics as standard CBZ files.",
-	"version": "2.0.2",
+	"version": "2.0.3",
 	"minimum_chrome_version": "31",
 
 	"icons": {
