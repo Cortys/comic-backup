@@ -6,7 +6,7 @@ zip.useWebWorkers = true;
 zip.workerScriptsPath = "zip/";
 
 zip.workerScripts = {
-	deflater: ["z-worker.js", "zlib-asm/zlib.js", "zlib-asm/codecs.js"]
+	deflater: ["z-worker.js", "deflate.js"]
 };
 
 var ports = { // stores all opened connections of tabs to bg page: key = tab id, value = port object
@@ -84,14 +84,19 @@ getSettings(function() {
 		if(port.name == "controller")
 			port.children = {}; // each connection stores the ids of the tabs it opened as children; key = tab id, value always true
 
-		if(port.name == "reader") // ZIPPING logic - moved to background script to have a dedicated tab/thread for compression so that it doesn't make the reader tab itself slow
+		/* ZIPPING logic
+		* moved to background script to have a dedicated tab/thread for compression so
+		* that it doesn't make the reader tab itself slow
+		*/
+		if(port.name == "reader")
 			port.receive(function(request, callback) {
 				if(request.what == "new_zip") {
 					getWriter(function (writer, zipFile) {
 						port.zipFile = zipFile;
 						zip.createWriter(writer, function(writer) {
 							port.zip = writer;
-							//writer.add(".meta.asc", new zip.TextReader("This is a ComiXology backup.\nPlease do not distribute it.\nBackup created by "+(request.user||"[UNKNOWN USER]")));
+							port.user = request.user;
+							writer.add(".meta.asc", new zip.TextReader("This is a ComiXology backup.\nPlease do not distribute it.\nBackup created by "+(request.user||"[UNKNOWN USER]")));
 							callback({ what:"new_zip_created", error:false });
 						}, function() {
 							callback({ what:"zip_creation_failed", error:true });
@@ -105,7 +110,7 @@ getSettings(function() {
 					if(request.toZip && port.zip) {
 						port.zip.add(name, new zip.Data64URIReader(request.page), function() {
 							d();
-						});
+						}, undefined, { comment: port.user });
 						return true;
 					}
 					d();
@@ -145,19 +150,24 @@ getSettings(function() {
 				else if(request.what == "unlink_from_opener") // prevents tab to be closed if opener is closed (reader and opener are still connected though and can send messages)
 					port.unlinked = true;
 			});
-		else if(port.name == "controller") // TAB handling logic for the controller tabs (like "My Books")
+		/*
+		* TAB HANDLING logic
+		* for the controller tabs (like "My Books")
+		*/
+		else if(port.name == "controller")
 			port.receive(function(request, callback) {
 				if(request.what == "open_background_tab") {
 					chrome.tabs.create({ url:request.url, active:request.active }, function(tab) {
 						openers[tab.id] = sender;
 						port.children[tab.id] = true;
+						ports.reader[tab.id] = true; // fake a reader port, as long as reader wasn't loaded, boolean to make it easy to check for "real" port objects
 						callback(tab.id);
 					});
 					return true;
 				}
 				else if(request.what == "close_background_tab")
 					chrome.tabs.remove(request.tab);
-				else if(request.what == "message_to_child" && ports.reader[request.tab]) {
+				else if(request.what == "message_to_child" && typeof ports.reader[request.tab] == "object") {
 					ports.reader[request.tab].send({ what:"opener_message", message:request.message }, callback);
 					return true;
 				}
@@ -165,6 +175,8 @@ getSettings(function() {
 
 		var disconnectAction = port.name == "controller"?function() {
 			for (var tab in port.children)
+				// only not YET estabished or established linked port connections are allowed:
+				// children that once had a port are not closed (if the user started surfing in a backup tab)
 				if(ports.reader[tab] && !ports.reader[tab].unlinked)
 					chrome.tabs.remove(tab*1);
 		}:closedReader;
@@ -178,12 +190,23 @@ getSettings(function() {
 
 });
 
-chrome.runtime.onMessage.addListener(function(message) {
-	if(message == "update_settings")
-		getSettings();
-});
-
 chrome.tabs.onRemoved.addListener(function(tab) {
 	if(!ports.reader[tab] && tab in openers) // tab is a backup-purpose reader but there is no port connection yet:
 		closedReader({ senderId:tab, fake:true }); // port disconnect wont fire, so it will be "faked".
+});
+
+// Old communication channel to options page. Separated from the port system to reduce memory and logic overhead.
+chrome.runtime.onMessage.addListener(function(request) {
+	// Only used when settings are changed (e.g. notify background zipper when compression settings were changed at runtime):
+	if(request.what == "update_settings")
+		getSettings();
+	// Broadcast messages to all readers:
+	else if(request.what == "reader_message")
+		ports.reader.forEach(function(v) {
+			v.send(request.message);
+		});
+	// Broadcast messages to all controllers:
+	else if(request.what == "controller_message")
+		for(var i in ports.controller)
+			ports.controller[i].send(request.message);
 });

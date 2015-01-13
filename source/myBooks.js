@@ -105,6 +105,17 @@ getSettings(function() {
 
 	Download.counter = 0;
 	Download.activeDownloads = 0;
+
+	Download.updateParallelism = function(newLimit) {
+		settings.queueLength = newLimit;
+		if(newLimit > 0)
+			for(var i = this.activeDownloads; i < newLimit; i++)
+				this.queue.resume();
+		else
+			while(this.queue.resume());
+	};
+
+	// Queue definition: Stores all backup requests
 	Download.queue = new Queue();
 	Download.queue.resume = function() {
 		var d;
@@ -112,8 +123,9 @@ getSettings(function() {
 			if(d.canceled)
 				continue;
 			d.start();
-			break;
+			return true;
 		}
+		return false;
 	};
 
 	Download.prototype = {
@@ -283,8 +295,10 @@ getSettings(function() {
 				callback,
 				request.message.data
 			);
-		else if(request.what == "child_broadcast" && request.message.what == "finished_scan")
+		else if((request.what == "child_broadcast" && request.message.what == "finished_scan") || request.what == "reload_page")
 			location.reload();
+		else if(request.what == "update_queue")
+			Download.updateParallelism(request.data);
 	});
 
 	function init() {
