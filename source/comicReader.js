@@ -203,7 +203,15 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 	},
 
 	get pages() {
-		return (this.pagesCached = this.pagesCached) || document.querySelectorAll(settings.selectorPages);
+		return (this.pagesCached = this.pagesCached || function() {
+
+			var pages = document.querySelectorAll(settings.selectorPages);
+
+			if(pages.length > 1 && pages[0].getAttribute(this.pagenumAttr) * 1 > pages[pages.length - 1].getAttribute(this.pagenumAttr) * 1)
+				pages = Array.prototype.slice.call(pages, 0).reverse();
+
+			return pages;
+		}.call(this));
 	},
 	get activePage() {
 		return document.querySelector(settings.selectorActivePage);
