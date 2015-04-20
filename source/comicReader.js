@@ -1,4 +1,3 @@
-//(C) 2013 Sperglord Enterprises
 //Code is under GNUGPLv3 - read http://www.gnu.org/licenses/gpl.html
 
 var overlay = document.createElement("div");
@@ -203,7 +202,7 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 	},
 
 	get pages() {
-		return (this.pagesCached = this.pagesCached || function() {
+		return (this.pagesCached = this.pagesCached) || function() {
 
 			var pages = document.querySelectorAll(settings.selectorPages);
 
@@ -211,7 +210,7 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 				pages = Array.prototype.slice.call(pages, 0).reverse();
 
 			return pages;
-		}.call(this));
+		}.call(this);
 	},
 	get activePage() {
 		return document.querySelector(settings.selectorActivePage);
@@ -476,8 +475,6 @@ function loadComic(callback, step) {
 		}, changeWaiter = null,
 		interval = function() {
 			nextPage(function() {
-				var bef = dom.canvasContainer;
-				dom.getCanvasContainer();
 				getOpenedPage(function(page) {
 					port.send({ what:"add_page", page:(settings.container!=2?page:null), i:pos, len:numLength, extension:(settings.page?"png":"jpeg"), toZip:(settings.container!=2) }, function(result) {
 						if(settings.container == 2)
@@ -507,10 +504,16 @@ function loadComic(callback, step) {
 			});
 		}, rmListener = function(e) {
 			delayMeasurement.stop();
-			if (typeof changeWaiter === "function" && (!dom.countCanvas() || !dom.isVisible(dom.canvasContainer))) {
-				changeWaiter();
-				changeWaiter = null;
-			}
+			var container = dom.canvasContainer;
+			if (typeof changeWaiter === "function" && (!dom.countCanvas() || !dom.isVisible(container)))
+				(function check() {
+					if(container === dom.getCanvasContainer())
+						setTimeout(check, 100);
+					else {
+						changeWaiter();
+						changeWaiter = null;
+					}
+				}());
 			else
 				start();
 		}, firstPage = 0, firstPageFig = null;
@@ -523,7 +526,7 @@ function loadComic(callback, step) {
 		firstPageFig = dom.activePage;
 		firstPage = (firstPageFig && firstPageFig.getAttribute(dom.pagenumAttr)*1-settings.pagenumCorrection) || 0;
 		pos = settings.start?Math.max(firstPage-1, -1):-1;
-		if(dom.isActiveOnepageButton())
+		if(dom.onepageButton == null || dom.isActiveOnepageButton())
 			start();
 		else {
 			realClick(dom.onepageButton);
@@ -607,10 +610,10 @@ function zipImages(callback) {
 // get data URL of the currently opened page in the reader (async! result is given to callback)
 function getOpenedPage(callback) {
 	var view = dom.getCanvasContainer(),
-		doneLoading = view && (view.style.webkitTransform || view.style.transform) && !dom.loaderVisible();
-	if(doneLoading) {
-		var canvasOnThisPage = dom.canvasElements,
-			w = parseInt(view.style.width),
+		doneLoading = view && (view.style.webkitTransform || view.style.transform) && !dom.loaderVisible(),
+		canvasOnThisPage = dom.canvasElements;
+	if(doneLoading && canvasOnThisPage.length) {
+		var w = parseInt(view.style.width),
 			h = parseInt(view.style.height),
 			outCanvas = document.createElement('canvas'),
 			ctx = outCanvas.getContext('2d'),
