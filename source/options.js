@@ -1,4 +1,4 @@
-var selects = document.getElementsByTagName("select");
+var selects = document.querySelectorAll("select, input");
 
 for(var i = 0; i < selects.length; i++)
 	(function(e) {
@@ -8,7 +8,16 @@ for(var i = 0; i < selects.length; i++)
 			e.addEventListener("change", function() {
 				var o = {},
 					message = e.getAttribute("data-message");
-				o[e.id] = e.value*1;
+
+				if(e.id === "updateServer")
+					o[e.id] = e.value.charAt(e.value.length-1) == "/" ? e.value.substr(0, e.value.length-1) : e.value;
+				else {
+					o[e.id] = e.value*1;
+					if(!Number.isFinite(o[e.id]))
+						return;
+					if(e.id === "pageSwapDelay" && o[e.id] < 0)
+						o[e.id] = 0;
+				}
 
 				if(message)
 					chrome.runtime.sendMessage({ what:"controller_message", message:{ what:message, data:o[e.id] } });
@@ -18,8 +27,12 @@ for(var i = 0; i < selects.length; i++)
 				});
 			}, false);
 			chrome.storage.local.get([e.id], function(a) {
-				if(a[e.id])
-					e.querySelector("option[value='"+a[e.id]+"']").selected = "selected";
+				if(e.id in a) {
+					if(e.tagName.match(/select/i))
+						e.querySelector("option[value='"+a[e.id]+"']").selected = "selected";
+					else
+						e.value = a[e.id];
+				}
 			});
 		};
 
@@ -39,11 +52,3 @@ for(var i = 0; i < selects.length; i++)
 	}(selects[i]));
 
 document.getElementById("content").style.visibility = "visible";
-
-document.getElementById("setServer").addEventListener("click", function() {
-	chrome.storage.local.get(["updateServer"], function(a) {
-		var r = window.prompt("Enter update server URL:", a.updateServer||"");
-		if(r || r === "")
-			chrome.storage.local.set({ updateServer:(r.charAt(r.length-1) == "/"?r.substr(0, r.length-1):r) });
-	});
-}, false);

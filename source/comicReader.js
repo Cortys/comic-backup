@@ -13,38 +13,30 @@ document.documentElement.appendChild(overlay);
 //ENTRANCE POINT FOR READER BACKUP LOGIC:
 
 var port = connector.connect({ name:"reader" }),
-	delayMeasurement;
+	swapPage;
 
 getSettings(function() {
 
-	// Disable delays if measurements for latency compensation were disabled in the settings:
-	if(!settings.latency)
-		delayMeasurement = {
-			start: function() {},
-			stop: function() {},
-			timeout: function(c) { c(); }
+	if(!("pageSwapDelay" in settings))
+		settings.pageSwapDelay = 500;
+
+	if(!settings.pageSwapDelay)
+		swapPage = function swapPage(callback) {
+			if(typeof callback === "function")
+				callback();
 		};
 	else
-		delayMeasurement = {
-			timestamp: null,
-			delay: 0,
-			start: function() {
-				this.timestamp = Date.now();
-			},
-			stop: function() {
-				if(!this.timestamp)
-					return;
-				var diff = Date.now()-this.timestamp;
-				if(diff > this.delay)
-					this.delay = diff;
-				this.timestamp = null;
-			},
-			timeout: function(callback) {
-				if(this.delay)
-					setTimeout(callback, this.delay);
-				else
-					callback();
-			}
+		swapPage = function swapPage(callback) {
+			var swap = function() {
+					swapPage.lastSwap = Date.now();
+					if(typeof callback === "function")
+						callback();
+				},
+				d = !swapPage.lastSwap ? 0 : settings.pageSwapDelay - (Date.now() - swapPage.lastSwap);
+			if(d <= 0)
+				swap();
+			else
+				setTimeout(swap, d);
 		};
 
 	// delete cached uncompleted zip-backups for this tab:
@@ -467,9 +459,11 @@ function loadComic(callback, step) {
 			}
 			else {
 				changeWaiter = callback;
-				delayMeasurement.timeout(function() {
-					delayMeasurement.start();
-					realClick(fig);
+				// Guarantee that at least settings.pageSwapDelay ms have passed between this and last swap:
+				swapPage(function() {
+					// Only swap if no other actor already swapped pages:
+					if(changeWaiter === callback)
+						realClick(fig);
 				});
 			}
 		}, changeWaiter = null,
@@ -503,7 +497,6 @@ function loadComic(callback, step) {
 				});
 			});
 		}, rmListener = function(e) {
-			delayMeasurement.stop();
 			var container = dom.canvasContainer;
 			if (typeof changeWaiter === "function" && (!dom.countCanvas() || !dom.isVisible(container)))
 				(function check() {
@@ -632,6 +625,6 @@ function getOpenedPage(callback) {
 	else {
 		setTimeout(function() {
 			getOpenedPage(callback);
-		}, 300);
+		}, 100);
 	}
 }

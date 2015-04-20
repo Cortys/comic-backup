@@ -54,7 +54,7 @@
 
 		select, input {
 			background: #eddfca;
-			border-radius: 5px;
+			border-radius: 3px;
 			background-image: linear-gradient(-180deg, #FCF8F2 0%, #DDBA89 61%);
 			border: 2px solid #3B3A3A;
 			font-size: 13px;
@@ -62,15 +62,28 @@
 			padding: 5px;
 			text-align: center;
 		}
-		select:active, input:active {
+		select:active, input:active, input:focus {
 			box-shadow: 0 0 10px #3b3a3a;
 		}
 
-		p {
+		input[type=text] {
+			background: #ffffff;
+			color: #3b3a3a;
+			text-align: left;
+			background-image: none;
+			width: 350px;
+			border-width: 1px;
+		}
+
+		p, section {
 			position: relative;
-			width: 500px;
+			width: 600px;
 			margin: 10px auto;
 			line-height: 20px;
+		}
+
+		section {
+			margin-top: 40px;
 		}
 
 		div.aligner {
@@ -82,6 +95,10 @@
 		}
 		div.aligner.r {
 			text-align: left;
+		}
+
+		#pageSwapDelay {
+			width: 50px;
 		}
 
 		#credits {
@@ -137,16 +154,13 @@
 		<p><i>If the limit is reached, every new download will be queued.</i></p>
 		<h2>Updates</h2>
 		<p>To get notifications about extension updates, you have to add an update server.</p>
-		<input value="Set update server" type="button" id="setServer">
+		<input placeholder="Update Server URL" type="text" id="updateServer">
 		<h2>I need help!</h2>
-		<p><b>How is "Scan" different from the official backup options?</b> When you backup a comic with this extension, it takes high quality screenshots from the web reader. Those are quite good but do not match the quality of the official downloads. You should use "Scan" if you want to have smaller files or a comic is not officially available for download.</p>
-		<p><b>The download never starts!</b> To use the extension make sure you disabled the <i>Prompt to continue</i> message in the settings of the web reader (click the gear to get there).</p>
-		<p><b>My backups stop randomly and/or have blank pages!</b> The latency in the ComiXology reader is quite unpredictable and can cause blank pages or even stop your backups. To circumvent that, you can enable latency compensation. This dynamically slows your backups down to match the readers rendering intervals. We try to keep the slowdown as low as possible but it's still noticable.</p>
-		Latency compensation: <select id="latency">
-			<option value="0">Disabled</option>
-			<option value="1">Enabled</option>
-		</select><br>
-		<p><b>It still does not work!</b> Sometimes ComiXology changes their reader code. If that happens you can force a new exploit scan and the plugin will try to detect a new way to backup your comics. In order to do that you will be asked to perform some actions the next time you open a comic.</p>
+		<section><b>How is "Scan" different from the official backup options?</b> When you backup a comic with this extension, it takes high quality screenshots from the web reader. Those are quite good but do not match the quality of the official downloads. You should use "Scan" if you want to have smaller files or a comic is not officially available for download.</section>
+		<section><b>The download never starts!</b> To use the extension make sure you disabled the <i>Prompt to continue</i> message in the settings of the web reader (click the gear to get there).</section>
+		<section><b>My backups stop randomly and/or have blank pages!</b> Network latencies and UI eventhandling delays in the ComiXology reader are quite unpredictable and can cause blank pages or even stop your backups. To circumvent that, you should increase the page swap interval. It determines the shortest allowed interval between two page swaps.</section>
+		Min. page swap interval: <input value="500" type="text" id="pageSwapDelay"> ms<br>
+		<section><b>It still does not work!</b> Sometimes ComiXology changes their reader code. If that happens you can force a new exploit scan and the plugin will try to detect a new way to backup your comics. In order to do that you will be asked to perform some actions the next time you open a comic.</section>
 		Force new exploit scan: <select id="selectors" data-message="reload_page">
 			<option value="0">Yes</option>
 			<option value="1">No</option>
