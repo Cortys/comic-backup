@@ -244,10 +244,12 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 		return settings.pagenumCorrection;
 	},
 	get loader() {
-		return document.querySelector(".loading");
+		return document.querySelectorAll(".loading");
 	},
 	loaderVisible: function() {
-		return this.loader && this.loader.style.display != "none";
+		return this.loader && this.loader.length && Array.prototype.reduce.call(this.loader, function(prev, curr) {
+			return prev || curr.style.display !== "none";
+		}, false);
 	},
 	isActivePage: function(page) {
 		return page.matches(settings.selectorActivePage);
@@ -427,6 +429,8 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 // download the opened comic. a callback and a step function can be used.
 function loadComic(callback, step) {
 
+	"use strict";
+
 	addTopBar();
 	overlay.style.display = "block";
 
@@ -446,6 +450,7 @@ function loadComic(callback, step) {
 		l = dom.pages.length,
 		numLength = String(l-1).length,
 		nextPage = function(callback) {
+			clearTimeout(noChangeTimeout);
 			pos++;
 			if (pos >= l) {
 				changeWaiter = null;
@@ -462,11 +467,21 @@ function loadComic(callback, step) {
 				// Guarantee that at least settings.pageSwapDelay ms have passed between this and last swap:
 				swapPage(function() {
 					// Only swap if no other actor already swapped pages:
-					if(changeWaiter === callback)
+					if(changeWaiter === callback) {
 						realClick(fig);
+						var a = Math.random();
+						console.log("NO CHANGE TIMEOUT START", a);
+						noChangeTimeout = setTimeout(function() {
+							console.log("NO CHANGE TIMEOUT END", a);
+							nextPage(callback);
+						}, settings.pageSwapDelay);
+					}
 				});
 			}
-		}, changeWaiter = null,
+		},
+		changeWaiter = null,
+		noChangeTimeout = null,
+
 		interval = function() {
 			nextPage(function() {
 				getOpenedPage(function(page) {
@@ -498,6 +513,7 @@ function loadComic(callback, step) {
 			});
 		}, rmListener = function(e) {
 			var container = dom.canvasContainer;
+			clearTimeout(noChangeTimeout);
 			if (typeof changeWaiter === "function" && (!dom.countCanvas() || !dom.isVisible(container)))
 				(function check() {
 					if(container === dom.getCanvasContainer())
@@ -507,8 +523,6 @@ function loadComic(callback, step) {
 						changeWaiter = null;
 					}
 				}());
-			else
-				start();
 		}, firstPage = 0, firstPageFig = null;
 
 	port.send({ what:"new_zip", user:getUsername() }, function(result) {
@@ -523,14 +537,9 @@ function loadComic(callback, step) {
 			start();
 		else {
 			realClick(dom.onepageButton);
-			(function check() {
-				setTimeout(function() {
-					if(dom.isActiveOnepageButton())
-						start();
-					else
-						check();
-				}, 100);
-			}());
+			pageLoaded(function() {
+				start();
+			});
 		}
 	});
 }
@@ -600,12 +609,22 @@ function zipImages(callback) {
 	});
 }
 
-// get data URL of the currently opened page in the reader (async! result is given to callback)
-function getOpenedPage(callback) {
+function pageLoaded(callback) {
 	var view = dom.getCanvasContainer(),
 		doneLoading = view && (view.style.webkitTransform || view.style.transform) && !dom.loaderVisible(),
 		canvasOnThisPage = dom.canvasElements;
-	if(doneLoading && canvasOnThisPage.length) {
+	if(doneLoading && canvasOnThisPage.length)
+		callback(view, canvasOnThisPage);
+	else {
+		setTimeout(function() {
+			pageLoaded(callback);
+		}, 100);
+	}
+}
+
+// get data URL of the currently opened page in the reader (async! result is given to callback)
+function getOpenedPage(callback) {
+	pageLoaded(function(view, canvasOnThisPage) {
 		var w = parseInt(view.style.width),
 			h = parseInt(view.style.height),
 			outCanvas = document.createElement('canvas'),
@@ -621,10 +640,5 @@ function getOpenedPage(callback) {
 		ctx.putImageData(data, w-data.width, h-data.height);
 
 		callback(outCanvas.toDataURL("image/"+(settings.page?"png":"jpeg")));
-	}
-	else {
-		setTimeout(function() {
-			getOpenedPage(callback);
-		}, 100);
-	}
+	});
 }
