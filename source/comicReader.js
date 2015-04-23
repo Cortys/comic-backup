@@ -260,13 +260,9 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 	countCanvas: function() {
 		return this.canvasElements.length;
 	},
-	countCanvasContainers: function() {
-		var i = 0;
-		this.loopCanvasContainers(function() {
-			i++;
-			return false;
-		});
-		return i;
+	isLoading: function() {
+		var view = dom.getCanvasContainer();
+		return !view || (!view.style.webkitTransform && !view.style.transform) || dom.loaderVisible() || !dom.canvasElements.length;
 	}
 };
 
@@ -469,11 +465,13 @@ function loadComic(callback, step) {
 					// Only swap if no other actor already swapped pages:
 					if(changeWaiter === callback) {
 						realClick(fig);
-						var a = Math.random();
+						var a = pos;
 						console.log("NO CHANGE TIMEOUT START", a);
 						noChangeTimeout = setTimeout(function() {
-							console.log("NO CHANGE TIMEOUT END", a);
-							nextPage(callback);
+							if(!dom.isLoading()) {
+								console.log("NO CHANGE TIMEOUT END", a);
+								nextPage(callback);
+							}
 						}, settings.pageSwapDelay);
 					}
 				});
@@ -610,21 +608,21 @@ function zipImages(callback) {
 }
 
 function pageLoaded(callback) {
-	var view = dom.getCanvasContainer(),
-		doneLoading = view && (view.style.webkitTransform || view.style.transform) && !dom.loaderVisible(),
-		canvasOnThisPage = dom.canvasElements;
-	if(doneLoading && canvasOnThisPage.length)
-		callback(view, canvasOnThisPage);
-	else {
+	if(!dom.isLoading())
+		callback();
+	else
 		setTimeout(function() {
 			pageLoaded(callback);
 		}, 100);
-	}
 }
 
 // get data URL of the currently opened page in the reader (async! result is given to callback)
 function getOpenedPage(callback) {
-	pageLoaded(function(view, canvasOnThisPage) {
+	pageLoaded(function() {
+
+		var view = dom.getCanvasContainer(),
+			canvasOnThisPage = dom.canvasElements;
+
 		var w = parseInt(view.style.width),
 			h = parseInt(view.style.height),
 			outCanvas = document.createElement('canvas'),
