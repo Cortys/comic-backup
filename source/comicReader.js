@@ -464,15 +464,14 @@ function loadComic(callback, step) {
 				swapPage(function() {
 					// Only swap if no other actor already swapped pages:
 					if(changeWaiter === callback) {
-						realClick(fig);
 						var a = pos;
-						console.log("NO CHANGE TIMEOUT START", a);
 						noChangeTimeout = setTimeout(function() {
 							if(!dom.isLoading()) {
 								console.log("NO CHANGE TIMEOUT END", a);
 								nextPage(callback);
 							}
 						}, settings.pageSwapDelay);
+						realClick(fig);
 					}
 				});
 			}
@@ -531,14 +530,11 @@ function loadComic(callback, step) {
 		firstPageFig = dom.activePage;
 		firstPage = (firstPageFig && firstPageFig.getAttribute(dom.pagenumAttr)*1-settings.pagenumCorrection) || 0;
 		pos = settings.start?Math.max(firstPage-1, -1):-1;
-		if(dom.onepageButton == null || dom.isActiveOnepageButton())
-			start();
-		else {
+		if(dom.onepageButton != null && !dom.isActiveOnepageButton())
 			realClick(dom.onepageButton);
-			pageLoaded(function() {
-				start();
-			});
-		}
+		pageLoaded(function() {
+			start();
+		});
 	});
 }
 
