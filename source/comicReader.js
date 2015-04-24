@@ -466,10 +466,8 @@ function loadComic(callback, step) {
 					if(changeWaiter === callback) {
 						var a = pos;
 						noChangeTimeout = setTimeout(function() {
-							if(!dom.isLoading()) {
-								console.log("NO CHANGE TIMEOUT END", a);
+							if(!dom.isLoading())
 								nextPage(callback);
-							}
 						}, settings.pageSwapDelay);
 						realClick(fig);
 					}
