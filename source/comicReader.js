@@ -438,12 +438,17 @@ function loadComic(callback, step) {
 	if(typeof step != "function")
 		step = function() {};
 
+	var l = dom.pages.length;
+
+	if(l < 1)
+		return callback(new Error("Found no pages to backup."));
+
 	if(!dom.getCanvasContainer() || dom.loaderVisible() || !dom.countCanvas()) // delay download if comic isn't displayed yet => reader not ready, first page is not loaded yet, first page is not displayed yet
 		return setTimeout(function() {
 			loadComic(callback, step);
 		}, 100);
+
 	var pos = -1,
-		l = dom.pages.length,
 		numLength = String(l-1).length,
 		nextPage = function(callback) {
 			clearTimeout(noChangeTimeout);
