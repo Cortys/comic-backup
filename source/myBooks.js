@@ -18,7 +18,7 @@ getSettings(function() {
 		backupText = (function() {
 			var c = document.querySelector("section.backup-container h1");
 			return c && c.innerHTML || "DRM-Free Backup";
-		})(),
+		}()),
 
 		Download = function(button) {
 			this.readButton = button;

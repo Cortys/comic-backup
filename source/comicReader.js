@@ -225,6 +225,13 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 			return a;
 		}));
 	},
+	get canvasContainerCount() {
+		var i = 0;
+		this.loopCanvasContainers(function() {
+			i++;
+		});
+		return i;
+	},
 	get canvasElements() {
 		return this.canvasContainer.querySelectorAll("canvas");
 	},
@@ -261,8 +268,8 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 		return this.canvasElements.length;
 	},
 	isLoading: function() {
-		var view = dom.getCanvasContainer();
-		return !view || (!view.style.webkitTransform && !view.style.transform) || dom.loaderVisible() || !dom.canvasElements.length;
+		var view;
+		return this.canvasContainerCount !== 1 || (view = dom.getCanvasContainer(), !view.style.webkitTransform && !view.style.transform) || dom.loaderVisible() || !dom.canvasElements.length;
 	}
 };
 
@@ -459,6 +466,7 @@ function loadComic(callback, step) {
 				return;
 			}
 			var fig = dom.pages[pos];
+			var a = pos;
 			if (dom.isActivePage(fig)) {
 				changeWaiter = null;
 				callback();
@@ -469,7 +477,6 @@ function loadComic(callback, step) {
 				swapPage(function() {
 					// Only swap if no other actor already swapped pages:
 					if(changeWaiter === callback) {
-						var a = pos;
 						noChangeTimeout = setTimeout(function() {
 							if(!dom.isLoading())
 								nextPage(callback);
