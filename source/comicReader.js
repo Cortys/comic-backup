@@ -466,7 +466,6 @@ function loadComic(callback, step) {
 				return;
 			}
 			var fig = dom.pages[pos];
-			var a = pos;
 			if (dom.isActivePage(fig)) {
 				changeWaiter = null;
 				callback();
@@ -476,10 +475,13 @@ function loadComic(callback, step) {
 				// Guarantee that at least settings.pageSwapDelay ms have passed between this and last swap:
 				swapPage(function() {
 					// Only swap if no other actor already swapped pages:
+					var canvasContainer = dom.canvasContainer;
 					if(changeWaiter === callback) {
 						noChangeTimeout = setTimeout(function() {
-							if(!dom.isLoading())
+							if(changeWaiter === callback && !dom.isLoading() && canvasContainer === dom.canvasContainer) {
+								changeWaiter = null;
 								nextPage(callback);
+							}
 						}, settings.pageSwapDelay);
 						realClick(fig);
 					}
@@ -519,17 +521,19 @@ function loadComic(callback, step) {
 				});
 			});
 		}, rmListener = function(e) {
-			var container = dom.canvasContainer;
 			clearTimeout(noChangeTimeout);
-			if (typeof changeWaiter === "function" && (!dom.countCanvas() || !dom.isVisible(container)))
+			var container = dom.canvasContainer,
+				waiter = changeWaiter;
+			
+			if (typeof waiter === "function" && (!dom.countCanvas() || !dom.isVisible(container))) {
+				changeWaiter = null;
 				(function check() {
 					if(container === dom.getCanvasContainer())
 						setTimeout(check, 100);
-					else {
-						changeWaiter();
-						changeWaiter = null;
-					}
+					else
+						waiter();
 				}());
+			}
 		}, firstPage = 0, firstPageFig = null;
 
 	port.send({ what:"new_zip", user:getUsername() }, function(result) {
