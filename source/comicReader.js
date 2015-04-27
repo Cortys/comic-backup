@@ -20,6 +20,9 @@ getSettings(function() {
 	if(!("pageSwapDelay" in settings))
 		settings.pageSwapDelay = 500;
 
+	if(!("pageSkipDelay" in settings))
+		settings.pageSkipDelay = 1000;
+
 	if(!settings.pageSwapDelay)
 		swapPage = function swapPage(callback) {
 			if(typeof callback === "function")
@@ -478,11 +481,11 @@ function loadComic(callback, step) {
 					var canvasContainer = dom.canvasContainer;
 					if(changeWaiter === callback) {
 						noChangeTimeout = setTimeout(function() {
-							if(changeWaiter === callback && !dom.isLoading() && canvasContainer === dom.canvasContainer) {
+							if(changeWaiter === callback && !dom.isLoading() && dom.isActivePage(fig) && canvasContainer === dom.canvasContainer) {
 								changeWaiter = null;
 								nextPage(callback);
 							}
-						}, settings.pageSwapDelay);
+						}, settings.pageSkipDelay);
 						realClick(fig);
 					}
 				});
@@ -524,7 +527,7 @@ function loadComic(callback, step) {
 			clearTimeout(noChangeTimeout);
 			var container = dom.canvasContainer,
 				waiter = changeWaiter;
-			
+
 			if (typeof waiter === "function" && (!dom.countCanvas() || !dom.isVisible(container))) {
 				changeWaiter = null;
 				(function check() {

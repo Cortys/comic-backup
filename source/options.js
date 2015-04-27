@@ -15,7 +15,7 @@ for(var i = 0; i < selects.length; i++)
 					o[e.id] = e.value*1;
 					if(!Number.isFinite(o[e.id]))
 						return;
-					if(e.id === "pageSwapDelay" && o[e.id] < 0)
+					if((e.id === "pageSwapDelay" || e.id === "pageSkipDelay") && o[e.id] < 0)
 						o[e.id] = 0;
 				}
 
