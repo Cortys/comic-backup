@@ -84,6 +84,7 @@
 
 		section {
 			margin-top: 40px;
+			text-align: justify;
 		}
 
 		div.aligner {
@@ -164,10 +165,10 @@
 		<section><b>Some pages are missing in my backups!</b> You might want to fiddle with the <u>page skip delay</u>. It determines how long to wait for a reaction to a page swap. If the reader did not show any reaction to a page swap for the given time, the backup will just continue with the next page. This option is essential for manga fixed format comics, that have to be backuped in dual-page-mode and thus do not rerender every second page.</section>
 		<div class="aligner">Page skip delay:</div><div class="aligner r"><input value="1000" type="text" id="pageSkipDelay"> ms</div><br>
 		<section><b>It still does not work!</b> Sometimes ComiXology changes their reader code. If that happens you can force a new exploit scan and the plugin will try to detect a new way to backup your comics. In order to do that you will be asked to perform some actions the next time you open a comic.</section>
-		Force new exploit scan: <select id="selectors" data-message="reload_page">
+		<div class="aligner">Force new exploit scan:</div><div class="aligner r"><select id="selectors" data-message="reload_page">
 			<option value="0">Yes</option>
 			<option value="1">No</option>
-		</select>
+		</select></div>
 	</div>
 	<script src="options.js" type="text/javascript"></script>
 </body>
