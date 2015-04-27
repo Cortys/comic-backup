@@ -323,4 +323,9 @@ getSettings(function() {
 		attributes: true,
 		attributeFilter: ["style"]
 	});
+
+	window.onbeforeunload = function() {
+		if(Download.activeDownloads > 0 || Download.queue.getLength() > 0)
+			return "If you close this page all backups will be canceled.";
+	};
 });
