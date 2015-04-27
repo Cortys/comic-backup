@@ -49,5 +49,5 @@
 
 	"options_page": "options.html",
 
-	"web_accessible_resources": ["ajax-loader.gif"]
+	"web_accessible_resources": ["blankLogo.png"]
 }

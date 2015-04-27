@@ -10,6 +10,20 @@ overlay.style.background = "rgba(0,0,0,0.3)";
 overlay.style.display = "none";
 document.documentElement.appendChild(overlay);
 
+(function() {
+	var favicons = document.head.querySelectorAll("link[rel~=icon]");
+
+	for(var i = 0; i < favicons.length; i++)
+		document.head.removeChild(favicons[i]);
+}());
+
+var favicon = document.createElement("link");
+favicon.type = "image/png";
+favicon.rel = "shortcut icon";
+
+document.head.appendChild(favicon);
+renderFaviconPercentage();
+
 //ENTRANCE POINT FOR READER BACKUP LOGIC:
 
 var port = connector.connect({ name:"reader" }),
@@ -50,6 +64,8 @@ getSettings(function() {
 			return;
 		}
 
+		renderFaviconPercentage(0);
+
 		port.send({ what:"message_to_opener", message:{ what:"ready_to_download" } }, function(start) {
 			if(start)
 				if(start.download)
@@ -66,6 +82,47 @@ getSettings(function() {
 		});
 	});
 });
+
+function renderFaviconPercentage(perc) {
+
+	if(perc === undefined) {
+		favicon.href = chrome.extension.getURL("blankLogo.png");
+		return;
+	}
+
+	var canvas = document.createElement('canvas'),
+		ctx = canvas.getContext('2d'),
+		data;
+
+	canvas.width = canvas.height = 32;
+
+	ctx.globalCompositeOperation = "source-over";
+	ctx.fillStyle = perc < 1 ? "#b97c11": "#6f9305";
+
+	ctx.beginPath();
+	ctx.moveTo(16, 16);
+	ctx.arc(16, 16, 14, -Math.PI/2, Math.PI*2*(perc - 0.25), false);
+	ctx.fill();
+	ctx.closePath();
+
+	ctx.globalCompositeOperation = "destination-out";
+
+	ctx.beginPath();
+	ctx.arc(16, 16, 10, 0, Math.PI*2, false);
+	ctx.fill();
+	ctx.closePath();
+
+	if(perc < 1) {
+		ctx.globalCompositeOperation = "source-over";
+		ctx.fillStyle = "#000000";
+		ctx.font = "13px Arial";
+		ctx.textAlign = "center";
+		ctx.textBaseline = "middle";
+		ctx.fillText("" + Math.round(perc*100), 16, 16, 18);
+	}
+
+	favicon.href = canvas.toDataURL("image/png");
+}
 
 // show orange bar: asking for exploit scan
 function displayExploitBar() {
@@ -442,6 +499,7 @@ function loadComic(callback, step) {
 
 	div.innerHTML = "Downloading comic... <span>0</span>%";
 	div.style.lineHeight = "50px";
+	renderFaviconPercentage(0);
 
 	if(typeof callback != "function")
 		callback = function() {};
@@ -501,8 +559,10 @@ function loadComic(callback, step) {
 						if(settings.container == 2)
 							downloadData(getName()+"/"+result.name, page, true);
 
-						var perc = Math.round((pos + 1) / l * 100);
+						var floatingPerc = (pos + 1) / l,
+							perc = Math.round(floatingPerc * 100);
 						div.getElementsByTagName("span")[0].innerHTML = perc;
+						renderFaviconPercentage(floatingPerc);
 						step(perc);
 						interval();
 					});
@@ -611,10 +671,12 @@ function downloadData(name, data, overwrite, callback) { // overwrite is not use
 function zipImages(callback) {
 	if(settings.container == 2)
 		return typeof callback === "function"?callback():undefined;
+	renderFaviconPercentage(1);
 	div.innerHTML = "Zipping images...";
 	div.style.lineHeight = "50px";
 
 	port.send({ what:"start_zipping" }, function(result) {
+		renderFaviconPercentage(1);
 		div.innerHTML = "Saving comic...";
 		callback();
 	});
