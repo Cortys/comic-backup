@@ -1,4 +1,3 @@
-//(C) 2013 Sperglord Enterprises
 //Code is under GNUGPLv3 - read http://www.gnu.org/licenses/gpl.html
 
 zip.useWebWorkers = true;

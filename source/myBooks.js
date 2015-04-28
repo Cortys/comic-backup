@@ -18,7 +18,7 @@ getSettings(function() {
 		backupText = (function() {
 			var c = document.querySelector("section.backup-container h1");
 			return c && c.innerHTML || "DRM-Free Backup";
-		})(),
+		}()),
 
 		Download = function(button) {
 			this.readButton = button;
@@ -323,4 +323,9 @@ getSettings(function() {
 		attributes: true,
 		attributeFilter: ["style"]
 	});
+
+	window.onbeforeunload = function() {
+		if(Download.activeDownloads > 0 || Download.queue.getLength() > 0)
+			return "If you close this page all backups will be canceled.";
+	};
 });

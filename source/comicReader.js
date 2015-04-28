@@ -1,4 +1,3 @@
-//(C) 2013 Sperglord Enterprises
 //Code is under GNUGPLv3 - read http://www.gnu.org/licenses/gpl.html
 
 var overlay = document.createElement("div");
@@ -11,41 +10,50 @@ overlay.style.background = "rgba(0,0,0,0.3)";
 overlay.style.display = "none";
 document.documentElement.appendChild(overlay);
 
+(function() {
+	var favicons = document.head.querySelectorAll("link[rel~=icon]");
+
+	for(var i = 0; i < favicons.length; i++)
+		document.head.removeChild(favicons[i]);
+}());
+
+var favicon = document.createElement("link");
+favicon.type = "image/png";
+favicon.rel = "shortcut icon";
+
+document.head.appendChild(favicon);
+renderFaviconPercentage();
+
 //ENTRANCE POINT FOR READER BACKUP LOGIC:
 
 var port = connector.connect({ name:"reader" }),
-	delayMeasurement;
+	swapPage;
 
 getSettings(function() {
 
-	// Disable delays if measurements for latency compensation were disabled in the settings:
-	if(!settings.latency)
-		delayMeasurement = {
-			start: function() {},
-			stop: function() {},
-			timeout: function(c) { c(); }
+	if(!("pageSwapDelay" in settings))
+		settings.pageSwapDelay = 500;
+
+	if(!("pageSkipDelay" in settings))
+		settings.pageSkipDelay = 1000;
+
+	if(!settings.pageSwapDelay)
+		swapPage = function swapPage(callback) {
+			if(typeof callback === "function")
+				callback();
 		};
 	else
-		delayMeasurement = {
-			timestamp: null,
-			delay: 0,
-			start: function() {
-				this.timestamp = Date.now();
-			},
-			stop: function() {
-				if(!this.timestamp)
-					return;
-				var diff = Date.now()-this.timestamp;
-				if(diff > this.delay)
-					this.delay = diff;
-				this.timestamp = null;
-			},
-			timeout: function(callback) {
-				if(this.delay)
-					setTimeout(callback, this.delay);
-				else
-					callback();
-			}
+		swapPage = function swapPage(callback) {
+			var swap = function() {
+					swapPage.lastSwap = Date.now();
+					if(typeof callback === "function")
+						callback();
+				},
+				d = !swapPage.lastSwap ? 0 : settings.pageSwapDelay - (Date.now() - swapPage.lastSwap);
+			if(d <= 0)
+				swap();
+			else
+				setTimeout(swap, d);
 		};
 
 	// delete cached uncompleted zip-backups for this tab:
@@ -55,6 +63,8 @@ getSettings(function() {
 				displayExploitBar();
 			return;
 		}
+
+		renderFaviconPercentage(0);
 
 		port.send({ what:"message_to_opener", message:{ what:"ready_to_download" } }, function(start) {
 			if(start)
@@ -72,6 +82,47 @@ getSettings(function() {
 		});
 	});
 });
+
+function renderFaviconPercentage(perc) {
+
+	if(perc === undefined) {
+		favicon.href = chrome.extension.getURL("blankLogo.png");
+		return;
+	}
+
+	var canvas = document.createElement('canvas'),
+		ctx = canvas.getContext('2d'),
+		data;
+
+	canvas.width = canvas.height = 32;
+
+	ctx.globalCompositeOperation = "source-over";
+	ctx.fillStyle = perc < 1 ? "#b97c11": "#6f9305";
+
+	ctx.beginPath();
+	ctx.moveTo(16, 16);
+	ctx.arc(16, 16, 14, -Math.PI/2, Math.PI*2*(perc - 0.25), false);
+	ctx.fill();
+	ctx.closePath();
+
+	ctx.globalCompositeOperation = "destination-out";
+
+	ctx.beginPath();
+	ctx.arc(16, 16, 10, 0, Math.PI*2, false);
+	ctx.fill();
+	ctx.closePath();
+
+	if(perc < 1) {
+		ctx.globalCompositeOperation = "source-over";
+		ctx.fillStyle = "#000000";
+		ctx.font = "13px Arial";
+		ctx.textAlign = "center";
+		ctx.textBaseline = "middle";
+		ctx.fillText("" + Math.round(perc*100), 16, 16, 18);
+	}
+
+	favicon.href = canvas.toDataURL("image/png");
+}
 
 // show orange bar: asking for exploit scan
 function displayExploitBar() {
@@ -203,7 +254,15 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 	},
 
 	get pages() {
-		return (this.pagesCached = this.pagesCached) || document.querySelectorAll(settings.selectorPages);
+		return (this.pagesCached = this.pagesCached) || function() {
+
+			var pages = document.querySelectorAll(settings.selectorPages);
+
+			if(pages.length > 1 && pages[0].getAttribute(this.pagenumAttr) * 1 > pages[pages.length - 1].getAttribute(this.pagenumAttr) * 1)
+				pages = Array.prototype.slice.call(pages, 0).reverse();
+
+			return pages;
+		}.call(this);
 	},
 	get activePage() {
 		return document.querySelector(settings.selectorActivePage);
@@ -226,6 +285,13 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 			return a;
 		}));
 	},
+	get canvasContainerCount() {
+		var i = 0;
+		this.loopCanvasContainers(function() {
+			i++;
+		});
+		return i;
+	},
 	get canvasElements() {
 		return this.canvasContainer.querySelectorAll("canvas");
 	},
@@ -245,10 +311,12 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 		return settings.pagenumCorrection;
 	},
 	get loader() {
-		return document.querySelector(".loading");
+		return document.querySelectorAll(".loading");
 	},
 	loaderVisible: function() {
-		return this.loader && this.loader.style.display != "none";
+		return this.loader && this.loader.length && Array.prototype.reduce.call(this.loader, function(prev, curr) {
+			return prev || curr.style.display !== "none";
+		}, false);
 	},
 	isActivePage: function(page) {
 		return page.matches(settings.selectorActivePage);
@@ -259,13 +327,9 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 	countCanvas: function() {
 		return this.canvasElements.length;
 	},
-	countCanvasContainers: function() {
-		var i = 0;
-		this.loopCanvasContainers(function() {
-			i++;
-			return false;
-		});
-		return i;
+	isLoading: function() {
+		var view;
+		return this.canvasContainerCount !== 1 || (view = dom.getCanvasContainer(), !view.style.webkitTransform && !view.style.transform) || dom.loaderVisible() || !dom.canvasElements.length;
 	}
 };
 
@@ -428,25 +492,34 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 // download the opened comic. a callback and a step function can be used.
 function loadComic(callback, step) {
 
+	"use strict";
+
 	addTopBar();
 	overlay.style.display = "block";
 
 	div.innerHTML = "Downloading comic... <span>0</span>%";
 	div.style.lineHeight = "50px";
+	renderFaviconPercentage(0);
 
 	if(typeof callback != "function")
 		callback = function() {};
 	if(typeof step != "function")
 		step = function() {};
 
+	var l = dom.pages.length;
+
+	if(l < 1)
+		return callback(new Error("Found no pages to backup."));
+
 	if(!dom.getCanvasContainer() || dom.loaderVisible() || !dom.countCanvas()) // delay download if comic isn't displayed yet => reader not ready, first page is not loaded yet, first page is not displayed yet
 		return setTimeout(function() {
 			loadComic(callback, step);
 		}, 100);
+
 	var pos = -1,
-		l = dom.pages.length,
 		numLength = String(l-1).length,
 		nextPage = function(callback) {
+			clearTimeout(noChangeTimeout);
 			pos++;
 			if (pos >= l) {
 				changeWaiter = null;
@@ -460,23 +533,36 @@ function loadComic(callback, step) {
 			}
 			else {
 				changeWaiter = callback;
-				delayMeasurement.timeout(function() {
-					delayMeasurement.start();
-					realClick(fig);
+				// Guarantee that at least settings.pageSwapDelay ms have passed between this and last swap:
+				swapPage(function() {
+					// Only swap if no other actor already swapped pages:
+					var canvasContainer = dom.canvasContainer;
+					if(changeWaiter === callback) {
+						noChangeTimeout = setTimeout(function() {
+							if(changeWaiter === callback && !dom.isLoading() && dom.isActivePage(fig) && canvasContainer === dom.canvasContainer) {
+								changeWaiter = null;
+								nextPage(callback);
+							}
+						}, settings.pageSkipDelay);
+						realClick(fig);
+					}
 				});
 			}
-		}, changeWaiter = null,
+		},
+		changeWaiter = null,
+		noChangeTimeout = null,
+
 		interval = function() {
 			nextPage(function() {
-				var bef = dom.canvasContainer;
-				dom.getCanvasContainer();
 				getOpenedPage(function(page) {
 					port.send({ what:"add_page", page:(settings.container!=2?page:null), i:pos, len:numLength, extension:(settings.page?"png":"jpeg"), toZip:(settings.container!=2) }, function(result) {
 						if(settings.container == 2)
 							downloadData(getName()+"/"+result.name, page, true);
 
-						var perc = Math.round((pos + 1) / l * 100);
+						var floatingPerc = (pos + 1) / l,
+							perc = Math.round(floatingPerc * 100);
 						div.getElementsByTagName("span")[0].innerHTML = perc;
+						renderFaviconPercentage(floatingPerc);
 						step(perc);
 						interval();
 					});
@@ -498,13 +584,19 @@ function loadComic(callback, step) {
 				});
 			});
 		}, rmListener = function(e) {
-			delayMeasurement.stop();
-			if (typeof changeWaiter === "function" && (!dom.countCanvas() || !dom.isVisible(dom.canvasContainer))) {
-				changeWaiter();
+			clearTimeout(noChangeTimeout);
+			var container = dom.canvasContainer,
+				waiter = changeWaiter;
+
+			if (typeof waiter === "function" && (!dom.countCanvas() || !dom.isVisible(container))) {
 				changeWaiter = null;
+				(function check() {
+					if(container === dom.getCanvasContainer())
+						setTimeout(check, 100);
+					else
+						waiter();
+				}());
 			}
-			else
-				start();
 		}, firstPage = 0, firstPageFig = null;
 
 	port.send({ what:"new_zip", user:getUsername() }, function(result) {
@@ -515,19 +607,11 @@ function loadComic(callback, step) {
 		firstPageFig = dom.activePage;
 		firstPage = (firstPageFig && firstPageFig.getAttribute(dom.pagenumAttr)*1-settings.pagenumCorrection) || 0;
 		pos = settings.start?Math.max(firstPage-1, -1):-1;
-		if(dom.isActiveOnepageButton())
-			start();
-		else {
+		if(dom.onepageButton != null && !dom.isActiveOnepageButton())
 			realClick(dom.onepageButton);
-			(function check() {
-				setTimeout(function() {
-					if(dom.isActiveOnepageButton())
-						start();
-					else
-						check();
-				}, 100);
-			}());
-		}
+		pageLoaded(function() {
+			start();
+		});
 	});
 }
 
@@ -587,22 +671,34 @@ function downloadData(name, data, overwrite, callback) { // overwrite is not use
 function zipImages(callback) {
 	if(settings.container == 2)
 		return typeof callback === "function"?callback():undefined;
+	renderFaviconPercentage(1);
 	div.innerHTML = "Zipping images...";
 	div.style.lineHeight = "50px";
 
 	port.send({ what:"start_zipping" }, function(result) {
+		renderFaviconPercentage(1);
 		div.innerHTML = "Saving comic...";
 		callback();
 	});
 }
 
+function pageLoaded(callback) {
+	if(!dom.isLoading())
+		callback();
+	else
+		setTimeout(function() {
+			pageLoaded(callback);
+		}, 100);
+}
+
 // get data URL of the currently opened page in the reader (async! result is given to callback)
 function getOpenedPage(callback) {
-	var view = dom.getCanvasContainer(),
-		doneLoading = view && (view.style.webkitTransform || view.style.transform) && !dom.loaderVisible();
-	if(doneLoading) {
-		var canvasOnThisPage = dom.canvasElements,
-			w = parseInt(view.style.width),
+	pageLoaded(function() {
+
+		var view = dom.getCanvasContainer(),
+			canvasOnThisPage = dom.canvasElements;
+
+		var w = parseInt(view.style.width),
 			h = parseInt(view.style.height),
 			outCanvas = document.createElement('canvas'),
 			ctx = outCanvas.getContext('2d'),
@@ -617,10 +713,5 @@ function getOpenedPage(callback) {
 		ctx.putImageData(data, w-data.width, h-data.height);
 
 		callback(outCanvas.toDataURL("image/"+(settings.page?"png":"jpeg")));
-	}
-	else {
-		setTimeout(function() {
-			getOpenedPage(callback);
-		}, 300);
-	}
+	});
 }
