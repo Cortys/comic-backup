@@ -573,16 +573,21 @@ function loadComic(callback, step) {
 			interval();
 		}, end = function() {
 			dom.getCanvasContainer().parentElement.removeEventListener("DOMNodeRemoved", rmListener, false);
-			step("zip");
-			zipImages(function() {
-				step("save");
-				downloadBlob(getName()+"."+(settings.container?"zip":"cbz"), function() {
-					document.documentElement.removeChild(div);
-					document.documentElement.removeChild(overlay);
-					realClick(firstPageFig);
-					callback();
+			function done() {
+				document.documentElement.removeChild(div);
+				document.documentElement.removeChild(overlay);
+				realClick(firstPageFig);
+				callback();
+			}
+			if(settings.container == 2)
+				done();
+			else {
+				step("zip");
+				zipImages(function() {
+					step("save");
+					downloadBlob(getName()+"."+(settings.container?"zip":"cbz"), done);
 				});
-			});
+			}
 		}, rmListener = function(e) {
 			clearTimeout(noChangeTimeout);
 			var container = dom.canvasContainer,
@@ -619,8 +624,15 @@ function getName() {
 	if(getName.title != null)
 		return getName.title;
 	var title = document.getElementsByTagName('title');
-	if(title[0])
-		return (getName.title = title[0].innerHTML.substr(0, title[0].innerHTML.lastIndexOf("-")).trim().replace(/\s/g, "_").replace(/[^a-z0-9#.()\[\]_-]/gi, ""));
+	if(title[0]) {
+		var spaceReplacement = {
+			1: "_",
+			2: ".",
+			3: "-",
+			4: ""
+		}[settings.filename];
+		return (getName.title = sanitizeFilename(title[0].innerHTML.substr(0, title[0].innerHTML.lastIndexOf("-")).trim(), spaceReplacement) || "comic");
+	}
 	return "comic";
 }
 getName.title = null;
