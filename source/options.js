@@ -1,3 +1,5 @@
+"use strict";
+
 var selects = document.querySelectorAll("select, input");
 
 for(var i = 0; i < selects.length; i++)

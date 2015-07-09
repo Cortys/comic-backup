@@ -1,4 +1,5 @@
 //Code is under GNUGPLv3 - read http://www.gnu.org/licenses/gpl.html
+"use strict";
 
 zip.useWebWorkers = true;
 

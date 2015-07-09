@@ -1,3 +1,5 @@
+"use strict";
+
 getSettings(function() {
 
 	if(!settings.queueLength)

@@ -1,5 +1,6 @@
 {
 	"scripturl": true,
 	"eqnull": true,
-	"loopfunc": true
+	"loopfunc": true,
+	"node": true
 }
