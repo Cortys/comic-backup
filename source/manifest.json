@@ -3,7 +3,7 @@
 
 	"name": "Comixology Backup",
 	"description": "Save your Comixology comics as standard CBZ files.",
-	"version": "2.1.0",
+	"version": "2.1.1",
 	"minimum_chrome_version": "31",
 
 	"icons": {
@@ -31,21 +31,19 @@
 		"persistent": false
 	},
 
-	"content_scripts": [
-		{
-			"matches": ["*://www.comixology.com/comic-reader/*","*://www.comixology.eu/comic-reader/*","*://www.comixology.co.uk/comic-reader/*","*://www.comixology.fr/comic-reader/*","*://www.comixology.de/comic-reader/*"],
-			"js": ["common.js", "reactivateDom.js"],
-			"run_at": "document_start"
-		}, {
-			"matches": ["*://www.comixology.com/comic-reader/*","*://www.comixology.eu/comic-reader/*","*://www.comixology.co.uk/comic-reader/*","*://www.comixology.fr/comic-reader/*","*://www.comixology.de/comic-reader/*"],
-			"js": ["diffMatchPatch.js", "common.js", "comicReader.js"],
-			"run_at": "document_idle"
-		}, {
-			"matches": ["*://www.comixology.com/my-*","*://www.comixology.eu/my-*","*://www.comixology.co.uk/my-*","*://www.comixology.fr/my-*","*://www.comixology.de/my-*", "*://www.comixology.com/wishlists*","*://www.comixology.eu/wishlists","*://www.comixology.co.uk/wishlists","*://www.comixology.fr/wishlists","*://www.comixology.de/wishlists"],
-			"js": ["common.js", "myBooks.js"],
-			"run_at": "document_end"
-		}
-	],
+	"content_scripts": [{
+		"matches": ["*://www.comixology.com/comic-reader/*", "*://www.comixology.eu/comic-reader/*", "*://www.comixology.co.uk/comic-reader/*", "*://www.comixology.fr/comic-reader/*", "*://www.comixology.de/comic-reader/*"],
+		"js": ["common.js", "reactivateDom.js"],
+		"run_at": "document_start"
+	}, {
+		"matches": ["*://www.comixology.com/comic-reader/*", "*://www.comixology.eu/comic-reader/*", "*://www.comixology.co.uk/comic-reader/*", "*://www.comixology.fr/comic-reader/*", "*://www.comixology.de/comic-reader/*"],
+		"js": ["diffMatchPatch.js", "common.js", "comicReader.js"],
+		"run_at": "document_idle"
+	}, {
+		"matches": ["*://www.comixology.com/my-*", "*://www.comixology.eu/my-*", "*://www.comixology.co.uk/my-*", "*://www.comixology.fr/my-*", "*://www.comixology.de/my-*", "*://www.comixology.com/wishlists*", "*://www.comixology.eu/wishlists", "*://www.comixology.co.uk/wishlists", "*://www.comixology.fr/wishlists", "*://www.comixology.de/wishlists"],
+		"js": ["common.js", "myBooks.js"],
+		"run_at": "document_end"
+	}],
 
 	"options_page": "options.html",
 
