@@ -1,4 +1,6 @@
-var current_version = 114,
+"use strict";
+
+var current_version = 115,
 	div, linkStyle = "color:#ffffff;font-weight:bold;background:linear-gradient(to bottom, rgb(115, 152, 200) 0%,rgb(179, 206, 233) 1%,rgb(82, 142, 204) 5%,rgb(79, 137, 200) 20%,rgb(66, 120, 184) 50%,rgb(49, 97, 161) 100%);padding:3px;text-decoration:none;display:inline-block;width:70px;text-align:center;height:22px;box-sizing:border-box;line-height:14px;border:1px solid rgb(49,96,166);",
 	settings;
 
@@ -16,6 +18,21 @@ function randomString(min, max) { // generates random alphanumeric string with a
 	for (var r = ""; r.length < l;)
 		r += poss.charAt(Math.round(Math.random()*(poss.length-(r.length?1:11))));
 	return r;
+}
+
+// Cleans up a string to be a valid cross platform filename.
+// Inspired by https://github.com/parshap/node-sanitize-filename.
+function sanitizeFilename(input, spaceReplacement) {
+	var result = input
+		.replace(/\s?[\/\\\|\?<>:\*\":]+\s?/g, " ")
+		.replace(/[\x00-\x1f\x80-\x9f]/g, "")
+		.replace(/(\.|\s)+$/g, "")
+		.replace(/^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i, "");
+
+	if(spaceReplacement != null)
+		result = result.replace(/\s/g, spaceReplacement);
+
+	return result;
 }
 
 function nullFill(num, len) {

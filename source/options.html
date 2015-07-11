@@ -118,7 +118,7 @@
 	</style>
 </head>
 <body>
-	<a href="https://github.com/Cortys" target="_blank" id="credits">v2.1.0 by <b>Cortys</b></a>
+	<a href="https://github.com/Cortys" target="_blank" id="credits">v2.1.1 by <b>Cortys</b></a>
 	<h1><img src="logoOptions@2x.png" alt="Comixology Backup Settings"></h1>
 	<div id="content">
 		<h2>Backup behaviour</h2>
@@ -143,6 +143,13 @@
 		<div class="aligner">Start backup at:</div><div class="aligner r"><select id="start">
 			<option value="0">first page</option>
 			<option value="1">currently opened page</option>
+		</select></div><br>
+		<div class="aligner">Filename convention:</div><div class="aligner r"><select id="filename">
+			<option value="0">All valid filenames</option>
+			<option value="1">Underscores instead of spaces</option>
+			<option value="2">Dots instead of spaces</option>
+			<option value="3">Dashes instead of spaces</option>
+			<option value="4">Remove spaces</option>
 		</select></div><br>
 		<div class="aligner">Max. parallel downloads per tab:</div><div class="aligner r"><select id="queueLength"  data-message="update_queue">
 		 	<option value="1">1</option>

@@ -1,4 +1,5 @@
 //Code is under GNUGPLv3 - read http://www.gnu.org/licenses/gpl.html
+"use strict";
 
 zip.useWebWorkers = true;
 
@@ -165,8 +166,10 @@ getSettings(function() {
 					return true;
 				}
 				else if(request.what == "close_background_tab")
-					chrome.tabs.remove(request.tab);
-				else if(request.what == "message_to_child" && typeof ports.reader[request.tab] == "object") {
+					chrome.tabs.remove(request.tab, function() {
+						chrome.runtime.lastError;
+					});
+				else if(request.what == "message_to_child" && typeof ports.reader[request.tab] === "object") {
 					ports.reader[request.tab].send({ what:"opener_message", message:request.message }, callback);
 					return true;
 				}
@@ -176,8 +179,10 @@ getSettings(function() {
 			for (var tab in port.children)
 				// only not YET estabished or established linked port connections are allowed:
 				// children that once had a port are not closed (if the user started surfing in a backup tab)
-				if(ports.reader[tab] && !ports.reader[tab].unlinked)
-					chrome.tabs.remove(tab*1);
+				if(typeof ports.reader[tab] === "object" && !ports.reader[tab].unlinked)
+					chrome.tabs.remove(tab*1, function() {
+						chrome.runtime.lastError;
+					});
 		}:closedReader;
 
 		port.onDisconnect.addListener(function() {
@@ -190,7 +195,7 @@ getSettings(function() {
 });
 
 chrome.tabs.onRemoved.addListener(function(tab) {
-	if(!ports.reader[tab] && tab in openers) // tab is a backup-purpose reader but there is no port connection yet:
+	if(ports.reader[tab] === true && tab in openers) // tab is a backup-purpose reader but there is no port connection yet:
 		closedReader({ senderId:tab, fake:true }); // port disconnect wont fire, so it will be "faked".
 });
 
