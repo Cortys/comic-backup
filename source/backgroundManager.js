@@ -100,7 +100,7 @@ getSettings(function() {
 							callback({ what:"new_zip_created", error:false });
 						}, function() {
 							callback({ what:"zip_creation_failed", error:true });
-						}, !settings.compression);
+						}, !settings.compression, {comment:""});
 					});
 					return true;
 				}
@@ -120,7 +120,7 @@ getSettings(function() {
 						port.zip = null;
 						port.zipUrl = port.zipFile?port.zipFile.toURL():URL.createObjectURL(result);
 						callback({ what:"completed_zipping" });
-					});
+					},request.comment);
 					return true;
 				}
 				else if(request.what == "download_blob") {
