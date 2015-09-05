@@ -809,7 +809,7 @@
 				else
 					writeFile();
 			},
-			close : function(callback) {
+			close : function(callback, comment) {
 				if (this._worker) {
 					this._worker.terminate();
 					this._worker = null;
@@ -820,7 +820,7 @@
 					file = files[filenames[indexFilename]];
 					length += 46 + file.filename.length + file.comment.length;
 				}
-				data = getDataHelper(length + 22);
+				data = getDataHelper(length + 22 + comment.length);
 				for (indexFilename = 0; indexFilename < filenames.length; indexFilename++) {
 					file = files[filenames[indexFilename]];
 					data.view.setUint32(index, 0x504b0102);
@@ -839,6 +839,14 @@
 				data.view.setUint16(index + 10, filenames.length, true);
 				data.view.setUint32(index + 12, length, true);
 				data.view.setUint32(index + 16, datalength, true);
+				data.view.setUint16(index + 20, comment.length, true);
+				
+				//ZIP comments (not file comments!) are at the end of the file
+				for (var i = 0; i < comment.length ; i++)
+				{				
+				   data.view.setUint8(index + i + 22, comment.charCodeAt(i));
+				}
+				
 				writer.writeUint8Array(data.array, function() {
 					writer.getData(callback);
 				}, onwriteerror);
