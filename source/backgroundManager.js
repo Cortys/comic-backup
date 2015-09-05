@@ -120,7 +120,7 @@ getSettings(function() {
 						port.zip = null;
 						port.zipUrl = port.zipFile?port.zipFile.toURL():URL.createObjectURL(result);
 						callback({ what:"completed_zipping" });
-					});
+					},request.comment);
 					return true;
 				}
 				else if(request.what == "download_blob") {
