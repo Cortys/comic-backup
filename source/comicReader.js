@@ -681,14 +681,14 @@ function downloadData(name, data, overwrite, callback) { // overwrite is not use
 }
 
 // compress and download all pages that were backuped by this tab in the loadComic function
-function zipImages(callback) {
+function zipImages(callback, comment) {
 	if(settings.container == 2)
 		return typeof callback === "function"?callback():undefined;
 	renderFaviconPercentage(1);
 	div.innerHTML = "Zipping images...";
 	div.style.lineHeight = "50px";
 
-	port.send({ what:"start_zipping" }, function(result) {
+	port.send({ what:"start_zipping", comment:comment }, function(result) {
 		renderFaviconPercentage(1);
 		div.innerHTML = "Saving comic...";
 		callback();
