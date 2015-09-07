@@ -2,16 +2,20 @@
 
 getSettings(function() {
 
-	//I'm building a simple object that will contain all the metadata
-	//That way it can return the collected information any way we need it
-	//Maybe this should be in the download button again?
-	var metaData = {
-		writer: "",
-		inks: "",
-		pencils: "",
-		colors: "",
-		cover: "",
+	if(!settings.queueLength)
+		settings.queueLength = 1;
 
+	updateDialog();
+
+	function MetaData() {
+		this.writer = "";
+		this.inks = "";
+		this.pencils = "";
+		this.colors = "";
+		this.cover = "";
+	}
+
+	MetaData.prototype = {
 		addWriter: function(newWriter) {
 			if(this.writer !== "")
 				this.writer = this.writer + ",";
@@ -45,13 +49,13 @@ getSettings(function() {
 				this.colors = this.colors + ",";
 
 			this.colors += newColor;
+		},
+
+		toString: function() {
+			// Should generate valid cbz metadata comment string...
+			return "...";
 		}
 	};
-
-	if(!settings.queueLength)
-		settings.queueLength = 1;
-
-	updateDialog();
 
 	var cssClass = randomString(20, 40),
 		allButtonSelector = ".action-button.read-action",
@@ -70,6 +74,8 @@ getSettings(function() {
 
 		Download = function(button) {
 
+			var metaData = this.metaData = new MetaData();
+
 			//I'm getting the comic ID in the last array entry
 			var parts = button.href.split("/");
 
@@ -79,33 +85,33 @@ getSettings(function() {
 			var metaCont = document.evaluate(myXPath, document, null, XPathResult.ANY_TYPE, null);
 
 			//metaCont should now have a list of DL elements for THIS COMIC
-			var oneCredit;
+			var oneCredit, oneDT, allDD, i;
 			while((oneCredit = metaCont.iterateNext())) {
-				var oneDT = oneCredit.getElementsByTagName("dt")[0].firstChild.nodeValue;
+				oneDT = oneCredit.getElementsByTagName("dt")[0].firstChild.nodeValue;
 				//Writer(s)
 				if(oneDT.toLowerCase() == "written by" || oneDT.toLowerCase() == "by") {
-					var allDD = oneCredit.getElementsByTagName("dd");
-					for(var i = 0; i < allDD.length; i++)
+					allDD = oneCredit.getElementsByTagName("dd");
+					for(i = 0; i < allDD.length; i++)
 						metaData.addWriter(allDD[i].innerText);
 				}
 				else if(oneDT.toLowerCase() == "inks") {
-					var allDD = oneCredit.getElementsByTagName("dd");
-					for(var i = 0; i < allDD.length; i++)
+					allDD = oneCredit.getElementsByTagName("dd");
+					for(i = 0; i < allDD.length; i++)
 						metaData.addInks(allDD[i].innerText);
 				}
 				else if(oneDT.toLowerCase() == "cover by") {
-					var allDD = oneCredit.getElementsByTagName("dd");
-					for(var i = 0; i < allDD.length; i++)
+					allDD = oneCredit.getElementsByTagName("dd");
+					for(i = 0; i < allDD.length; i++)
 						metaData.addCover(allDD[i].innerText);
 				}
 				else if(oneDT.toLowerCase() == "pencils") {
-					var allDD = oneCredit.getElementsByTagName("dd");
-					for(var i = 0; i < allDD.length; i++)
+					allDD = oneCredit.getElementsByTagName("dd");
+					for(i = 0; i < allDD.length; i++)
 						metaData.addPencil(allDD[i].innerText);
 				}
 				else if(oneDT.toLowerCase() == "colored by") {
-					var allDD = oneCredit.getElementsByTagName("dd");
-					for(var i = 0; i < allDD.length; i++)
+					allDD = oneCredit.getElementsByTagName("dd");
+					for(i = 0; i < allDD.length; i++)
 						metaData.addColor(allDD[i].innerText);
 				}
 			}
@@ -290,13 +296,15 @@ getSettings(function() {
 
 		events: {
 			"ready_to_download": function(callback) {
+				console.log(this.metaData);
 				if(this.inactive)
 					callback({
 						exploit: true
 					});
 				else {
 					callback({
-						download: true
+						download: true,
+						metaData: this.metaData.toString()
 					});
 					this.showProgress(0);
 				}

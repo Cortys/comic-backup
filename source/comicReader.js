@@ -77,31 +77,33 @@ getSettings(function() {
 				what: "ready_to_download"
 			}
 		}, function(start) {
-			if(start)
-				if(start.download)
-					loadComic(function(err) {
-						port.send({
-							what: "message_to_opener",
-							message: {
-								what: err ? "download_failed" : "finished_download"
-							}
-						});
-					}, function(perc) {
-						port.send({
-							what: "message_to_opener",
-							message: {
-								what: "download_progress",
-								data: perc
-							}
-						});
+			if(!start)
+				return;
+
+			if(start.download) {
+				loadComic(function(err) {
+					port.send({
+						what: "message_to_opener",
+						message: {
+							what: err ? "download_failed" : "finished_download"
+						}
 					});
-				else if(start.exploit) {
+				}, function(perc) {
+					port.send({
+						what: "message_to_opener",
+						message: {
+							what: "download_progress",
+							data: perc
+						}
+					});
+				}, start.metaData);
+			}
+			else if(start.exploit) {
 				port.send({
 					what: "unlink_from_opener"
 				});
 				setupSelectors();
 			}
-
 		});
 	});
 });
@@ -530,9 +532,7 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 }
 
 // download the opened comic. a callback and a step function can be used.
-function loadComic(callback, step) {
-
-	"use strict";
+function loadComic(callback, step, metaData) {
 
 	addTopBar();
 	overlay.style.display = "block";
@@ -553,7 +553,7 @@ function loadComic(callback, step) {
 
 	if(!dom.getCanvasContainer() || dom.loaderVisible() || !dom.countCanvas()) // delay download if comic isn't displayed yet => reader not ready, first page is not loaded yet, first page is not displayed yet
 		return setTimeout(function() {
-		loadComic(callback, step);
+		loadComic(callback, step, metaData);
 	}, 100);
 
 	var pos = -1,
@@ -636,7 +636,7 @@ function loadComic(callback, step) {
 				zipImages(function() {
 					step("save");
 					downloadBlob(getName() + "." + (settings.container ? "zip" : "cbz"), done);
-				}, "Here be metadata");
+				}, metaData);
 			}
 		},
 		rmListener = function(e) {
