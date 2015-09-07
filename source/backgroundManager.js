@@ -100,7 +100,7 @@ getSettings(function() {
 							callback({ what:"new_zip_created", error:false });
 						}, function() {
 							callback({ what:"zip_creation_failed", error:true });
-						}, !settings.compression, {comment:""});
+						}, !settings.compression);
 					});
 					return true;
 				}
