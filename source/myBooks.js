@@ -2,57 +2,51 @@
 
 getSettings(function() {
 
-			//I'm building a simple object that will contain all the metadata
-			//That way it can return the collected information any way we need it
-			//Maybe this should be in the download button again?
-		    var metaData =
-			{
-			   writer: "",
-			   inks: "",
-			   pencils: "",
-			   colors: "",
-			   cover: "",
-			   
-			   addWriter:function(newWriter)
-			   {
-			      if (this.writer != "")
-				     this.writer = this.writer + ",";
+	//I'm building a simple object that will contain all the metadata
+	//That way it can return the collected information any way we need it
+	//Maybe this should be in the download button again?
+	var metaData = {
+		writer: "",
+		inks: "",
+		pencils: "",
+		colors: "",
+		cover: "",
 
-				  this.writer += newWriter;
-			   },
-			   
-			   addInks:function(newInks)
-			   {
-			      if (this.inks != "")
-				     this.inks = this.inks + ",";
+		addWriter: function(newWriter) {
+			if(this.writer !== "")
+				this.writer = this.writer + ",";
 
-				  this.inks += newInks;
-			   },
-			   
-			   addCover:function(newCover)
-			   {
-			      if (this.cover != "")
-				     this.cover = this.cover + ",";
+			this.writer += newWriter;
+		},
 
-				  this.cover += newCover;
-			   },
-			   
-			   addPencil:function(newPencil)
-			   {
-			      if (this.pencils != "")
-				     this.pencils = this.pencils + ",";
+		addInks: function(newInks) {
+			if(this.inks !== "")
+				this.inks = this.inks + ",";
 
-				  this.pencils += newPencil;
-			   },
-			   
-			   addColor:function(newColor)
-			   {
-			      if (this.colors != "")
-				     this.colors = this.colors + ",";
+			this.inks += newInks;
+		},
 
-				  this.colors += newColor;
-			   }		   
-			};
+		addCover: function(newCover) {
+			if(this.cover !== "")
+				this.cover = this.cover + ",";
+
+			this.cover += newCover;
+		},
+
+		addPencil: function(newPencil) {
+			if(this.pencils !== "")
+				this.pencils = this.pencils + ",";
+
+			this.pencils += newPencil;
+		},
+
+		addColor: function(newColor) {
+			if(this.colors !== "")
+				this.colors = this.colors + ",";
+
+			this.colors += newColor;
+		}
+	};
 
 	if(!settings.queueLength)
 		settings.queueLength = 1;
@@ -61,11 +55,11 @@ getSettings(function() {
 
 	var cssClass = randomString(20, 40),
 		allButtonSelector = ".action-button.read-action",
-		readButtonSelector = allButtonSelector+":not(."+cssClass+")",
+		readButtonSelector = allButtonSelector + ":not(." + cssClass + ")",
 		injectCss = function() {
 			var style = document.createElement("style");
 			style.type = "text/css";
-			style.innerHTML = "."+cssClass+" span { position:absolute; width:auto; top:50%; margin-top:-0.5em; line-height:1em; left:0; right:0; transition:opacity 0.1s linear 0s; opacity:1; }\n."+cssClass+".cancel:hover span { transition-delay:0.3s; }\n."+cssClass+" .cancel { opacity:0; }\n."+cssClass+".cancel:hover .cancel { opacity:1; }\n."+cssClass+".cancel:hover .text { opacity:0; }";
+			style.innerHTML = "." + cssClass + " span { position:absolute; width:auto; top:50%; margin-top:-0.5em; line-height:1em; left:0; right:0; transition:opacity 0.1s linear 0s; opacity:1; }\n." + cssClass + ".cancel:hover span { transition-delay:0.3s; }\n." + cssClass + " .cancel { opacity:0; }\n." + cssClass + ".cancel:hover .cancel { opacity:1; }\n." + cssClass + ".cancel:hover .text { opacity:0; }";
 			document.head.appendChild(style);
 		},
 		downloadEvents = {},
@@ -75,56 +69,49 @@ getSettings(function() {
 		}()),
 
 		Download = function(button) {
-			
-		    //I'm getting the comic ID in the last array entry
+
+			//I'm getting the comic ID in the last array entry
 			var parts = button.href.split("/");
 
 			//Since we have the comic ID, we can directly access the container and even navigate
 			//to the inner credits/metadata container
-			var myXPath = "//li[@data-item-id=" + parts[parts.length-1] + "]//dl";
-			var metaCont = document.evaluate(myXPath, document, null, XPathResult.ANY_TYPE, null);		
-			
+			var myXPath = "//li[@data-item-id=" + parts[parts.length - 1] + "]//dl";
+			var metaCont = document.evaluate(myXPath, document, null, XPathResult.ANY_TYPE, null);
+
 			//metaCont should now have a list of DL elements for THIS COMIC
 			var oneCredit;
-			while(oneCredit = metaCont.iterateNext())
-			{
-			   var oneDT = oneCredit.getElementsByTagName("dt")[0].firstChild.nodeValue;
-			   //Writer(s)
-			   if (oneDT.toLowerCase() == "written by" || oneDT.toLowerCase() == "by")
-			   {
-			      var allDD = oneCredit.getElementsByTagName("dd");
-				  for (var i = 0; i < allDD.length; i++)
-				     metaData.addWriter(allDD[i].innerText);
+			while((oneCredit = metaCont.iterateNext())) {
+				var oneDT = oneCredit.getElementsByTagName("dt")[0].firstChild.nodeValue;
+				//Writer(s)
+				if(oneDT.toLowerCase() == "written by" || oneDT.toLowerCase() == "by") {
+					var allDD = oneCredit.getElementsByTagName("dd");
+					for(var i = 0; i < allDD.length; i++)
+						metaData.addWriter(allDD[i].innerText);
 				}
-				else if (oneDT.toLowerCase() == "inks")
-				{
-			      var allDD = oneCredit.getElementsByTagName("dd");
-				  for (var i = 0; i < allDD.length; i++)
-				     metaData.addInks(allDD[i].innerText);
+				else if(oneDT.toLowerCase() == "inks") {
+					var allDD = oneCredit.getElementsByTagName("dd");
+					for(var i = 0; i < allDD.length; i++)
+						metaData.addInks(allDD[i].innerText);
 				}
-				else if (oneDT.toLowerCase() == "cover by")
-				{
-			      var allDD = oneCredit.getElementsByTagName("dd");
-				  for (var i = 0; i < allDD.length; i++)
-				     metaData.addCover(allDD[i].innerText);
+				else if(oneDT.toLowerCase() == "cover by") {
+					var allDD = oneCredit.getElementsByTagName("dd");
+					for(var i = 0; i < allDD.length; i++)
+						metaData.addCover(allDD[i].innerText);
 				}
-				else if (oneDT.toLowerCase() == "pencils")
-				{
-			      var allDD = oneCredit.getElementsByTagName("dd");
-				  for (var i = 0; i < allDD.length; i++)
-				     metaData.addPencil(allDD[i].innerText);
+				else if(oneDT.toLowerCase() == "pencils") {
+					var allDD = oneCredit.getElementsByTagName("dd");
+					for(var i = 0; i < allDD.length; i++)
+						metaData.addPencil(allDD[i].innerText);
 				}
-				else if (oneDT.toLowerCase() == "colored by")
-				{
-			      var allDD = oneCredit.getElementsByTagName("dd");
-				  for (var i = 0; i < allDD.length; i++)
-				     metaData.addColor(allDD[i].innerText);
+				else if(oneDT.toLowerCase() == "colored by") {
+					var allDD = oneCredit.getElementsByTagName("dd");
+					for(var i = 0; i < allDD.length; i++)
+						metaData.addColor(allDD[i].innerText);
 				}
 			}
 
 			//Continue with download
 
-			
 			this.readButton = button;
 			var t = this,
 				clone = t.downloadButton = button.cloneNode(false),
@@ -138,18 +125,18 @@ getSettings(function() {
 			t.buttonBGs = {
 				normal: buttonComputedStyle.background,
 				gray: "#777777",
-				progress: "linear-gradient(to right, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.4) {X}%, rgba(0,0,0,0) {X}%, rgba(0,0,0,0) 100%), "+buttonComputedStyle.background
+				progress: "linear-gradient(to right, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.4) {X}%, rgba(0,0,0,0) {X}%, rgba(0,0,0,0) 100%), " + buttonComputedStyle.background
 			};
 
 			// create clone:
 			var randomId = randomString(20, 40); // make sure cmxlgy can not break button text rendering by changing class names
-			clone.innerHTML = button.innerHTML.replace(button.innerText.trim(), "<span class='text "+randomId+"'></span><span class='cancel'>Stop</span>");
+			clone.innerHTML = button.innerHTML.replace(button.innerText.trim(), "<span class='text " + randomId + "'></span><span class='cancel'>Stop</span>");
 			clone.style.position = "relative";
 			clone.style.textAlign = button.style.textAlign = "center";
 			clone.href = "javascript:";
 			clone.classList.add(cssClass);
 
-			t.text = clone.querySelector("span.text."+randomId);
+			t.text = clone.querySelector("span.text." + randomId);
 
 			this.show = function(b) {
 
@@ -162,12 +149,13 @@ getSettings(function() {
 					return;
 
 				var parent = function goUp(button) { // recursively search for right parent element of read button
-					if(button == null)
-						return null;
-					if(button.matches(".item-actions"))
-						return button;
-					return goUp(button.parentElement);
-				}(button), backupContainer = parent?parent.querySelector(".backup-container"):null;
+						if(button == null)
+							return null;
+						if(button.matches(".item-actions"))
+							return button;
+						return goUp(button.parentElement);
+					}(button),
+					backupContainer = parent ? parent.querySelector(".backup-container") : null;
 
 				if(!parent)
 					return;
@@ -177,7 +165,7 @@ getSettings(function() {
 						cont = document.createElement("section");
 					fragment.appendChild(document.createElement("hr"));
 					cont.setAttribute("class", "backup-container");
-					cont.innerHTML = "<h1>"+backupText+"</h1>";
+					cont.innerHTML = "<h1>" + backupText + "</h1>";
 					cont.appendChild(clone);
 					fragment.appendChild(cont);
 					parent.insertBefore(fragment, parent.querySelector(".archive-actions"));
@@ -188,7 +176,7 @@ getSettings(function() {
 
 			if(settings.selectors) {
 				clone.addEventListener("click", function() {
-					t[t.cancelable?"cancel":"start"]();
+					t[t.cancelable ? "cancel" : "start"]();
 				}, false);
 				t.showDefault();
 			}
@@ -260,7 +248,11 @@ getSettings(function() {
 
 		openTab: function(active) {
 			var t = this;
-			port.send({ what:"open_background_tab", url:t.readButton.href, active:active }, function(tab) {
+			port.send({
+				what: "open_background_tab",
+				url: t.readButton.href,
+				active: active
+			}, function(tab) {
 				t.tab = tab;
 				downloadEvents[tab] = t;
 			});
@@ -285,7 +277,10 @@ getSettings(function() {
 			this.showDefault();
 			if(!this.downloading)
 				return;
-			port.send({ what:"close_background_tab", tab:this.tab });
+			port.send({
+				what: "close_background_tab",
+				tab: this.tab
+			});
 			delete downloadEvents[this.tab];
 			this.tab = null;
 			this.setDownloading(false);
@@ -296,21 +291,31 @@ getSettings(function() {
 		events: {
 			"ready_to_download": function(callback) {
 				if(this.inactive)
-					callback({ exploit:true });
+					callback({
+						exploit: true
+					});
 				else {
-					callback({ download:true });
+					callback({
+						download: true
+					});
 					this.showProgress(0);
 				}
 			},
 			"finished_download": function() {
-				port.send({ what:"close_background_tab", tab:this.tab });
+				port.send({
+					what: "close_background_tab",
+					tab: this.tab
+				});
 				delete downloadEvents[this.tab];
 				this.tab = null;
 				this.setDownloading(false);
 				this.showDone();
 			},
 			"download_failed": function() {
-				port.send({ what:"close_background_tab", tab:this.tab });
+				port.send({
+					what: "close_background_tab",
+					tab: this.tab
+				});
 				delete downloadEvents[this.tab];
 				this.tab = null;
 				this.setDownloading(false);
@@ -325,7 +330,7 @@ getSettings(function() {
 				this.showError();
 			},
 			"download_progress": function(callback, percentage) {
-				this["show"+(percentage=="zip"?"Zipping":percentage=="save"?"Saving":"Progress")](percentage);
+				this["show" + (percentage == "zip" ? "Zipping" : percentage == "save" ? "Saving" : "Progress")](percentage);
 			}
 		},
 
@@ -389,16 +394,18 @@ getSettings(function() {
 
 	injectCss();
 
-	var port = connector.connect({ name:"controller" });
+	var port = connector.connect({
+		name: "controller"
+	});
 
 	port.receive(function(request, callback) {
 		if(request.what == "child_message")
 			return downloadEvents[request.tab] && typeof downloadEvents[request.tab].events[request.message.what] == "function" &&
-			downloadEvents[request.tab].events[request.message.what].call(
-				downloadEvents[request.tab],
-				callback,
-				request.message.data
-			);
+				downloadEvents[request.tab].events[request.message.what].call(
+					downloadEvents[request.tab],
+					callback,
+					request.message.data
+				);
 		else if((request.what == "child_broadcast" && request.message.what == "finished_scan") || request.what == "reload_page")
 			location.reload();
 		else if(request.what == "update_queue")
