@@ -587,7 +587,7 @@ function loadComic(callback, step) {
 				zipImages(function() {
 					step("save");
 					downloadBlob(getName()+"."+(settings.container?"zip":"cbz"), done);
-				});
+				}, "Here be metadata");
 			}
 		}, rmListener = function(e) {
 			clearTimeout(noChangeTimeout);
