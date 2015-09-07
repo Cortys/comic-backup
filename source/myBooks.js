@@ -2,6 +2,58 @@
 
 getSettings(function() {
 
+			//I'm building a simple object that will contain all the metadata
+			//That way it can return the collected information any way we need it
+			//Maybe this should be in the download button again?
+		    var metaData =
+			{
+			   writer: "",
+			   inks: "",
+			   pencils: "",
+			   colors: "",
+			   cover: "",
+			   
+			   addWriter:function(newWriter)
+			   {
+			      if (this.writer != "")
+				     this.writer = this.writer + ",";
+
+				  this.writer += newWriter;
+			   },
+			   
+			   addInks:function(newInks)
+			   {
+			      if (this.inks != "")
+				     this.inks = this.inks + ",";
+
+				  this.inks += newInks;
+			   },
+			   
+			   addCover:function(newCover)
+			   {
+			      if (this.cover != "")
+				     this.cover = this.cover + ",";
+
+				  this.cover += newCover;
+			   },
+			   
+			   addPencil:function(newPencil)
+			   {
+			      if (this.pencils != "")
+				     this.pencils = this.pencils + ",";
+
+				  this.pencils += newPencil;
+			   },
+			   
+			   addColor:function(newColor)
+			   {
+			      if (this.colors != "")
+				     this.colors = this.colors + ",";
+
+				  this.colors += newColor;
+			   }		   
+			};
+
 	if(!settings.queueLength)
 		settings.queueLength = 1;
 
@@ -23,6 +75,56 @@ getSettings(function() {
 		}()),
 
 		Download = function(button) {
+			
+		    //I'm getting the comic ID in the last array entry
+			var parts = button.href.split("/");
+
+			//Since we have the comic ID, we can directly access the container and even navigate
+			//to the inner credits/metadata container
+			var myXPath = "//li[@data-item-id=" + parts[parts.length-1] + "]//dl";
+			var metaCont = document.evaluate(myXPath, document, null, XPathResult.ANY_TYPE, null);		
+			
+			//metaCont should now have a list of DL elements for THIS COMIC
+			var oneCredit;
+			while(oneCredit = metaCont.iterateNext())
+			{
+			   var oneDT = oneCredit.getElementsByTagName("dt")[0].firstChild.nodeValue;
+			   //Writer(s)
+			   if (oneDT.toLowerCase() == "written by" || oneDT.toLowerCase() == "by")
+			   {
+			      var allDD = oneCredit.getElementsByTagName("dd");
+				  for (var i = 0; i < allDD.length; i++)
+				     metaData.addWriter(allDD[i].innerText);
+				}
+				else if (oneDT.toLowerCase() == "inks")
+				{
+			      var allDD = oneCredit.getElementsByTagName("dd");
+				  for (var i = 0; i < allDD.length; i++)
+				     metaData.addInks(allDD[i].innerText);
+				}
+				else if (oneDT.toLowerCase() == "cover by")
+				{
+			      var allDD = oneCredit.getElementsByTagName("dd");
+				  for (var i = 0; i < allDD.length; i++)
+				     metaData.addCover(allDD[i].innerText);
+				}
+				else if (oneDT.toLowerCase() == "pencils")
+				{
+			      var allDD = oneCredit.getElementsByTagName("dd");
+				  for (var i = 0; i < allDD.length; i++)
+				     metaData.addPencil(allDD[i].innerText);
+				}
+				else if (oneDT.toLowerCase() == "colored by")
+				{
+			      var allDD = oneCredit.getElementsByTagName("dd");
+				  for (var i = 0; i < allDD.length; i++)
+				     metaData.addColor(allDD[i].innerText);
+				}
+			}
+
+			//Continue with download
+
+			
 			this.readButton = button;
 			var t = this,
 				clone = t.downloadButton = button.cloneNode(false),
