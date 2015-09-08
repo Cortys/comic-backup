@@ -81,12 +81,14 @@ getSettings(function() {
 
 			//Since we have the comic ID, we can directly access the container and even navigate
 			//to the inner credits/metadata container
-			var myXPath = "//li[@data-item-id=" + parts[parts.length - 1] + "]//dl";
-			var metaCont = document.evaluate(myXPath, document, null, XPathResult.ANY_TYPE, null);
-
+			var myXPath = "li[data-item-id=\"" + parts[parts.length - 1] + "\"]";
+			var metaCont = document.querySelectorAll(myXPath);
+			
 			//metaCont should now have a list of DL elements for THIS COMIC
 			var oneCredit, oneDT, allDD, i;
-			while((oneCredit = metaCont.iterateNext())) {
+			for (var i = 0; i < metaCont.length; i++)
+			{
+			    	oneCredit = metaCont[i];
 				oneDT = oneCredit.getElementsByTagName("dt")[0].firstChild.nodeValue;
 				//Writer(s)
 				if(oneDT.toLowerCase() == "written by" || oneDT.toLowerCase() == "by") {
