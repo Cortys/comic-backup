@@ -12,9 +12,9 @@ for(var i = 0; i < selects.length; i++)
 					message = e.getAttribute("data-message");
 
 				if(e.id === "updateServer")
-					o[e.id] = e.value.charAt(e.value.length-1) == "/" ? e.value.substr(0, e.value.length-1) : e.value;
+					o[e.id] = e.value.charAt(e.value.length - 1) == "/" ? e.value.substr(0, e.value.length - 1) : e.value;
 				else {
-					o[e.id] = e.value*1;
+					o[e.id] = e.value * 1;
 					if(!Number.isFinite(o[e.id]))
 						return;
 					if((e.id === "pageSwapDelay" || e.id === "pageSkipDelay") && o[e.id] < 0)
@@ -22,16 +22,24 @@ for(var i = 0; i < selects.length; i++)
 				}
 
 				if(message)
-					chrome.runtime.sendMessage({ what:"controller_message", message:{ what:message, data:o[e.id] } });
+					chrome.runtime.sendMessage({
+						what: "controller_message",
+						message: {
+							what: message,
+							data: o[e.id]
+						}
+					});
 
 				chrome.storage.local.set(o, function() {
-					chrome.runtime.sendMessage({ what:"update_settings" });
+					chrome.runtime.sendMessage({
+						what: "update_settings"
+					});
 				});
 			}, false);
 			chrome.storage.local.get([e.id], function(a) {
 				if(e.id in a) {
 					if(e.tagName.match(/select/i))
-						e.querySelector("option[value='"+a[e.id]+"']").selected = "selected";
+						e.querySelector("option[value='" + a[e.id] + "']").selected = "selected";
 					else
 						e.value = a[e.id];
 				}
@@ -43,7 +51,7 @@ for(var i = 0; i < selects.length; i++)
 				if(!a.scannedOnce) {
 					e.setAttribute("disabled", "1");
 					var p = document.createElement("p");
-					p.innerHTML="You have to do at least one scan before this can be disabled.";
+					p.innerHTML = "You have to do at least one scan before this can be disabled.";
 					document.body.appendChild(p);
 				}
 				else
