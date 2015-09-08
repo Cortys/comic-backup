@@ -8,11 +8,34 @@ getSettings(function() {
 	updateDialog();
 
 	function MetaData() {
+		
+		//We may want to support different outputmodes later on
+		//For now, there is only one: https://code.google.com/p/comicbookinfo/wiki/Example
+		//This is used by Calibre
+		this.outputMode = "CBI";
+		
+		//Metadata, credits - CSV
+		
 		this.writer = "";
 		this.inks = "";
 		this.pencils = "";
 		this.colors = "";
 		this.cover = "";
+		
+		//As yet unused
+		this.series = "";
+		this.title = "";
+		this.publisher = "";
+		this.pubMonth = "";
+		this.pubYear = "";
+		this.issue = "";
+		this.numberOfIssues = "";
+		this.volume = "";
+		this.numberOfVolumes = "";
+		this.rating = "";
+		this.genre = "";
+		this.language = "";
+		this.country = "";
 	}
 
 	MetaData.prototype = {
@@ -51,9 +74,95 @@ getSettings(function() {
 			this.colors += newColor;
 		},
 
-		toString: function() {
-			// Should generate valid cbz metadata comment string...
-			return "...";
+		
+		//Add a list of allowed modes to check against?
+		changeOutputMode: function(newOutputMode){
+		   this.outputMode = newOutputMode;
+		},
+		
+		//Is there a better way? Maybe a util class?
+		q: function(value){
+			return "\"" + value + "\"";
+		},
+		
+		q2: function(val1, val2){
+		   return this.q(val1) + ":" + this.q(val2);
+		},
+		
+	   JSONPerson: function(personArray, role, JSONString)
+	   {
+		for (var i = 0; i < personArray.length; i++)
+		{
+		    if (personArray[i] === undefined || personArray[i] == "")
+			   continue;
+
+
+
+
+  		    JSONString += "{";
+			JSONString += this.q2("person", personArray[i]) + ",";
+			JSONString += this.q2("role", role);
+				
+			if (i == 0)
+				JSONString += "," + this.q2("primary", "YES");				  
+				
+			JSONString += "}";
+			
+			if (i < personArray.length-1)
+			   JSONString += ",";
+		}
+		
+		return JSONString;
+	   },
+
+		toString: function(outputMode) {
+		   var useMode = outputMode;
+		   
+		    if (useMode === undefined)
+			   useMode = this.outputMode;
+
+			//I suppose it would be possible to create an object that contains the right
+			//names already and just have JSON.stringify do the job.
+			//It wouldn't be able to set primaries, though, would it?
+			//Maybe do that later on
+			if (useMode == "CBI")
+			{
+			   var myDate = new Date();
+			   var CBIJSON = "";
+			   CBIJSON += "{";
+			   CBIJSON += this.q2("appID", "Comixology Backup") + ",";
+			   CBIJSON += this.q2("lastModified", myDate.toJSON()) + ",";
+			   CBIJSON += this.q("ComicBookInfo/1.0") + ": {";
+
+			   CBIJSON += this.q2("series", this.series) + ",";
+			   CBIJSON += this.q2("title", this.title) + ",";
+			   CBIJSON += this.q2("publisher", this.publisher) + ",";
+			   CBIJSON += this.q2("publicationMonth", this.pubMonth) + ",";
+			   CBIJSON += this.q2("publicationYear", this.pubYear) + ",";
+			   CBIJSON += this.q2("issue", this.issue) + ",";
+			   CBIJSON += this.q2("numberOfIssues", this.numberOfIssues) + ",";
+			   CBIJSON += this.q2("volume", this.volume) + ",";
+			   CBIJSON += this.q2("numberOfVolumes", this.numberOfVolumes) + ",";
+			   CBIJSON += this.q2("rating", this.rating) + ",";
+			   CBIJSON += this.q2("genre", this.genre) + ",";
+			   CBIJSON += this.q2("language", this.language) + ",";
+			   CBIJSON += this.q2("country", this.country) + ",";
+			   
+			   CBIJSON += this.q("credits") + ":" + "[";
+			   CBIJSON = this.JSONPerson(this.writer.split(","), "Writer", CBIJSON);
+			   CBIJSON = this.JSONPerson((this.inks + "," + this.pencils).split(","), "Artist", CBIJSON);
+			   CBIJSON = this.JSONPerson(this.colors.split(","), "Colorer", CBIJSON);
+			   
+			   //Not defined in the example, hopefully supported?
+			   CBIJSON = this.JSONPerson(this.cover.split(","), "Cover", CBIJSON);
+			   
+			   //We don't have those - yet?
+			   //CBIJSON = this.JSONPerson(this.???.split(","), "Editor", CBIJSON);
+			   //CBIJSON = this.JSONPerson(this.???.split(","), "Letterer", CBIJSON);
+			   
+			   CBIJSON += "]}}";			   
+			}			
+			return CBIJSON;
 		}
 	};
 
