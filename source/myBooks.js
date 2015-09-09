@@ -89,7 +89,7 @@ getSettings(function() {
 		   return this.q(val1) + ":" + this.q(val2);
 		},
 		
-	   JSONPerson: function(personArray, role, JSONString)
+	   JSONPerson: function(personArray, role, JSONString, noEndComma)
 	   {
 		for (var i = 0; i < personArray.length; i++)
 		{
@@ -108,8 +108,9 @@ getSettings(function() {
 				
 			JSONString += "}";
 			
-			if (i < personArray.length-1)
-			   JSONString += ",";
+			//We need to separate the entries with a comma - but the last entry doesn't need one!
+			if (noEndComma === undefined)
+				JSONString += ",";
 		}
 		
 		return JSONString;
@@ -154,7 +155,7 @@ getSettings(function() {
 			   CBIJSON = this.JSONPerson(this.colors.split(","), "Colorer", CBIJSON);
 			   
 			   //Not defined in the example, hopefully supported?
-			   CBIJSON = this.JSONPerson(this.cover.split(","), "Cover", CBIJSON);
+			   CBIJSON = this.JSONPerson(this.cover.split(","), "Cover", CBIJSON, "X");
 			   
 			   //We don't have those - yet?
 			   //CBIJSON = this.JSONPerson(this.???.split(","), "Editor", CBIJSON);
@@ -190,39 +191,40 @@ getSettings(function() {
 
 			//Since we have the comic ID, we can directly access the container and even navigate
 			//to the inner credits/metadata container
-			var myXPath = "li[data-item-id=\"" + parts[parts.length - 1] + "\"]";
+			var myXPath = "li[data-item-id=\"" + parts[parts.length - 1] + "\"] div.credits";
 			var metaCont = document.querySelectorAll(myXPath);
 			
 			//metaCont should now have a list of DL elements for THIS COMIC
 			var oneCredit, oneDT, allDD, i;
-			for (var i = 0; i < metaCont.length; i++)
+			for (var j = 0; j < metaCont.length; j++)
 			{
-			    	oneCredit = metaCont[i];
+			    oneCredit = metaCont[j];
 				oneDT = oneCredit.getElementsByTagName("dt")[0].firstChild.nodeValue;
+
 				//Writer(s)
 				if(oneDT.toLowerCase() == "written by" || oneDT.toLowerCase() == "by") {
 					allDD = oneCredit.getElementsByTagName("dd");
-					for(i = 0; i < allDD.length; i++)
+					for(var i = 0; i < allDD.length; i++)
 						metaData.addWriter(allDD[i].innerText);
 				}
 				else if(oneDT.toLowerCase() == "inks") {
 					allDD = oneCredit.getElementsByTagName("dd");
-					for(i = 0; i < allDD.length; i++)
+					for(var i = 0; i < allDD.length; i++)
 						metaData.addInks(allDD[i].innerText);
 				}
 				else if(oneDT.toLowerCase() == "cover by") {
 					allDD = oneCredit.getElementsByTagName("dd");
-					for(i = 0; i < allDD.length; i++)
+					for(var i = 0; i < allDD.length; i++)
 						metaData.addCover(allDD[i].innerText);
 				}
 				else if(oneDT.toLowerCase() == "pencils") {
 					allDD = oneCredit.getElementsByTagName("dd");
-					for(i = 0; i < allDD.length; i++)
+					for(var i = 0; i < allDD.length; i++)
 						metaData.addPencil(allDD[i].innerText);
 				}
 				else if(oneDT.toLowerCase() == "colored by") {
 					allDD = oneCredit.getElementsByTagName("dd");
-					for(i = 0; i < allDD.length; i++)
+					for(var i = 0; i < allDD.length; i++)
 						metaData.addColor(allDD[i].innerText);
 				}
 			}
