@@ -14,9 +14,9 @@ function getSettings(callback) {
 
 function randomString(min, max) { // generates random alphanumeric string with a length between min and max - it never starts with a number so that results can be used as class names etc.
 	var poss = "abcdefghijklmnopqrstuvwxyz0123456789",
-		l = Math.round(Math.random()*(max-min))+min;
-	for (var r = ""; r.length < l;)
-		r += poss.charAt(Math.round(Math.random()*(poss.length-(r.length?1:11))));
+		l = Math.round(Math.random() * (max - min)) + min;
+	for(var r = ""; r.length < l;)
+		r += poss.charAt(Math.round(Math.random() * (poss.length - (r.length ? 1 : 11))));
 	return r;
 }
 
@@ -38,7 +38,7 @@ function sanitizeFilename(input, spaceReplacement) {
 function nullFill(num, len) {
 	num += "";
 	while(num.length < len)
-		num = "0"+num;
+		num = "0" + num;
 	return num;
 }
 
@@ -46,16 +46,16 @@ function nullFill(num, len) {
 function checkVersion(callback) {
 	var xhr = new XMLHttpRequest();
 	if(settings.updateServer) {
-		xhr.open("GET", settings.updateServer+"/version", true);
+		xhr.open("GET", settings.updateServer + "/version", true);
 		xhr.responseType = 'text';
 
 		xhr.onreadystatechange = function() {
 
-			if (xhr.readyState == 4) {
+			if(xhr.readyState == 4) {
 				if(xhr.status != 200)
 					callback(false);
-				var version = this.response*1;
-				if (version > current_version)
+				var version = this.response * 1;
+				if(version > current_version)
 					callback(true);
 				else
 					callback(false);
@@ -73,7 +73,7 @@ function addTopBar() {
 
 	div = document.createElement("div");
 
-	div.id = randomString(20,40);
+	div.id = randomString(20, 40);
 
 	div.style.fontSize = "13px";
 	div.style.top = "50%";
@@ -101,7 +101,7 @@ function updateDialog() {
 			addTopBar();
 			div.style.top = 0;
 			div.style.marginTop = 0;
-			div.innerHTML = "This version of the \"Comixology Backup\" extension is outdated.<br><a href=\""+settings.updateServer+"/download.zip\" style='"+linkStyle+"' target='_blank'>Update</a>";
+			div.innerHTML = "This version of the \"Comixology Backup\" extension is outdated.<br><a href=\"" + settings.updateServer + "/download.zip\" style='" + linkStyle + "' target='_blank'>Update</a>";
 		}
 	});
 }
@@ -111,28 +111,31 @@ if(typeof Element.prototype.matches !== "function")
 
 // Converts an RGB (0-255) color value to HSL (0-1)
 function rgbToHsl(r, g, b) {
-	r /= 255; g /= 255; b /= 255;
+	r /= 255;
+	g /= 255;
+	b /= 255;
 
 	var max = Math.max(r, g, b),
 		min = Math.min(r, g, b);
 	var h, s, l = (max + min) / 2;
 
-	if (max == min) {
+	if(max == min) {
 		h = s = 0; // achromatic
-	} else {
+	}
+	else {
 		var d = max - min;
 		s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
 
-		switch (max) {
-		case r:
-			h = (g - b) / d + (g < b ? 6 : 0);
-			break;
-		case g:
-			h = (b - r) / d + 2;
-			break;
-		case b:
-			h = (r - g) / d + 4;
-			break;
+		switch(max) {
+			case r:
+				h = (g - b) / d + (g < b ? 6 : 0);
+				break;
+			case g:
+				h = (b - r) / d + 2;
+				break;
+			case b:
+				h = (r - g) / d + 4;
+				break;
 		}
 
 		h /= 6;
@@ -145,9 +148,10 @@ function rgbToHsl(r, g, b) {
 function hslToRgb(h, s, l) {
 	var r, g, b;
 
-	if (s === 0) {
+	if(s === 0) {
 		r = g = b = l; // achromatic
-	} else {
+	}
+	else {
 		var q = l < 0.5 ? l * (1 + s) : l + s - l * s,
 			p = 2 * l - q;
 
@@ -160,11 +164,11 @@ function hslToRgb(h, s, l) {
 }
 
 hslToRgb.hue2rgb = function hue2rgb(p, q, t) {
-	if (t < 0) t += 1;
-	if (t > 1) t -= 1;
-	if (t < 1 / 6) return p + (q - p) * 6 * t;
-	if (t < 1 / 2) return q;
-	if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+	if(t < 0) t += 1;
+	if(t > 1) t -= 1;
+	if(t < 1 / 6) return p + (q - p) * 6 * t;
+	if(t < 1 / 2) return q;
+	if(t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
 	return p;
 };
 
@@ -178,23 +182,26 @@ function dataURLtoBlob(dataURI) {
 		intArray,
 		i,
 		mimeString;
-	if (dataURI.split(',')[0].indexOf('base64') >= 0) {
+	if(dataURI.split(',')[0].indexOf('base64') >= 0) {
 		// Convert base64 to raw binary data held in a string:
 		byteString = atob(dataURI.split(',')[1]);
-	} else {
+	}
+	else {
 		// Convert base64/URLEncoded data component to raw binary data:
 		byteString = decodeURIComponent(dataURI.split(',')[1]);
 	}
 	// Write the bytes of the string to an ArrayBuffer:
 	arrayBuffer = new ArrayBuffer(byteString.length);
 	intArray = new Uint8Array(arrayBuffer);
-	for (i = 0; i < byteString.length; i += 1) {
+	for(i = 0; i < byteString.length; i += 1) {
 		intArray[i] = byteString.charCodeAt(i);
 	}
 	// Separate out the mime component:
 	mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
 	// Write the ArrayBuffer (or ArrayBufferView) to a blob:
-	return new Blob([intArray], {type: mimeString});
+	return new Blob([intArray], {
+		type: mimeString
+	});
 }
 
 /*
@@ -211,47 +218,47 @@ http://creativecommons.org/publicdomain/zero/1.0/legalcode
 */
 
 /* Creates a new queue. A queue is a first-in-first-out (FIFO) data structure -
-* items are added to the end of the queue and removed from the front.
-*/
-function Queue(){
+ * items are added to the end of the queue and removed from the front.
+ */
+function Queue() {
 
 	// initialise the queue and offset
-	var queue  = [];
+	var queue = [];
 	var offset = 0;
 
 	// Returns the length of the queue.
 	this.getLength = function() {
-		return (queue.length - offset);
+		return(queue.length - offset);
 	};
 
 	// Returns true if the queue is empty, and false otherwise.
 	this.isEmpty = function() {
-		return (queue.length === 0);
+		return(queue.length === 0);
 	};
 
 	/* Enqueues the specified item. The parameter is:
-	*
-	* item - the item to enqueue
-	*/
+	 *
+	 * item - the item to enqueue
+	 */
 	this.enqueue = function(item) {
 		queue.push(item);
 	};
 
 	/* Dequeues an item and returns it. If the queue is empty, the value
-	* 'undefined' is returned.
-	*/
+	 * 'undefined' is returned.
+	 */
 	this.dequeue = function() {
 
 		// if the queue is empty, return immediately
-		if (queue.length === 0) return undefined;
+		if(queue.length === 0) return undefined;
 
 		// store the item at the front of the queue
 		var item = queue[offset];
 		queue[offset] = undefined;
 
 		// increment the offset and remove the free space if necessary
-		if (++ offset * 2 >= queue.length){
-			queue  = queue.slice(offset);
+		if(++offset * 2 >= queue.length) {
+			queue = queue.slice(offset);
 			offset = 0;
 		}
 
@@ -261,10 +268,10 @@ function Queue(){
 	};
 
 	/* Returns the item at the front of the queue (without dequeuing it). If the
-	* queue is empty then undefined is returned.
-	*/
+	 * queue is empty then undefined is returned.
+	 */
 	this.peek = function() {
-		return (queue.length > 0 ? queue[offset] : undefined);
+		return(queue.length > 0 ? queue[offset] : undefined);
 	};
 
 }
@@ -276,22 +283,36 @@ var connector = Object.create(chrome.runtime);
 
 connector.mutatePort = function(port) {
 
-	var c = 1, l = new Queue(), callbacks = {};
+	var c = 1,
+		l = new Queue(),
+		callbacks = {};
 
 	port.send = function(msg, callback) {
 		var id = l.dequeue() || c++;
 		callbacks[id] = callback;
-		this.postMessage({ id:id, type:0, message:msg }); // type0 message: A transmits msg to B
+		this.postMessage({
+			id: id,
+			type: 0,
+			message: msg
+		}); // type0 message: A transmits msg to B
 	};
 
 	port.receive = function(callback) {
-		var t = this, called = false;
+		var t = this,
+			called = false;
 		t.onMessage.addListener(function(msg) {
 			if(msg.id !== undefined && !msg.type && !callback(msg.message, function(response) { // if callback returns true => B's response will be sent asynchronous (A will wait for a response as long as B requires => RISK this could be endless!)
-				called = true;
-				t.postMessage({ id:msg.id, type:1, message:response }); // type1 message: B responds to A with response
-			}) && !called)
-				t.postMessage({ id:msg.id, type:2 }); // type2 message: B chose to not respond to A => A is notified, that no response will come
+					called = true;
+					t.postMessage({
+						id: msg.id,
+						type: 1,
+						message: response
+					}); // type1 message: B responds to A with response
+				}) && !called)
+				t.postMessage({
+					id: msg.id,
+					type: 2
+				}); // type2 message: B chose to not respond to A => A is notified, that no response will come
 		});
 	};
 
@@ -329,7 +350,7 @@ function downloadFile(name, data, overwrite, callback) { // overwrite is not use
 			url: data,
 			filename: name,
 			method: "GET",
-			conflictAction: (overwrite?"overwrite":"uniquify")
+			conflictAction: (overwrite ? "overwrite" : "uniquify")
 		}, function(downloadId) {
 			downloadFile.handlers[downloadId] = function(delta) {
 				if(!delta.endTime || !delta.endTime.current)
@@ -341,7 +362,11 @@ function downloadFile(name, data, overwrite, callback) { // overwrite is not use
 		});
 	}
 	else
-		downloadFile.port.send({ name:name, data:data, overwrite:overwrite }, callback);
+		downloadFile.port.send({
+			name: name,
+			data: data,
+			overwrite: overwrite
+		}, callback);
 }
 
 if(chrome.downloads) {
@@ -353,4 +378,6 @@ if(chrome.downloads) {
 	});
 }
 else
-	downloadFile.port = connector.connect({ name:"download" });
+	downloadFile.port = connector.connect({
+		name: "download"
+	});

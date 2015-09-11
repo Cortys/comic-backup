@@ -9,11 +9,11 @@ getSettings(function() {
 
 	var cssClass = randomString(20, 40),
 		allButtonSelector = ".action-button.read-action",
-		readButtonSelector = allButtonSelector+":not(."+cssClass+")",
+		readButtonSelector = allButtonSelector + ":not(." + cssClass + ")",
 		injectCss = function() {
 			var style = document.createElement("style");
 			style.type = "text/css";
-			style.innerHTML = "."+cssClass+" span { position:absolute; width:auto; top:50%; margin-top:-0.5em; line-height:1em; left:0; right:0; transition:opacity 0.1s linear 0s; opacity:1; }\n."+cssClass+".cancel:hover span { transition-delay:0.3s; }\n."+cssClass+" .cancel { opacity:0; }\n."+cssClass+".cancel:hover .cancel { opacity:1; }\n."+cssClass+".cancel:hover .text { opacity:0; }";
+			style.innerHTML = "." + cssClass + " span { position:absolute; width:auto; top:50%; margin-top:-0.5em; line-height:1em; left:0; right:0; transition:opacity 0.1s linear 0s; opacity:1; }\n." + cssClass + ".cancel:hover span { transition-delay:0.3s; }\n." + cssClass + " .cancel { opacity:0; }\n." + cssClass + ".cancel:hover .cancel { opacity:1; }\n." + cssClass + ".cancel:hover .text { opacity:0; }";
 			document.head.appendChild(style);
 		},
 		downloadEvents = {},
@@ -36,18 +36,18 @@ getSettings(function() {
 			t.buttonBGs = {
 				normal: buttonComputedStyle.background,
 				gray: "#777777",
-				progress: "linear-gradient(to right, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.4) {X}%, rgba(0,0,0,0) {X}%, rgba(0,0,0,0) 100%), "+buttonComputedStyle.background
+				progress: "linear-gradient(to right, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.4) {X}%, rgba(0,0,0,0) {X}%, rgba(0,0,0,0) 100%), " + buttonComputedStyle.background
 			};
 
 			// create clone:
 			var randomId = randomString(20, 40); // make sure cmxlgy can not break button text rendering by changing class names
-			clone.innerHTML = button.innerHTML.replace(button.innerText.trim(), "<span class='text "+randomId+"'></span><span class='cancel'>Stop</span>");
+			clone.innerHTML = button.innerHTML.replace(button.innerText.trim(), "<span class='text " + randomId + "'></span><span class='cancel'>Stop</span>");
 			clone.style.position = "relative";
 			clone.style.textAlign = button.style.textAlign = "center";
 			clone.href = "javascript:";
 			clone.classList.add(cssClass);
 
-			t.text = clone.querySelector("span.text."+randomId);
+			t.text = clone.querySelector("span.text." + randomId);
 
 			this.show = function(b) {
 
@@ -60,12 +60,13 @@ getSettings(function() {
 					return;
 
 				var parent = function goUp(button) { // recursively search for right parent element of read button
-					if(button == null)
-						return null;
-					if(button.matches(".item-actions"))
-						return button;
-					return goUp(button.parentElement);
-				}(button), backupContainer = parent?parent.querySelector(".backup-container"):null;
+						if(button == null)
+							return null;
+						if(button.matches(".item-actions"))
+							return button;
+						return goUp(button.parentElement);
+					}(button),
+					backupContainer = parent ? parent.querySelector(".backup-container") : null;
 
 				if(!parent)
 					return;
@@ -75,7 +76,7 @@ getSettings(function() {
 						cont = document.createElement("section");
 					fragment.appendChild(document.createElement("hr"));
 					cont.setAttribute("class", "backup-container");
-					cont.innerHTML = "<h1>"+backupText+"</h1>";
+					cont.innerHTML = "<h1>" + backupText + "</h1>";
 					cont.appendChild(clone);
 					fragment.appendChild(cont);
 					parent.insertBefore(fragment, parent.querySelector(".archive-actions"));
@@ -86,7 +87,7 @@ getSettings(function() {
 
 			if(settings.selectors) {
 				clone.addEventListener("click", function() {
-					t[t.cancelable?"cancel":"start"]();
+					t[t.cancelable ? "cancel" : "start"]();
 				}, false);
 				t.showDefault();
 			}
@@ -158,7 +159,11 @@ getSettings(function() {
 
 		openTab: function(active) {
 			var t = this;
-			port.send({ what:"open_background_tab", url:t.readButton.href, active:active }, function(tab) {
+			port.send({
+				what: "open_background_tab",
+				url: t.readButton.href,
+				active: active
+			}, function(tab) {
 				t.tab = tab;
 				downloadEvents[tab] = t;
 			});
@@ -183,7 +188,10 @@ getSettings(function() {
 			this.showDefault();
 			if(!this.downloading)
 				return;
-			port.send({ what:"close_background_tab", tab:this.tab });
+			port.send({
+				what: "close_background_tab",
+				tab: this.tab
+			});
 			delete downloadEvents[this.tab];
 			this.tab = null;
 			this.setDownloading(false);
@@ -194,21 +202,31 @@ getSettings(function() {
 		events: {
 			"ready_to_download": function(callback) {
 				if(this.inactive)
-					callback({ exploit:true });
+					callback({
+						exploit: true
+					});
 				else {
-					callback({ download:true });
+					callback({
+						download: true
+					});
 					this.showProgress(0);
 				}
 			},
 			"finished_download": function() {
-				port.send({ what:"close_background_tab", tab:this.tab });
+				port.send({
+					what: "close_background_tab",
+					tab: this.tab
+				});
 				delete downloadEvents[this.tab];
 				this.tab = null;
 				this.setDownloading(false);
 				this.showDone();
 			},
 			"download_failed": function() {
-				port.send({ what:"close_background_tab", tab:this.tab });
+				port.send({
+					what: "close_background_tab",
+					tab: this.tab
+				});
 				delete downloadEvents[this.tab];
 				this.tab = null;
 				this.setDownloading(false);
@@ -223,7 +241,7 @@ getSettings(function() {
 				this.showError();
 			},
 			"download_progress": function(callback, percentage) {
-				this["show"+(percentage=="zip"?"Zipping":percentage=="save"?"Saving":"Progress")](percentage);
+				this["show" + (percentage == "zip" ? "Zipping" : percentage == "save" ? "Saving" : "Progress")](percentage);
 			}
 		},
 
@@ -287,16 +305,18 @@ getSettings(function() {
 
 	injectCss();
 
-	var port = connector.connect({ name:"controller" });
+	var port = connector.connect({
+		name: "controller"
+	});
 
 	port.receive(function(request, callback) {
 		if(request.what == "child_message")
 			return downloadEvents[request.tab] && typeof downloadEvents[request.tab].events[request.message.what] == "function" &&
-			downloadEvents[request.tab].events[request.message.what].call(
-				downloadEvents[request.tab],
-				callback,
-				request.message.data
-			);
+				downloadEvents[request.tab].events[request.message.what].call(
+					downloadEvents[request.tab],
+					callback,
+					request.message.data
+				);
 		else if((request.what == "child_broadcast" && request.message.what == "finished_scan") || request.what == "reload_page")
 			location.reload();
 		else if(request.what == "update_queue")
