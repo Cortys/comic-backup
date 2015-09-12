@@ -35,10 +35,10 @@ var port = connector.connect({
 getSettings(function() {
 
 	if(!("pageSwapDelay" in settings))
-		settings.pageSwapDelay = 500;
+		settings.pageSwapDelay = 600;
 
 	if(!("pageSkipDelay" in settings))
-		settings.pageSkipDelay = 1000;
+		settings.pageSkipDelay = 1200;
 
 	if(!settings.pageSwapDelay)
 		swapPage = function swapPage(callback) {
@@ -77,33 +77,31 @@ getSettings(function() {
 				what: "ready_to_download"
 			}
 		}, function(start) {
-			if(!start)
-				return;
-
-			if(start.download) {
-				loadComic(function(err) {
-					port.send({
-						what: "message_to_opener",
-						message: {
-							what: err ? "download_failed" : "finished_download"
-						}
-					});
-				}, function(perc) {
-					port.send({
-						what: "message_to_opener",
-						message: {
-							what: "download_progress",
-							data: perc
-						}
-					});
-				}, start.metaData);
-			}
-			else if(start.exploit) {
+			if(start)
+				if(start.download)
+					loadComic(function(err) {
+						port.send({
+							what: "message_to_opener",
+							message: {
+								what: err ? "download_failed" : "finished_download"
+							}
+						});
+					}, function(perc) {
+						port.send({
+							what: "message_to_opener",
+							message: {
+								what: "download_progress",
+								data: perc
+							}
+						});
+					}, start.metaData);
+				else if(start.exploit) {
 				port.send({
 					what: "unlink_from_opener"
 				});
 				setupSelectors();
 			}
+
 		});
 	});
 });
@@ -278,7 +276,7 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 	browseButtonCached: null,
 	onepageButtonCached: null,
 
-	isVisible: function(e) {
+	isVisible(e) {
 		return e.style.display != "none" && e.style.visibility != "hidden";
 	},
 
@@ -297,7 +295,7 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 		return document.querySelector(settings.selectorActivePage);
 	},
 
-	loopCanvasContainers: function(f) {
+	loopCanvasContainers(f) {
 		var a = document.querySelectorAll("div.view"),
 			v;
 		for(var i = 0; i < a.length; i++)
@@ -306,7 +304,7 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 		return null;
 	},
 
-	getCanvasContainer: function() {
+	getCanvasContainer() {
 		var t = this;
 		if(t.canvasContainer && document.contains(t.canvasContainer) && t.isVisible(t.canvasContainer))
 			return this.canvasContainer;
@@ -342,21 +340,21 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 	get loader() {
 		return document.querySelectorAll(".loading");
 	},
-	loaderVisible: function() {
+	loaderVisible() {
 		return this.loader && this.loader.length && Array.prototype.reduce.call(this.loader, function(prev, curr) {
 			return prev || curr.style.display !== "none";
 		}, false);
 	},
-	isActivePage: function(page) {
+	isActivePage(page) {
 		return page.matches(settings.selectorActivePage);
 	},
-	isActiveOnepageButton: function() {
+	isActiveOnepageButton() {
 		return this.onepageButton.matches(settings.selectorActiveOnepageButton);
 	},
-	countCanvas: function() {
+	countCanvas() {
 		return this.canvasElements.length;
 	},
-	isLoading: function() {
+	isLoading() {
 		var view;
 		return this.canvasContainerCount !== 1 || (view = dom.getCanvasContainer(), !view.style.webkitTransform && !view.style.transform) || dom.loaderVisible() || !dom.canvasElements.length;
 	}
@@ -407,13 +405,13 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 			{
 				text: "Click the button that enables single page view.",
 				btn: null,
-				callback: function(element) {
+				callback(element) {
 					this.btn = element;
 					return !!this.btn;
 				}
 			}, {
 				text: "Click the button that enables dual page view.",
-				callback: function(dual) {
+				callback(dual) {
 					var single = steps[0].btn,
 						states = level(single, dual);
 					if(!states)
@@ -427,20 +425,20 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 				}
 			}, {
 				text: "Click the browse button that shows all pages.",
-				callback: function(element) {
+				callback(element) {
 					var btn = getPathFor(element);
 					write.selectorBrowseButton = btn;
 					return !!btn;
 				}
 			}, {
 				text: "Click on the thumbnail of the first page.",
-				callback: function(element) {
+				callback(element) {
 					this.page = element;
 					return this.page;
 				}
 			}, {
 				text: "Click on the thumbnail of the second page.",
-				callback: function(second) {
+				callback(second) {
 					var first = steps[3].page,
 						states = level(first, second);
 					if(!states)
@@ -621,7 +619,9 @@ function loadComic(callback, step, metaData) {
 			interval();
 		},
 		end = function() {
-			dom.getCanvasContainer().parentElement.removeEventListener("DOMNodeRemoved", rmListener, false);
+
+			if(mutationObserver)
+				mutationObserver.disconnect();
 
 			function done() {
 				document.documentElement.removeChild(div);
@@ -639,7 +639,7 @@ function loadComic(callback, step, metaData) {
 				}, metaData);
 			}
 		},
-		rmListener = function(e) {
+		rmListener = function() {
 			clearTimeout(noChangeTimeout);
 			var container = dom.canvasContainer,
 				waiter = changeWaiter;
@@ -654,6 +654,7 @@ function loadComic(callback, step, metaData) {
 				}());
 			}
 		},
+		mutationObserver = null,
 		firstPage = 0,
 		firstPageFig = null;
 
@@ -663,7 +664,21 @@ function loadComic(callback, step, metaData) {
 	}, function(result) {
 		if(result.error) // zip creation failed: stop backup immediately.
 			return callback(new Error("Zip creation failed."));
-		dom.getCanvasContainer().parentElement.addEventListener("DOMNodeRemoved", rmListener, false);
+
+		mutationObserver = new MutationObserver(function(mutations) {
+			var removed = false;
+			for(var i = 0; i < mutations.length; i++)
+				if(mutations[i].removedNodes.length > 0) {
+					removed = true;
+					break;
+				}
+			if(removed)
+				rmListener();
+		}).observe(dom.getCanvasContainer().parentElement, {
+			subtree: true,
+			childList: true
+		});
+
 		realClick(dom.browseButton);
 		firstPageFig = dom.activePage;
 		firstPage = (firstPageFig && firstPageFig.getAttribute(dom.pagenumAttr) * 1 - settings.pagenumCorrection) || 0;
