@@ -35,10 +35,10 @@ var port = connector.connect({
 getSettings(function() {
 
 	if(!("pageSwapDelay" in settings))
-		settings.pageSwapDelay = 500;
+		settings.pageSwapDelay = 600;
 
 	if(!("pageSkipDelay" in settings))
-		settings.pageSkipDelay = 1000;
+		settings.pageSkipDelay = 1200;
 
 	if(!settings.pageSwapDelay)
 		swapPage = function swapPage(callback) {
@@ -619,7 +619,9 @@ function loadComic(callback, step) {
 			interval();
 		},
 		end = function() {
-			dom.getCanvasContainer().parentElement.removeEventListener("DOMNodeRemoved", rmListener, false);
+
+			if(mutationObserver)
+				mutationObserver.disconnect();
 
 			function done() {
 				document.documentElement.removeChild(div);
@@ -637,7 +639,7 @@ function loadComic(callback, step) {
 				});
 			}
 		},
-		rmListener = function(e) {
+		rmListener = function() {
 			clearTimeout(noChangeTimeout);
 			var container = dom.canvasContainer,
 				waiter = changeWaiter;
@@ -652,6 +654,7 @@ function loadComic(callback, step) {
 				}());
 			}
 		},
+		mutationObserver = null,
 		firstPage = 0,
 		firstPageFig = null;
 
@@ -661,7 +664,21 @@ function loadComic(callback, step) {
 	}, function(result) {
 		if(result.error) // zip creation failed: stop backup immediately.
 			return callback(new Error("Zip creation failed."));
-		dom.getCanvasContainer().parentElement.addEventListener("DOMNodeRemoved", rmListener, false);
+
+		mutationObserver = new MutationObserver(function(mutations) {
+			var removed = false;
+			for(var i = 0; i < mutations.length; i++)
+				if(mutations[i].removedNodes.length > 0) {
+					removed = true;
+					break;
+				}
+			if(removed)
+				rmListener();
+		}).observe(dom.getCanvasContainer().parentElement, {
+			subtree: true,
+			childList: true
+		});
+
 		realClick(dom.browseButton);
 		firstPageFig = dom.activePage;
 		firstPage = (firstPageFig && firstPageFig.getAttribute(dom.pagenumAttr) * 1 - settings.pagenumCorrection) || 0;
