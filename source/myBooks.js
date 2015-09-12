@@ -80,27 +80,31 @@
 		   return this.q(val1) + ":" + this.q(val2);
 		},
 		
-	   JSONPerson: function(personArray, role, JSONString, noEndComma)
+	   JSONPerson: function(personArray, role, JSONString)
 	   {
+	      var tmpJSON = "";
+   
 		for (var i = 0; i < personArray.length; i++)
 		{
 		    if (personArray[i] === undefined || personArray[i] == "")
 			   continue;
 
-  		    JSONString += "{";
-			JSONString += this.q2("person", personArray[i]) + ",";
-			JSONString += this.q2("role", role);
+  		    tmpJSON += "{";
+			tmpJSON += this.q2("person", personArray[i]) + ",";
+			tmpJSON += this.q2("role", role);
 				
 			if (i == 0)
-				JSONString += "," + this.q2("primary", "YES");				  
+				tmpJSON += "," + this.q2("primary", "YES");				  
 				
-			JSONString += "}";
-			
-			//We need to separate the entries with a comma - but the last entry doesn't need one!
-			if (noEndComma === undefined)
-				JSONString += ",";
+			tmpJSON += "}";
 		}
 		
+	    //Maybe we've been called before, maybe something else added persons before this function
+		//in any case, we need to check if we have to put a comma  before us or not
+		if (tmpJSON != "" && JSONString.substr(JSONString.length-1) == "}")
+		   tmpJSON = "," + tmpJSON;
+		
+		JSONString += tmpJSON;
 		return JSONString;
 	   },
 
@@ -143,7 +147,7 @@
 			   CBIJSON = this.JSONPerson(this.colors.split(","), "Colorer", CBIJSON);
 			   
 			   //Not defined in the example, hopefully supported?
-			   CBIJSON = this.JSONPerson(this.cover.split(","), "Cover", CBIJSON, "X");
+			   CBIJSON = this.JSONPerson(this.cover.split(","), "Cover", CBIJSON);
 			   
 			   //We don't have those - yet?
 			   //CBIJSON = this.JSONPerson(this.???.split(","), "Editor", CBIJSON);
@@ -433,7 +437,8 @@ Download.prototype = {
 				});
 			else {
 				callback({
-					download: true
+					download: true,
+					metaData: this.metaData.toString()
 				});
 				this.showProgress(0);
 			}
