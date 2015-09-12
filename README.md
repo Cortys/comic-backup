@@ -16,11 +16,11 @@ The installation is slightly complicated (since I don't want to add this to the 
 There are two ways of installing the extension.
 
 ### *IMPORTANT* for Windows users
-If you are using Chrome 35+ on Windows you have to use the [second possibility](#second-possibility)! Using packed extensions, that aren't from the Chrome Web Store, does not work anymore.
+If you are using Chrome on Windows you have to use the [second possibility](#second-possibility)! Using packed extensions, that aren't from the Chrome Web Store, does not work anymore.
 
 ### First possibility
 
-The first way is [by this help page](https://support.google.com/chrome_webstore/answer/2664769?hl=en). **This does not work on Windows with Chrome version 35+.**
+The first way is [by this help page](https://support.google.com/chrome_webstore/answer/2664769?hl=en). **This does not work on Windows.**
 
 - In Chrome, click on the settings icon on the right (looks like three vertical lines on top of each other)
 - Select Tools > Extensions
@@ -31,7 +31,7 @@ The first way is [by this help page](https://support.google.com/chrome_webstore/
 
 The second way is without drag-and-drop, https://developer.chrome.com/extensions/getstarted#unpacked
 
-**This works for Windows with Chrome version 35+!**
+**This works on Windows!**
 
 - In Chrome, click on the settings icon on the right (looks like three vertical lines on top of each other)
 - Select Tools > Extensions
