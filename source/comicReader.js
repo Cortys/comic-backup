@@ -276,7 +276,7 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 	browseButtonCached: null,
 	onepageButtonCached: null,
 
-	isVisible: function(e) {
+	isVisible(e) {
 		return e.style.display != "none" && e.style.visibility != "hidden";
 	},
 
@@ -295,7 +295,7 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 		return document.querySelector(settings.selectorActivePage);
 	},
 
-	loopCanvasContainers: function(f) {
+	loopCanvasContainers(f) {
 		var a = document.querySelectorAll("div.view"),
 			v;
 		for(var i = 0; i < a.length; i++)
@@ -304,7 +304,7 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 		return null;
 	},
 
-	getCanvasContainer: function() {
+	getCanvasContainer() {
 		var t = this;
 		if(t.canvasContainer && document.contains(t.canvasContainer) && t.isVisible(t.canvasContainer))
 			return this.canvasContainer;
@@ -340,21 +340,21 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 	get loader() {
 		return document.querySelectorAll(".loading");
 	},
-	loaderVisible: function() {
+	loaderVisible() {
 		return this.loader && this.loader.length && Array.prototype.reduce.call(this.loader, function(prev, curr) {
 			return prev || curr.style.display !== "none";
 		}, false);
 	},
-	isActivePage: function(page) {
+	isActivePage(page) {
 		return page.matches(settings.selectorActivePage);
 	},
-	isActiveOnepageButton: function() {
+	isActiveOnepageButton() {
 		return this.onepageButton.matches(settings.selectorActiveOnepageButton);
 	},
-	countCanvas: function() {
+	countCanvas() {
 		return this.canvasElements.length;
 	},
-	isLoading: function() {
+	isLoading() {
 		var view;
 		return this.canvasContainerCount !== 1 || (view = dom.getCanvasContainer(), !view.style.webkitTransform && !view.style.transform) || dom.loaderVisible() || !dom.canvasElements.length;
 	}
@@ -405,13 +405,13 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 			{
 				text: "Click the button that enables single page view.",
 				btn: null,
-				callback: function(element) {
+				callback(element) {
 					this.btn = element;
 					return !!this.btn;
 				}
 			}, {
 				text: "Click the button that enables dual page view.",
-				callback: function(dual) {
+				callback(dual) {
 					var single = steps[0].btn,
 						states = level(single, dual);
 					if(!states)
@@ -425,20 +425,20 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 				}
 			}, {
 				text: "Click the browse button that shows all pages.",
-				callback: function(element) {
+				callback(element) {
 					var btn = getPathFor(element);
 					write.selectorBrowseButton = btn;
 					return !!btn;
 				}
 			}, {
 				text: "Click on the thumbnail of the first page.",
-				callback: function(element) {
+				callback(element) {
 					this.page = element;
 					return this.page;
 				}
 			}, {
 				text: "Click on the thumbnail of the second page.",
-				callback: function(second) {
+				callback(second) {
 					var first = steps[3].page,
 						states = level(first, second);
 					if(!states)

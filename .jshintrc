@@ -4,6 +4,7 @@
 	"loopfunc": true,
 	"browser": true,
 	"globalstrict": true,
+	"esnext": true,
 	"globals": {
 		"div": true,
 		"addTopBar": true,

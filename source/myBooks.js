@@ -28,9 +28,10 @@ getSettings(function() {
 });
 
 function init() {
+	Download.cleanUp();
 	var readButtons = document.body.querySelectorAll(readButtonSelector);
 	for(var i = 0; i < readButtons.length; i++)
-		Download.get(readButtons[i]).show(readButtons[i]);
+		new Download(readButtons[i].href).show(readButtons[i]);
 }
 
 var cssClass = randomString(20, 40),
@@ -42,82 +43,31 @@ var cssClass = randomString(20, 40),
 		style.innerHTML = "." + cssClass + " span { transition:opacity 0.1s linear 0s; opacity:1; }\n." + cssClass + " .cancel { position:absolute; display:inline-block; left:0; right:0; }\n." + cssClass + ".cancel:hover span { transition-delay:0.3s; }\n." + cssClass + " .cancel { opacity:0; }\n." + cssClass + ".cancel:hover .cancel { opacity:1; }\n." + cssClass + ".cancel:hover .text { opacity:0; }";
 		document.head.appendChild(style);
 	},
-	downloadEvents = {},
+	downloadEvents = {};
 
-	Download = function(button) {
+function Download(comicHref) {
 
-		this.readButton = button;
-		var t = this,
-			clone = t.downloadButton = button.cloneNode(false),
-			buttonComputedStyle = window.getComputedStyle(button);
+	if(Download.connections[comicHref])
+		return Download.connections[comicHref];
 
-		t.id = Download.counter++;
+	this.comicHref = comicHref;
 
-		Download.connections[this.readButton.href] = this;
+	this.id = Download.counter++;
 
-		// create colors:
-		t.buttonBGs = {
-			normal: buttonComputedStyle.background,
-			gray: "#777777",
-			progress: "linear-gradient(to right, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.4) {X}%, rgba(0,0,0,0) {X}%, rgba(0,0,0,0) 100%), " + buttonComputedStyle.background
-		};
+	this.buttons = new Map();
 
-		// create clone:
-		var randomId = randomString(20, 40); // make sure cmxlgy can not break button text rendering by changing class names
-		clone.innerHTML = button.innerHTML.replace(button.innerHTML.trim(), "<span class='text " + randomId + "'></span><span class='cancel'>Stop</span>");
-		clone.style.position = "relative";
-		clone.style.textAlign = button.style.textAlign = "center";
-		clone.href = "javascript:";
+	Download.connections[comicHref] = this;
+}
 
-		t.text = clone.querySelector("span.text." + randomId);
-
-		this.show = function(b) {
-
-			if(b && b.href == button.href && b !== button) // after switching pages via ajax new button html elements are created, those will be linked to the internal download object
-				button = this.readButton = b;
-
-			var buttonWidth = parseInt(button.style.width = window.getComputedStyle(button).width);
-
-			clone.setAttribute("class", button.getAttribute("class"));
-
-			clone.classList.add(cssClass);
-
-			clone.style.width = isFinite(buttonWidth) ? buttonWidth + "px" : button.style.width;
-
-			if(document.contains(clone))
-				return;
-
-			var parent = button.parentElement,
-				parentClone = parent && parent.cloneNode(false);
-
-			if(!parentClone)
-				return;
-
-			parentClone.appendChild(clone);
-
-			parent.parentElement.insertBefore(parentClone, parent.nextSibling);
-		};
-
-		if(settings.selectors) {
-			clone.addEventListener("click", function() {
-				t[t.cancelable ? "cancel" : "start"]();
-			}, false);
-			t.showDefault();
+Download.cleanUp = function() {
+	for(var href in Download.connections) {
+		if(Download.connections[href] && Download.connections[href].stale) {
+			Download.connections[href] = undefined;
 		}
-		else {
-			t.inactive = true;
-			clone.addEventListener("click", function() {
-				t.openTab(true);
-			}, false);
-			t.showInactive();
-		}
-	};
+	}
+};
 
 Download.connections = {};
-
-Download.get = function(readButton) {
-	return this.connections[readButton.href] || new Download(readButton);
-};
 
 Download.counter = 0;
 Download.activeDownloads = 0;
@@ -146,16 +96,81 @@ Download.queue.resume = function() {
 
 Download.prototype = {
 	id: 0,
-	readButton: null,
-	downloadButton: null,
-	text: null,
+	comicHref: null,
+	buttons: null,
 	tab: null,
+	queued: false,
 	downloading: false,
 	cancelable: false,
 	canceled: false,
-	buttonBGs: null,
+	currentButtonUI: null,
 
-	setDownloading: function(bool) {
+	get stale() {
+
+		this.cleanUp();
+
+		return this.buttons.size === 0 && !this.downloading && !this.queued;
+	},
+
+	cleanUp() {
+		for(var button of this.buttons.keys()) {
+			if(!document.contains(button))
+				this.buttons.delete(button);
+		}
+	},
+
+	show(button) {
+
+		if(button.href !== this.comicHref || this.buttons.has(button)) // after switching pages via ajax new button html elements are created, those will be linked to the internal download object
+			return;
+
+		var clone = button.cloneNode(false),
+			buttonComputedStyle = window.getComputedStyle(button);
+
+		var randomId = randomString(20, 40); // make sure cmxlgy can not break button text rendering by changing class names
+		clone.innerHTML = button.innerHTML.replace(button.innerHTML.trim(), "<span class='text " + randomId + "'></span><span class='cancel'>Stop</span>");
+		clone.style.position = "relative";
+		clone.style.textAlign = button.style.textAlign = "center";
+		clone.href = "javascript:";
+
+		clone.setAttribute("class", button.getAttribute("class"));
+
+		clone.classList.add(cssClass);
+
+		var buttonWidth = parseInt(button.style.width = buttonComputedStyle.width);
+
+		clone.style.width = isFinite(buttonWidth) ? buttonWidth + "px" : button.style.width;
+
+		this.buttons.set(button, {
+			button: clone,
+			text: clone.querySelector("span.text." + randomId),
+			progressBG: "linear-gradient(to right, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.4) {X}%, rgba(0,0,0,0) {X}%, rgba(0,0,0,0) 100%), " + buttonComputedStyle.background
+		});
+
+		if(settings.selectors) {
+			clone.addEventListener("click", function() {
+				this[this.cancelable ? "cancel" : "start"]();
+			}.bind(this), false);
+			if(!this.currentButtonUI)
+				this.showDefault();
+			else
+				this.setButtonUI.apply(this, this.currentButtonUI);
+		}
+		else {
+			this.inactive = true;
+			clone.addEventListener("click", this.openTab.bind(this, true), false);
+			this.showInactive();
+		}
+
+		var parent = button.parentElement,
+			parentClone = parent && parent.cloneNode(false);
+
+		parentClone.appendChild(clone);
+
+		parent.parentElement.insertBefore(parentClone, parent.nextSibling);
+	},
+
+	setDownloading(bool) {
 		if(bool && !this.downloading)
 			Download.activeDownloads++;
 		else if(!bool && this.downloading) {
@@ -165,16 +180,11 @@ Download.prototype = {
 		this.downloading = bool;
 	},
 
-	setCancelable: function(bool) {
-		this.cancelable = bool;
-		this.downloadButton.classList.toggle("cancel", bool);
-	},
-
-	openTab: function(active) {
+	openTab(active) {
 		var t = this;
 		port.send({
 			what: "open_background_tab",
-			url: t.readButton.href,
+			url: t.comicHref,
 			active: active
 		}, function(tab) {
 			t.tab = tab;
@@ -182,22 +192,25 @@ Download.prototype = {
 		});
 	},
 
-	start: function() {
+	start() {
 		var t = this;
 		if(t.downloading)
 			return;
 		if(Download.activeDownloads >= settings.queueLength && settings.queueLength > 0) {
 			t.canceled = false;
+			t.queued = true;
 			t.showQueued();
 			return Download.queue.enqueue(t);
 		}
+		t.queued = false;
 		t.setDownloading(true);
 		t.openTab(false);
 		t.showPrepare();
 	},
 
-	cancel: function() {
+	cancel() {
 		this.canceled = true;
+		this.queued = false;
 		this.showDefault();
 		if(!this.downloading)
 			return;
@@ -213,7 +226,7 @@ Download.prototype = {
 	// event handlers (receiving messages from the downloading tab):
 
 	events: {
-		"ready_to_download": function(callback) {
+		ready_to_download(callback) {
 			if(this.inactive)
 				callback({
 					exploit: true
@@ -225,7 +238,7 @@ Download.prototype = {
 				this.showProgress(0);
 			}
 		},
-		"finished_download": function() {
+		finished_download() {
 			port.send({
 				what: "close_background_tab",
 				tab: this.tab
@@ -235,7 +248,7 @@ Download.prototype = {
 			this.setDownloading(false);
 			this.showDone();
 		},
-		"download_failed": function() {
+		download_failed() {
 			port.send({
 				what: "close_background_tab",
 				tab: this.tab
@@ -245,7 +258,7 @@ Download.prototype = {
 			this.setDownloading(false);
 			this.showError();
 		},
-		"closed_background_tab": function() {
+		closed_background_tab() {
 			if(!this.downloading)
 				return;
 			delete downloadEvents[this.tab];
@@ -253,79 +266,109 @@ Download.prototype = {
 			this.setDownloading(false);
 			this.showError();
 		},
-		"download_progress": function(callback, percentage) {
+		download_progress(callback, percentage) {
 			this["show" + (percentage == "zip" ? "Zipping" : percentage == "save" ? "Saving" : "Progress")](percentage);
 		}
 	},
 
 	// UI behaviour:
 
-	showQueued: function() {
-		this.text.innerHTML = "Queued";
-		this.downloadButton.style.removeProperty("background");
-		this.downloadButton.style.paddingLeft = this.downloadButton.style.paddingRight = "10px";
-		this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(220deg)";
-		this.setCancelable(true);
+	setButtonUI(text, style, cancelable) {
+		for(var entry of this.buttons.values()) {
+			entry.text.innerHTML = text;
+			entry.button.classList.toggle("cancel", cancelable);
+
+			if("filter" in style)
+				style["-webkit-filter"] = style.filter;
+
+			if(style.background === "progress") {
+				style.background = entry.progressBG.replace(/\{X\}/g, style.progress);
+				delete style.progress;
+			}
+
+			for(var key in style) {
+				if(style[key] == null)
+					entry.button.style.removeProperty(key);
+				else
+					entry.button.style.setProperty(key, style[key]);
+			}
+		}
+		this.currentButtonUI = arguments;
+		this.cancelable = cancelable;
 	},
-	showPrepare: function() {
-		this.text.innerHTML = "Preparing";
-		this.downloadButton.style.removeProperty("background");
-		this.downloadButton.style.paddingLeft = this.downloadButton.style.paddingRight = "2px";
-		this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(245deg)";
-		this.setCancelable(true);
+
+	showQueued() {
+		this.setButtonUI("Queued", {
+			background: null,
+			"padding-left": "10px",
+			"padding-right": "10px",
+			filter: "hue-rotate(220deg)"
+		}, true);
 	},
-	showProgress: function(percentage) {
-		this.downloadButton.style.removeProperty("padding-left");
-		this.downloadButton.style.removeProperty("padding-right");
-		this.downloadButton.style.background = this.buttonBGs.progress.replace(/\{X\}/g, percentage);
-		this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(245deg)";
-		this.text.innerHTML = percentage + "%";
-		this.setCancelable(true);
+	showPrepare() {
+		this.setButtonUI("Preparing", {
+			background: null,
+			"padding-left": "2px",
+			"padding-right": "2px",
+			filter: "hue-rotate(245deg)"
+		}, true);
 	},
-	showDefault: function() {
-		this.downloadButton.style.removeProperty("background");
-		this.downloadButton.style.removeProperty("padding-left");
-		this.downloadButton.style.removeProperty("padding-right");
-		this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(55deg)";
-		this.text.innerHTML = "Scan";
-		this.setCancelable(false);
+	showProgress(percentage) {
+		this.setButtonUI(percentage + "%", {
+			background: "progress",
+			progress: percentage,
+			"padding-left": null,
+			"padding-right": null,
+			filter: "hue-rotate(245deg)"
+		}, true);
 	},
-	showDone: function() {
-		this.downloadButton.style.removeProperty("background");
-		this.downloadButton.style.paddingLeft = this.downloadButton.style.paddingRight = "10px";
-		this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(280deg)";
-		this.text.innerHTML = "Rescan";
-		this.setCancelable(false);
+	showDefault() {
+		this.setButtonUI("Scan", {
+			background: null,
+			"padding-left": null,
+			"padding-right": null,
+			filter: "hue-rotate(55deg)"
+		}, false);
 	},
-	showError: function() {
-		this.downloadButton.style.removeProperty("background");
-		this.downloadButton.style.removeProperty("padding-left");
-		this.downloadButton.style.removeProperty("padding-right");
-		this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(195deg)";
-		this.text.innerHTML = "Failed";
-		this.setCancelable(false);
+	showDone() {
+		this.setButtonUI("Rescan", {
+			background: null,
+			"padding-left": "10px",
+			"padding-right": "10px",
+			filter: "hue-rotate(280deg)"
+		}, false);
 	},
-	showZipping: function() {
-		this.downloadButton.style.removeProperty("background");
-		this.downloadButton.style.paddingLeft = this.downloadButton.style.paddingRight = "2px";
-		this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(260deg)";
-		this.text.innerHTML = "Zipping";
-		this.setCancelable(true);
+	showError() {
+		this.setButtonUI("Failed", {
+			background: null,
+			"padding-left": null,
+			"padding-right": null,
+			filter: "hue-rotate(195deg)"
+		}, false);
 	},
-	showSaving: function() {
-		this.downloadButton.style.removeProperty("background");
-		this.downloadButton.style.paddingLeft = this.downloadButton.style.paddingRight = "2px";
-		this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(270deg)";
-		this.text.innerHTML = "Saving";
-		this.setCancelable(false);
+	showZipping() {
+		this.setButtonUI("Zipping", {
+			background: null,
+			"padding-left": "10px",
+			"padding-right": "10px",
+			filter: "hue-rotate(260deg)"
+		}, true);
 	},
-	showInactive: function() {
-		this.downloadButton.style.removeProperty("background");
-		this.downloadButton.style.removeProperty("padding-left");
-		this.downloadButton.style.removeProperty("padding-right");
-		this.downloadButton.style.filter = this.downloadButton.style.webkitFilter = "hue-rotate(195deg)";
-		this.text.innerHTML = "Setup";
-		this.setCancelable(false);
+	showSaving() {
+		this.setButtonUI("Saving", {
+			background: null,
+			"padding-left": "10px",
+			"padding-right": "10px",
+			filter: "hue-rotate(270deg)"
+		}, false);
+	},
+	showInactive() {
+		this.setButtonUI("Setup", {
+			background: null,
+			"padding-left": null,
+			"padding-right": null,
+			filter: "hue-rotate(195deg)"
+		}, false);
 	}
 };
 
