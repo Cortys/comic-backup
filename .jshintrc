@@ -2,5 +2,30 @@
 	"scripturl": true,
 	"eqnull": true,
 	"loopfunc": true,
-	"node": true
+	"browser": true,
+	"globalstrict": true,
+	"esnext": true,
+	"globals": {
+		"div": true,
+		"addTopBar": true,
+		"updateDialog": true,
+		"checkVersion": true,
+		"linkStyle": true,
+		"diff_match_patch": true,
+		"sanitizeFilename": true,
+		"rgbToHsl": true,
+		"hslToRgb": true,
+		"dataURLtoBlob": true,
+		"zip": true,
+		"getSettings": true,
+		"connector": true,
+		"downloadFile": true,
+		"nullFill": true,
+		"settings": true,
+		"updateDialog": true,
+		"randomString": true,
+		"Queue": true,
+		"chrome": true,
+		"TEMPORARY": true
+	}
 }
