@@ -14,13 +14,16 @@ function MetaData() {
 	this.colors = "";
 	this.cover = "";
 
-	//As yet unused
+
 	this.series = "";
+	this.issue = "";
+	
+	//As yet unused
 	this.title = "";
 	this.publisher = "";
 	this.pubMonth = "";
 	this.pubYear = "";
-	this.issue = "";
+
 	this.numberOfIssues = "";
 	this.volume = "";
 	this.numberOfVolumes = "";
@@ -82,6 +85,7 @@ MetaData.prototype = {
 
 	JSONPerson(personArray, role, JSONString) {
 		var tmpJSON = "";
+		var first = true;
 
 		for(var i = 0; i < personArray.length; i++) {
 			if(personArray[i] === undefined || personArray[i] === "")
@@ -91,8 +95,10 @@ MetaData.prototype = {
 			tmpJSON += this.q2("person", personArray[i]) + ",";
 			tmpJSON += this.q2("role", role);
 
-			if(i === 0)
+			//Sometimes we may get arrays with empty lines before the first contentline
+			if(first == true)
 				tmpJSON += "," + this.q2("primary", "YES");
+		    first = false;
 
 			tmpJSON += "}";
 		}
@@ -126,7 +132,7 @@ MetaData.prototype = {
 			CBIJSON += this.q2("lastModified", myDate.toJSON()) + ",";
 			CBIJSON += this.q("ComicBookInfo/1.0") + ": {";
 
-			CBIJSON += this.q2("series", this.series) + ",";
+			CBIJSON += this.q2("series", this.series) + ",";			
 			CBIJSON += this.q2("title", this.title) + ",";
 			CBIJSON += this.q2("publisher", this.publisher) + ",";
 			CBIJSON += this.q2("publicationMonth", this.pubMonth) + ",";
@@ -218,12 +224,14 @@ function Download(comicHref, readButton) {
 
 	//Try to find the detail container, do nothing if it's not there - it means we're not on a detail page
 	if(bookItem.className != null)
+	 try
+	 {
 		if(bookItem.className == "lv2-item-action-row") {
 			while(bookItem !== undefined && bookItem.className != "lv2-item-detail")
 				bookItem = bookItem.parentNode;
 
 			//A bit of a gamble, I'm assuming there's always just one
-			//NOTE: I'm not yet using the title - but we could get title name, series, and number from it
+
 			var itemTitleRaw = bookItem.getElementsByClassName("lv2-title-container")[0];
 			var itemCreditRaw = bookItem.getElementsByTagName("aside")[0];
 
@@ -234,7 +242,11 @@ function Download(comicHref, readButton) {
 				var oneDT = allCredits[i].getElementsByTagName("dt")[0];
 				var oneDD = allCredits[i].getElementsByTagName("dd")[0];
 				var oneDTlc = oneDT.innerText.toLowerCase();
-				if(oneDTlc == "writer" || oneDTlc == "written by" || oneDTlc == "by") {
+				
+				if (oneDTlc == "full series"){
+				   metaData.series = oneDD.innerText;
+				}
+				else if(oneDTlc == "writer" || oneDTlc == "written by" || oneDTlc == "by") {
 					metaData.addWriter(oneDD.innerText);
 				}
 				else if(oneDTlc == "inks") {
@@ -250,7 +262,20 @@ function Download(comicHref, readButton) {
 					metaData.addColor(oneDD.innerText);
 				}
 			}
+			
+			//We know that under lv2-title-container there should be a single node with lv2-item-number
+			var itemNumber = itemTitleRaw.getElementsByClassName("lv2-item-number")[0].innerText;
+			//This will only work in some cases - apparently sometimes there are title additions in the issue field
+			//still, better than nothing?
+			itemNumber = parseInt(itemNumber.replace("#",""));
+			if (!isNaN(itemNumber))
+			   metaData.issue = itemNumber;
 		}
+	  }
+	  catch(err)
+	  {
+	    //Die silently...
+	  }
 
 	this.comicHref = comicHref;
 
