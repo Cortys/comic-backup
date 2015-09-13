@@ -217,12 +217,13 @@ function Download(comicHref, readButton) {
 	//unfortunately, they're not marked with a special id :-(
 	var bookItem = readButton.parentNode;
 
-	//Try to find the detail container
-	while (bookItem !== undefined && bookItem.className != "lv2-item-detail")
-	   bookItem = bookItem.parentNode;
-	   
-	if (bookItem !== undefined)
-	{	
+	//Try to find the detail container, do nothing if it's not there - it means we're not on a detail page
+	if (bookItem.className != null)
+	   if (bookItem.className == "lv2-item-action-row")
+	   {
+		  while (bookItem !== undefined && bookItem.className != "lv2-item-detail")
+		  bookItem = bookItem.parentNode;   
+
 	   //A bit of a gamble, I'm assuming there's always just one
 	   //NOTE: I'm not yet using the title - but we could get title name, series, and number from it
 	   var itemTitleRaw = bookItem.getElementsByClassName("lv2-title-container")[0];
