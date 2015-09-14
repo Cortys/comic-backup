@@ -15,6 +15,7 @@ function MetaData() {
 	this.cover = "";
 
 
+
 	this.series = "";
 	this.issue = "";
 	
@@ -97,7 +98,7 @@ MetaData.prototype = {
 
 			//Sometimes we may get arrays with empty lines before the first contentline
 			if(first == true)
-				tmpJSON += "," + this.q2("primary", "YES");
+				tmpJSON += "," + this.q2("primary", true);
 		    first = false;
 
 			tmpJSON += "}";
@@ -124,6 +125,16 @@ MetaData.prototype = {
 		//Maybe do that later on
 
 		var CBIJSON = "";
+
+		//No XOR?
+		//Calibre doesn't accept metadata where issue but not volume has content, so we have to supply both
+		//I don't think this is right and I'll ask the author of Calibre. For now, I'll leave this in, as a bugfix
+		//Calibre actually doesn't read in any metadata when this is not filled
+		if (this.issue == "" || this.volume == "")
+		  if (this.issue == "" && this.volume != "")
+		     this.issue = this.volume;
+		  else
+		     this.volume = this.issue;
 
 		if(useMode == "CBI") {
 			var myDate = new Date();
@@ -346,6 +357,7 @@ Download.prototype = {
 		}
 	},
 
+
 	show(button) {
 
 		if(button.href !== this.comicHref || this.buttons.has(button)) // after switching pages via ajax new button html elements are created, those will be linked to the internal download object
@@ -373,6 +385,7 @@ Download.prototype = {
 			text: clone.querySelector("span.text." + randomId),
 			progressBG: "linear-gradient(to right, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.4) {X}%, rgba(0,0,0,0) {X}%, rgba(0,0,0,0) 100%), " + buttonComputedStyle.background
 		});
+
 
 		if(settings.selectors) {
 			clone.addEventListener("click", function() {
