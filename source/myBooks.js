@@ -13,6 +13,7 @@ function MetaData() {
 	this.pencils = "";
 	this.colors = "";
 	this.cover = "";
+	this.editor = "";
 
 
 
@@ -41,7 +42,14 @@ MetaData.prototype = {
 
 		this.writer += newWriter;
 	},
+	
+	addEditor(newEditor) {
+		if(this.editor !== "")
+			this.editor = this.editor + ",";
 
+		this.editor += newEditor;
+	},
+	
 	addInks(newInks) {
 		if(this.inks !== "")
 			this.inks = this.inks + ",";
@@ -161,12 +169,14 @@ MetaData.prototype = {
 			CBIJSON = this.JSONPerson(this.writer.split(","), "Writer", CBIJSON);
 			CBIJSON = this.JSONPerson((this.inks + "," + this.pencils).split(","), "Artist", CBIJSON);
 			CBIJSON = this.JSONPerson(this.colors.split(","), "Colorer", CBIJSON);
+			CBIJSON = this.JSONPerson(this.editor.split(","), "Editor", CBIJSON);
 
 			//Not defined in the example, hopefully supported?
 			CBIJSON = this.JSONPerson(this.cover.split(","), "Cover", CBIJSON);
 
 			//We don't have those - yet?
-			//CBIJSON = this.JSONPerson(this.???.split(","), "Editor", CBIJSON);
+			
+
 			//CBIJSON = this.JSONPerson(this.???.split(","), "Letterer", CBIJSON);
 
 			CBIJSON += "]}}";
@@ -263,14 +273,17 @@ function Download(comicHref, readButton) {
 				else if(oneDTlc == "inks") {
 					metaData.addInks(oneDD.innerText);
 				}
-				else if(oneDTlc == "cover by") {
+				else if(oneDTlc == "cover by" || oneDTlc == "cover") {
 					metaData.addCover(oneDD.innerText);
 				}
 				else if(oneDTlc == "art" || oneDTlc == "penciler" || oneDTlc == "pencils") {
 					metaData.addPencil(oneDD.innerText);
 				}
-				else if(oneDTlc == "colored by") {
+				else if(oneDTlc == "colored by" || oneDTlc == "colorist") {
 					metaData.addColor(oneDD.innerText);
+				}
+				else if(oneDTlc == "editor") {
+					metaData.addEditor(oneDD.innerText);
 				}
 			}
 			
