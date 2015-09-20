@@ -41,7 +41,7 @@
 		"run_at": "document_idle"
 	}, {
 		"matches": ["*://www.comixology.com/my-*", "*://www.comixology.eu/my-*", "*://www.comixology.co.uk/my-*", "*://www.comixology.fr/my-*", "*://www.comixology.de/my-*", "*://comicstore.marvel.com/my-*", "*://www.readdcentertainment.com/my-*", "*://www.comixology.com/wishlists*", "*://www.comixology.eu/wishlists", "*://www.comixology.co.uk/wishlists", "*://www.comixology.fr/wishlists", "*://www.comixology.de/wishlists", "*://comicstore.marvel.com/wishlists", "*://www.readdcentertainment.com/wishlists"],
-		"js": ["common.js", "myBooks.js"],
+		"js": ["common.js", "myBooks.js", "metaData.js"],
 		"run_at": "document_end"
 	}],
 
