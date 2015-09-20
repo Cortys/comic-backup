@@ -1,190 +1,190 @@
 "use strict";
 
-function MetaData() {
-
-	//We may want to support different outputmodes later on
-	//For now, there is only one: https://code.google.com/p/comicbookinfo/wiki/Example
-	//This is used by Calibre
-	this.outputMode = "CBI";
-
-	//Metadata, credits - CSV
-	this.writer = "";
-	this.inks = "";
-	this.pencils = "";
-	this.colors = "";
-	this.cover = "";
-	this.editor = "";
 
 
 
-	this.series = "";
-	this.issue = "";
-	
-	//As yet unused
-	this.title = "";
-	this.publisher = "";
-	this.pubMonth = "";
-	this.pubYear = "";
 
-	this.numberOfIssues = "";
-	this.volume = "";
-	this.numberOfVolumes = "";
-	this.rating = "";
-	this.genre = "";
-	this.language = "";
-	this.country = "";
-}
 
-MetaData.prototype = {
-	addWriter(newWriter) {
-		if(this.writer !== "")
-			this.writer = this.writer + ",";
 
-		this.writer += newWriter;
-	},
-	
-	addEditor(newEditor) {
-		if(this.editor !== "")
-			this.editor = this.editor + ",";
 
-		this.editor += newEditor;
-	},
-	
-	addInks(newInks) {
-		if(this.inks !== "")
-			this.inks = this.inks + ",";
 
-		this.inks += newInks;
-	},
 
-	addCover(newCover) {
-		if(this.cover !== "")
-			this.cover = this.cover + ",";
 
-		this.cover += newCover;
-	},
 
-	addPencil(newPencil) {
-		if(this.pencils !== "")
-			this.pencils = this.pencils + ",";
 
-		this.pencils += newPencil;
-	},
 
-	addColor(newColor) {
-		if(this.colors !== "")
-			this.colors = this.colors + ",";
 
-		this.colors += newColor;
-	},
 
-	//Add a list of allowed modes to check against?
-	changeOutputMode(newOutputMode) {
-		this.outputMode = newOutputMode;
-	},
 
-	//Is there a better way? Maybe a util class?
-	q(value) {
-		return "\"" + value + "\"";
-	},
 
-	q2(val1, val2) {
-		return this.q(val1) + ":" + this.q(val2);
-	},
 
-	JSONPerson(personArray, role, JSONString) {
-		var tmpJSON = "";
-		var first = true;
 
-		for(var i = 0; i < personArray.length; i++) {
-			if(personArray[i] === undefined || personArray[i] === "")
-				continue;
 
-			tmpJSON += "{";
-			tmpJSON += this.q2("person", personArray[i]) + ",";
-			tmpJSON += this.q2("role", role);
 
-			//Sometimes we may get arrays with empty lines before the first contentline
-			if(first == true)
-				tmpJSON += "," + this.q2("primary", true);
-		    first = false;
 
-			tmpJSON += "}";
-		}
 
-		//Maybe we've been called before, maybe something else added persons before this function
-		//in any case, we need to check if we have to put a comma  before us or not
-		if(tmpJSON !== "" && JSONString.substr(JSONString.length - 1) == "}")
-			tmpJSON = "," + tmpJSON;
 
-		JSONString += tmpJSON;
-		return JSONString;
-	},
 
-	toString(outputMode) {
-		var useMode = outputMode;
 
-		if(useMode === undefined)
-			useMode = this.outputMode;
 
-		//I suppose it would be possible to create an object that contains the right
-		//names already and just have JSON.stringify do the job.
-		//It wouldn't be able to set primaries, though, would it?
-		//Maybe do that later on
 
-		var CBIJSON = "";
 
-		//No XOR?
-		//Calibre doesn't accept metadata where issue but not volume has content, so we have to supply both
-		//I don't think this is right and I'll ask the author of Calibre. For now, I'll leave this in, as a bugfix
-		//Calibre actually doesn't read in any metadata when this is not filled
-		if (this.issue == "" || this.volume == "")
-		  if (this.issue == "" && this.volume != "")
-		     this.issue = this.volume;
-		  else
-		     this.volume = this.issue;
 
-		if(useMode == "CBI") {
-			var myDate = new Date();
-			CBIJSON += "{";
-			CBIJSON += this.q2("appID", "Comixology Backup") + ",";
-			CBIJSON += this.q2("lastModified", myDate.toJSON()) + ",";
-			CBIJSON += this.q("ComicBookInfo/1.0") + ": {";
 
-			CBIJSON += this.q2("series", this.series) + ",";			
-			CBIJSON += this.q2("title", this.title) + ",";
-			CBIJSON += this.q2("publisher", this.publisher) + ",";
-			CBIJSON += this.q2("publicationMonth", this.pubMonth) + ",";
-			CBIJSON += this.q2("publicationYear", this.pubYear) + ",";
-			CBIJSON += this.q2("issue", this.issue) + ",";
-			CBIJSON += this.q2("numberOfIssues", this.numberOfIssues) + ",";
-			CBIJSON += this.q2("volume", this.volume) + ",";
-			CBIJSON += this.q2("numberOfVolumes", this.numberOfVolumes) + ",";
-			CBIJSON += this.q2("rating", this.rating) + ",";
-			CBIJSON += this.q2("genre", this.genre) + ",";
-			CBIJSON += this.q2("language", this.language) + ",";
-			CBIJSON += this.q2("country", this.country) + ",";
 
-			CBIJSON += this.q("credits") + ":" + "[";
-			CBIJSON = this.JSONPerson(this.writer.split(","), "Writer", CBIJSON);
-			CBIJSON = this.JSONPerson((this.inks + "," + this.pencils).split(","), "Artist", CBIJSON);
-			CBIJSON = this.JSONPerson(this.colors.split(","), "Colorer", CBIJSON);
-			CBIJSON = this.JSONPerson(this.editor.split(","), "Editor", CBIJSON);
 
-			//Not defined in the example, hopefully supported?
-			CBIJSON = this.JSONPerson(this.cover.split(","), "Cover", CBIJSON);
 
-			//We don't have those - yet?
-			
 
-			//CBIJSON = this.JSONPerson(this.???.split(","), "Letterer", CBIJSON);
 
-			CBIJSON += "]}}";
-		}
 
-		return CBIJSON;
-	}
-};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 getSettings(function() {
 
@@ -236,70 +236,70 @@ function Download(comicHref, readButton) {
 	if(Download.connections[comicHref])
 		return Download.connections[comicHref];
 
-	//Metadata container
+	//Metadata container, will be used in "show"
 	var metaData = this.metaData = new MetaData();
 
-	//To find the metadata, we need to find the top container for this comic
-	//unfortunately, they're not marked with a special id :-(
-	var bookItem = readButton.parentNode;
 
-	//Try to find the detail container, do nothing if it's not there - it means we're not on a detail page
-	if(bookItem.className != null)
-	 try
-	 {
-		if(bookItem.className == "lv2-item-action-row") {
-			while(bookItem !== undefined && bookItem.className != "lv2-item-detail")
-				bookItem = bookItem.parentNode;
 
-			//A bit of a gamble, I'm assuming there's always just one
 
-			var itemTitleRaw = bookItem.getElementsByClassName("lv2-title-container")[0];
-			var itemCreditRaw = bookItem.getElementsByTagName("aside")[0];
 
-			//Ignore the actual hierarchy, just take all DLs, which should contain DD/DT pairs with credits
-			var allCredits = itemCreditRaw.getElementsByTagName("dl");
-			for(var i = 0; i < allCredits.length; i++) {
-				//There should be only one DT/DD anyway
-				var oneDT = allCredits[i].getElementsByTagName("dt")[0];
-				var oneDD = allCredits[i].getElementsByTagName("dd")[0];
-				var oneDTlc = oneDT.innerText.toLowerCase();
-				
-				if (oneDTlc == "full series"){
-				   metaData.series = oneDD.innerText;
-				}
-				else if(oneDTlc == "writer" || oneDTlc == "written by" || oneDTlc == "by") {
-					metaData.addWriter(oneDD.innerText);
-				}
-				else if(oneDTlc == "inks") {
-					metaData.addInks(oneDD.innerText);
-				}
-				else if(oneDTlc == "cover by" || oneDTlc == "cover") {
-					metaData.addCover(oneDD.innerText);
-				}
-				else if(oneDTlc == "art" || oneDTlc == "penciler" || oneDTlc == "pencils") {
-					metaData.addPencil(oneDD.innerText);
-				}
-				else if(oneDTlc == "colored by" || oneDTlc == "colorist") {
-					metaData.addColor(oneDD.innerText);
-				}
-				else if(oneDTlc == "editor") {
-					metaData.addEditor(oneDD.innerText);
-				}
-			}
-			
-			//We know that under lv2-title-container there should be a single node with lv2-item-number
-			var itemNumber = itemTitleRaw.getElementsByClassName("lv2-item-number")[0].innerText;
-			//This will only work in some cases - apparently sometimes there are title additions in the issue field
-			//still, better than nothing?
-			itemNumber = parseInt(itemNumber.replace("#",""));
-			if (!isNaN(itemNumber))
-			   metaData.issue = itemNumber;
-		}
-	  }
-	  catch(err)
-	  {
-	    //Die silently...
-	  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	this.comicHref = comicHref;
 
@@ -375,6 +375,9 @@ Download.prototype = {
 
 		if(button.href !== this.comicHref || this.buttons.has(button)) // after switching pages via ajax new button html elements are created, those will be linked to the internal download object
 			return;
+			
+		//Get Metadata
+		this.metaData.scanMeta(button.parentNode);
 
 		var clone = button.cloneNode(false),
 			buttonComputedStyle = window.getComputedStyle(button);
@@ -398,7 +401,6 @@ Download.prototype = {
 			text: clone.querySelector("span.text." + randomId),
 			progressBG: "linear-gradient(to right, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.4) {X}%, rgba(0,0,0,0) {X}%, rgba(0,0,0,0) 100%), " + buttonComputedStyle.background
 		});
-
 
 		if(settings.selectors) {
 			clone.addEventListener("click", function() {
