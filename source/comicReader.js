@@ -556,6 +556,8 @@ function loadComic(callback, step, metaData) {
 	}, 100);
 
 	var pos = -1,
+		skipCount = 0,
+		skipStreak = 0,
 		numLength = String(l - 1).length,
 		nextPage = function(callback) {
 			clearTimeout(noChangeTimeout);
@@ -576,13 +578,20 @@ function loadComic(callback, step, metaData) {
 				swapPage(function() {
 					// Only swap if no other actor already swapped pages:
 					var canvasContainer = dom.canvasContainer;
+
 					if(changeWaiter === callback) {
+
+						// Delay page skips if they occurred rarely so far or more than one in a row:
+						var delayFactor = Math.min(skipCount / pos, 1) > 0.3 && skipStreak < 2 ? 1 : 2;
+
 						noChangeTimeout = setTimeout(function() {
 							if(changeWaiter === callback && !dom.isLoading() && dom.isActivePage(fig) && canvasContainer === dom.canvasContainer) {
 								changeWaiter = null;
+								skipCount++;
+								skipStreak++;
 								nextPage(callback);
 							}
-						}, settings.pageSkipDelay);
+						}, settings.pageSkipDelay * delayFactor);
 						realClick(fig);
 					}
 				});
@@ -594,6 +603,7 @@ function loadComic(callback, step, metaData) {
 		interval = function() {
 			nextPage(function() {
 				getOpenedPage(function(page) {
+					skipStreak = 0;
 					port.send({
 						what: "add_page",
 						page: (settings.container != 2 ? page : null),
