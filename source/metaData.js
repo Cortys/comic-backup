@@ -10,27 +10,25 @@ function MetaData() {
 	//This object will contain the actual metadata in a format
 	//that should allow easy download via STRINGIFY
 	this.JSONMD = {
-		appID: "Comixology Backup",
-		lastModified: new Date(),
+		appID: "Comixology Backup/" + current_version,
+		lastModified: new Date().toISOString().replace(/T|Z/g, " ") + "+0000",
+		"ComicBookInfo/1.0": {
+			series: "",
+			title: "",
+			publisher: "",
+			publicationMonth: "",
+			publicationYear: "",
+			issue: "",
+			numberOfIssues: "",
+			volume: "",
+			nubmerOfVolumes: "",
+			rating: "",
+			genre: "",
+			language: "",
+			country: "",
+			credits: []
+		}
 	};
-	this.JSONMD["ComicBookInfo/1.0"] = {
-		series: "",
-		title: "",
-		publisher: "",
-		publicationMonth: "",
-		publicationYear: "",
-		issue: "",
-		numberOfIssues: "",
-		volume: "",
-		nubmerOfVolumes: "",
-		rating: "",
-		genre: "",
-		language: "",
-		country: ""
-	};
-
-	//This doesn't seem to work, but I want it declared somewhere so we know it exists
-	this.JSONMD["ComicBookInfo/1.0"].credits = [];
 
 	//This is a shortcut to the actual data, it's there so I can fill detail
 	//data in without having to repeat the key - I doubt it'll ever change,
@@ -40,13 +38,14 @@ function MetaData() {
 	//In order to declare the first person in a role, I need to remember somwhere if we
 	//already had a first - so I'm creating a simply array with all the known roles
 	//that will go INTO the metadata (this is NOT what comes from Comixology!)
-	this.firstRoles = [];
-	this.firstRoles.Writer = true;
-	this.firstRoles.Artist = true;
-	this.firstRoles.Letterer = true;
-	this.firstRoles.Colorer = true;
-	this.firstRoles.Editor = true;
-	this.firstRoles.Cover = true;
+	this.firstRoles = {
+		Writer: true,
+		Artist: true,
+		Letterer: true,
+		Colorer: true,
+		Editor: true,
+		Cover: true
+	};
 
 	//I need to know the first time I add credits, because PUSH apparently doesn't work on
 	//empty arrays
@@ -104,10 +103,10 @@ MetaData.prototype = {
 						}
 
 						//We know that under lv2-title-container there should be a single node with lv2-item-number
-						var itemNumber = itemTitleRaw.getElementsByClassName("lv2-item-number")[0].innerText;
+						var itemNumber = itemTitleRaw.getElementsByClassName("lv2-item-number")[0].innerText.match(/\d+/);
 						//This will only work in some cases - apparently sometimes there are title additions in the issue field
 						//still, better than nothing?
-						itemNumber = parseInt(itemNumber.replace("#", ""));
+						itemNumber = parseInt(itemNumber && itemNumber[0]);
 						if(!isNaN(itemNumber))
 							this.addIssue(itemNumber);
 					}
@@ -116,6 +115,8 @@ MetaData.prototype = {
 				//Die silently...
 				//alert(err);
 			}
+
+			return this;
 		},
 
 		addPerson(newPerson, Role) {
@@ -131,74 +132,116 @@ MetaData.prototype = {
 			else
 				this.JSONData.credits.push(aPerson);
 			this.firstCredit = false;
+
+			return this;
 		},
 
 		//Add a list of allowed modes to check against?
 		changeOutputMode(newOutputMode) {
 			this.outputMode = newOutputMode;
+
+			return this;
 		},
 
 		//Since all data is currently in a JSON object, we need methods
 		//to fill them, instead of simply accessing the object
 		addSeries(newSeries) {
 			this.JSONData.series = newSeries;
+
+			return this;
 		},
 		addTitle(newTitle) {
 			this.JSONData.title = newTitle;
+
+			return this;
 		},
 		addPublisher(newPublisher) {
 			this.JSONData.publisher = newPublisher;
+
+			return this;
 		},
 		addPublicationMonth(newPublicationMonth) {
 			this.JSONData.publicationMonth = newPublicationMonth;
+
+			return this;
 		},
 		addPublicationYear(newPublicationYear) {
 			this.JSONData.publicationYear = newPublicationYear;
+
+			return this;
 		},
 		addIssue(newIssue) {
 			this.JSONData.issue = newIssue;
+
+			return this;
 		},
 		addNumberOfIssues(newNumberOfIssues) {
 			this.JSONData.numberOfIssues = newNumberOfIssues;
+
+			return this;
 		},
 		addVolume(newVolume) {
 			this.JSONData.volume = newVolume;
+
+			return this;
 		},
 		addNumberOfVolumes(newNumberOfVolumes) {
 			this.JSONData.numberOfVolumes = newNumberOfVolumes;
+
+			return this;
 		},
 		addRating(newRating) {
 			this.JSONData.rating = newRating;
+
+			return this;
 		},
 		addGenre(newGenre) {
 			this.JSONData.genre = newGenre;
+
+			return this;
 		},
 		addLanguage(newLanguage) {
 			this.JSONData.language = newLanguage;
+
+			return this;
 		},
 		addCountry(newCountry) {
 			this.JSONData.country = newCountry;
+
+			return this;
 		},
 
 		//Persons get their own functions, that way we can control where specific roles go
 		//Inks and Pencils may end up in Artist for now, but perhaps later they'll be split?
 		addWriter(newWriter) {
 			this.addPerson(newWriter, "Writer");
+
+			return this;
 		},
 		addEditor(newEditor) {
 			this.addPerson(newEditor, "Editor");
+
+			return this;
 		},
 		addInks(newInks) {
 			this.addPerson(newInks, "Artist");
+
+			return this;
 		},
 		addCover(newCover) {
 			this.addPerson(newCover, "Cover");
+
+			return this;
 		},
 		addPencil(newPencil) {
 			this.addPerson(newPencil, "Artist");
+
+			return this;
 		},
 		addColor(newColor) {
 			this.addPerson(newColor, "Colorer");
+
+			return this;
 		},
 
 		//Output - there may be multiple output modes later, so don't just

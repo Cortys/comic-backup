@@ -126,7 +126,7 @@ Download.prototype = {
 
 		if(button.href !== this.comicHref || this.buttons.has(button)) // after switching pages via ajax new button html elements are created, those will be linked to the internal download object
 			return;
-			
+
 		//Get Metadata
 		this.metaData.scanMeta(button.parentNode);
 
@@ -231,50 +231,50 @@ Download.prototype = {
 	// event handlers (receiving messages from the downloading tab):
 
 	events: {
-		ready_to_download(callback) {
-				if(this.inactive)
-					callback({
-						exploit: true
-					});
-				else {
-					callback({
-						download: true,
-						metaData: this.metaData.toString()
-					});
-					this.showProgress(0);
-				}
-			},
-			finished_download() {
-				port.send({
-					what: "close_background_tab",
-					tab: this.tab
+		ready_to_download(callback, comicName) {
+			if(this.inactive)
+				callback({
+					exploit: true
 				});
-				delete downloadEvents[this.tab];
-				this.tab = null;
-				this.setDownloading(false);
-				this.showDone();
-			},
-			download_failed() {
-				port.send({
-					what: "close_background_tab",
-					tab: this.tab
+			else {
+				callback({
+					download: true,
+					metaData: this.metaData.addTitle(comicName).toString()
 				});
-				delete downloadEvents[this.tab];
-				this.tab = null;
-				this.setDownloading(false);
-				this.showError();
-			},
-			closed_background_tab() {
-				if(!this.downloading)
-					return;
-				delete downloadEvents[this.tab];
-				this.tab = null;
-				this.setDownloading(false);
-				this.showError();
-			},
-			download_progress(callback, percentage) {
-				this["show" + (percentage == "zip" ? "Zipping" : percentage == "save" ? "Saving" : "Progress")](percentage);
+				this.showProgress(0);
 			}
+		},
+		finished_download() {
+			port.send({
+				what: "close_background_tab",
+				tab: this.tab
+			});
+			delete downloadEvents[this.tab];
+			this.tab = null;
+			this.setDownloading(false);
+			this.showDone();
+		},
+		download_failed() {
+			port.send({
+				what: "close_background_tab",
+				tab: this.tab
+			});
+			delete downloadEvents[this.tab];
+			this.tab = null;
+			this.setDownloading(false);
+			this.showError();
+		},
+		closed_background_tab() {
+			if(!this.downloading)
+				return;
+			delete downloadEvents[this.tab];
+			this.tab = null;
+			this.setDownloading(false);
+			this.showError();
+		},
+		download_progress(callback, percentage) {
+			this["show" + (percentage == "zip" ? "Zipping" : percentage == "save" ? "Saving" : "Progress")](percentage);
+		}
 	},
 
 	// UI behaviour:

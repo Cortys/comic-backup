@@ -26,6 +26,8 @@
 		"randomString": true,
 		"Queue": true,
 		"chrome": true,
-		"TEMPORARY": true
+		"TEMPORARY": true,
+		"current_version": true,
+		"MetaData": true
 	}
 }

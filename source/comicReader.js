@@ -74,7 +74,8 @@ getSettings(function() {
 		port.send({
 			what: "message_to_opener",
 			message: {
-				what: "ready_to_download"
+				what: "ready_to_download",
+				data: getName()
 			}
 		}, function(start) {
 			if(start)
