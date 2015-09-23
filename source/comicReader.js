@@ -94,7 +94,7 @@ getSettings(function() {
 								data: perc
 							}
 						});
-					});
+					}, start.metaData);
 				else if(start.exploit) {
 				port.send({
 					what: "unlink_from_opener"
@@ -530,7 +530,7 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 }
 
 // download the opened comic. a callback and a step function can be used.
-function loadComic(callback, step) {
+function loadComic(callback, step, metaData) {
 
 	addTopBar();
 	overlay.style.display = "block";
@@ -551,7 +551,7 @@ function loadComic(callback, step) {
 
 	if(!dom.getCanvasContainer() || dom.loaderVisible() || !dom.countCanvas()) // delay download if comic isn't displayed yet => reader not ready, first page is not loaded yet, first page is not displayed yet
 		return setTimeout(function() {
-		loadComic(callback, step);
+		loadComic(callback, step, metaData);
 	}, 100);
 
 	var pos = -1,
@@ -636,7 +636,7 @@ function loadComic(callback, step) {
 				zipImages(function() {
 					step("save");
 					downloadBlob(getName() + "." + (settings.container ? "zip" : "cbz"), done);
-				});
+				}, metaData);
 			}
 		},
 		rmListener = function() {
@@ -755,7 +755,7 @@ function downloadData(name, data, overwrite, callback) { // overwrite is not use
 }
 
 // compress and download all pages that were backuped by this tab in the loadComic function
-function zipImages(callback) {
+function zipImages(callback, comment) {
 	if(settings.container == 2)
 		return typeof callback === "function" ? callback() : undefined;
 	renderFaviconPercentage(1);
@@ -763,7 +763,8 @@ function zipImages(callback) {
 	div.style.lineHeight = "50px";
 
 	port.send({
-		what: "start_zipping"
+		what: "start_zipping",
+		comment: comment
 	}, function(result) {
 		renderFaviconPercentage(1);
 		div.innerHTML = "Saving comic...";

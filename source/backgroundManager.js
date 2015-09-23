@@ -140,7 +140,7 @@ getSettings(function() {
 						callback({
 							what: "completed_zipping"
 						});
-					});
+					}, request.comment);
 					return true;
 				}
 				else if(request.what == "download_blob") {

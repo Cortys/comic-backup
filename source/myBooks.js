@@ -31,7 +31,7 @@ function init() {
 	Download.cleanUp();
 	var readButtons = document.body.querySelectorAll(readButtonSelector);
 	for(var i = 0; i < readButtons.length; i++)
-		new Download(readButtons[i].href).show(readButtons[i]);
+		new Download(readButtons[i].href, readButtons[i]).show(readButtons[i]);
 }
 
 var cssClass = randomString(20, 40),
@@ -45,10 +45,13 @@ var cssClass = randomString(20, 40),
 	},
 	downloadEvents = {};
 
-function Download(comicHref) {
+function Download(comicHref, readButton) {
 
 	if(Download.connections[comicHref])
 		return Download.connections[comicHref];
+
+	//Metadata container, will be used in "show"
+	var metaData = this.metaData = new MetaData();
 
 	this.comicHref = comicHref;
 
@@ -123,6 +126,9 @@ Download.prototype = {
 
 		if(button.href !== this.comicHref || this.buttons.has(button)) // after switching pages via ajax new button html elements are created, those will be linked to the internal download object
 			return;
+			
+		//Get Metadata
+		this.metaData.scanMeta(button.parentNode);
 
 		var clone = button.cloneNode(false),
 			buttonComputedStyle = window.getComputedStyle(button);
@@ -146,7 +152,6 @@ Download.prototype = {
 			text: clone.querySelector("span.text." + randomId),
 			progressBG: "linear-gradient(to right, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.4) {X}%, rgba(0,0,0,0) {X}%, rgba(0,0,0,0) 100%), " + buttonComputedStyle.background
 		});
-
 		if(settings.selectors) {
 			clone.addEventListener("click", function() {
 				this[this.cancelable ? "cancel" : "start"]();
@@ -227,48 +232,49 @@ Download.prototype = {
 
 	events: {
 		ready_to_download(callback) {
-			if(this.inactive)
-				callback({
-					exploit: true
+				if(this.inactive)
+					callback({
+						exploit: true
+					});
+				else {
+					callback({
+						download: true,
+						metaData: this.metaData.toString()
+					});
+					this.showProgress(0);
+				}
+			},
+			finished_download() {
+				port.send({
+					what: "close_background_tab",
+					tab: this.tab
 				});
-			else {
-				callback({
-					download: true
+				delete downloadEvents[this.tab];
+				this.tab = null;
+				this.setDownloading(false);
+				this.showDone();
+			},
+			download_failed() {
+				port.send({
+					what: "close_background_tab",
+					tab: this.tab
 				});
-				this.showProgress(0);
+				delete downloadEvents[this.tab];
+				this.tab = null;
+				this.setDownloading(false);
+				this.showError();
+			},
+			closed_background_tab() {
+				if(!this.downloading)
+					return;
+				delete downloadEvents[this.tab];
+				this.tab = null;
+				this.setDownloading(false);
+				this.showError();
+			},
+			download_progress(callback, percentage) {
+				this["show" + (percentage == "zip" ? "Zipping" : percentage == "save" ? "Saving" : "Progress")](percentage);
 			}
-		},
-		finished_download() {
-			port.send({
-				what: "close_background_tab",
-				tab: this.tab
-			});
-			delete downloadEvents[this.tab];
-			this.tab = null;
-			this.setDownloading(false);
-			this.showDone();
-		},
-		download_failed() {
-			port.send({
-				what: "close_background_tab",
-				tab: this.tab
-			});
-			delete downloadEvents[this.tab];
-			this.tab = null;
-			this.setDownloading(false);
-			this.showError();
-		},
-		closed_background_tab() {
-			if(!this.downloading)
-				return;
-			delete downloadEvents[this.tab];
-			this.tab = null;
-			this.setDownloading(false);
-			this.showError();
-		},
-		download_progress(callback, percentage) {
-			this["show" + (percentage == "zip" ? "Zipping" : percentage == "save" ? "Saving" : "Progress")](percentage);
-		}
 	},
 
 	// UI behaviour:
