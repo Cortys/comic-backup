@@ -496,16 +496,15 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 
 		end = function() {
 			window.alert("Scan completed.\nIf the backup still does not work, you should force a new scan in the options.");
+
 			document.documentElement.removeAttribute("scanning");
 			document.documentElement.removeEventListener("click", listener, false);
+			document.documentElement.removeChild(div);
+
 			chrome.storage.local.set(write, function() {
 				for(var key in write)
 					settings[key] = write[key];
-				div.style.height = "auto";
-				div.style.lineHeight = "18px";
-				div.style.top = 0;
-				div.style.marginTop = 0;
-				div.innerHTML = "<b style='font-size:1.2em;display:block;margin-bottom:15px;margin-top:15px;'>Just one more thing!</b>Make sure you disabled the <i>Prompt to continue</i> message in the settings.<br>Click the gear on the bottom of this page to check.<br>If you do not disable that message, backups won't work.<br><a href=\"javascript:document.documentElement.removeChild(document.getElementById('" + div.id + "'))\" style='" + linkStyle + "width:auto;margin-bottom:10px;margin-top:10px;'>OK. I checked it.</a>";
+
 				port.send({
 					what: "broadcast_to_openers",
 					message: {
