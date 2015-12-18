@@ -10,6 +10,8 @@ for(var i = 0; i < selects.length; i++)
 			e.addEventListener("change", function() {
 				var o = {},
 					message = e.getAttribute("data-message");
+					/*This function will create a toast message every time the user does an action in the field options. */
+					toastr.success('Changes saved.');
 
 				if(e.id === "updateServer")
 					o[e.id] = e.value.charAt(e.value.length - 1) == "/" ? e.value.substr(0, e.value.length - 1) : e.value;
