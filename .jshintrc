@@ -28,6 +28,7 @@
 		"chrome": true,
 		"TEMPORARY": true,
 		"current_version": true,
-		"MetaData": true
+		"MetaData": true,
+		"toastr": true
 	}
 }
