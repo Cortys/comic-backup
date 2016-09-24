@@ -10,7 +10,7 @@ function MetaData() {
 	//This object will contain the actual metadata in a format
 	//that should allow easy download via STRINGIFY
 	this.JSONMD = {
-		appID: "Comixology Backup/" + current_version,
+		appID: "Comic Backup/" + current_version,
 		lastModified: new Date().toISOString().replace(/T|Z/g, " ") + "+0000",
 		"ComicBookInfo/1.0": {
 			series: "",
@@ -37,7 +37,7 @@ function MetaData() {
 
 	//In order to declare the first person in a role, I need to remember somwhere if we
 	//already had a first - so I'm creating a simply array with all the known roles
-	//that will go INTO the metadata (this is NOT what comes from Comixology!)
+	//that will go INTO the metadata
 	this.firstRoles = {
 		Writer: true,
 		Artist: true,
