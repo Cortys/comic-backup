@@ -22,9 +22,6 @@
 	"background": {
 		"scripts": [
 			"zip/zip.js",
-			"zip/mime-types.js",
-			"zip/zip-ext.js",
-			"zip/zip-fs.js",
 			"common.js",
 			"backgroundManager.js"
 		],

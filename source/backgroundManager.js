@@ -3,10 +3,8 @@
 
 zip.useWebWorkers = true;
 
-zip.workerScriptsPath = "zip/";
-
 zip.workerScripts = {
-	deflater: ["z-worker.js", "deflate.js"]
+  deflater: ['zip/z-worker.js', 'zip/deflate.js'],
 };
 
 var ports = { // stores all opened connections of tabs to bg page: key = tab id, value = port object
