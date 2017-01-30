@@ -39,7 +39,7 @@
 	var ERR_READ_DATA = "Error while reading file data.";
 	var ERR_DUPLICATED_NAME = "File already exists.";
 	var CHUNK_SIZE = 512 * 1024;
-
+	
 	var TEXT_PLAIN = "text/plain";
 
 	var appendABViewSupported;
@@ -73,7 +73,7 @@
 		}
 		return table;
 	})();
-
+	
 	// "no-op" codec
 	function NOOP() {}
 	NOOP.prototype.append = function append(bytes, onprogress) {
@@ -269,22 +269,24 @@
 	Data64URIWriter.prototype.constructor = Data64URIWriter;
 
 	function BlobWriter(contentType) {
-		var that = this, data = [];
+		var blob, that = this;
 
 		function init(callback) {
+			blob = new Blob([], {
+				type : contentType
+			});
 			callback();
 		}
 
 		function writeUint8Array(array, callback) {
-			data.push((new Uint8Array(array)).buffer);
-			/*blob = new Blob([ blob, appendABViewSupported ? array : array.buffer ], {
+			blob = new Blob([ blob, appendABViewSupported ? array : array.buffer ], {
 				type : contentType
-			});*/
+			});
 			callback();
 		}
 
 		function getData(callback) {
-			callback(new Blob(data, {type: contentType}));
+			callback(blob);
 		}
 
 		that.init = init;
@@ -294,7 +296,7 @@
 	BlobWriter.prototype = new Writer();
 	BlobWriter.prototype.constructor = BlobWriter;
 
-	/**
+	/** 
 	 * inflate/deflate core functions
 	 * @param worker {Worker} web worker for the task.
 	 * @param initialMessage {Object} initial message to be sent to the worker. should contain
@@ -358,14 +360,21 @@
 
 		function step() {
 			index = chunkIndex * CHUNK_SIZE;
-			if (index < size) {
+			// use `<=` instead of `<`, because `size` may be 0.
+			if (index <= size) {
 				reader.readUint8Array(offset + index, Math.min(CHUNK_SIZE, size - index), function(array) {
 					if (onprogress)
 						onprogress(index, size);
 					var msg = index === 0 ? initialMessage : {sn : sn};
 					msg.type = 'append';
 					msg.data = array;
-					worker.postMessage(msg, [array.buffer]);
+					
+					// posting a message with transferables will fail on IE10
+					try {
+						worker.postMessage(msg, [array.buffer]);
+					} catch(ex) {
+						worker.postMessage(msg); // retry without transferables
+					}
 					chunkIndex++;
 				}, onreaderror);
 			} else {
@@ -684,7 +693,7 @@
 		if (!obj.zip.useWebWorkers)
 			callback(zipReader);
 		else {
-			createWorker(obj.zip.workerScripts.inflater,
+			createWorker('inflater',
 				function(worker) {
 					zipReader._worker = worker;
 					callback(zipReader);
@@ -800,7 +809,7 @@
 				else
 					writeFile();
 			},
-			close : function(callback, comment) {
+			close : function(callback) {
 				if (this._worker) {
 					this._worker.terminate();
 					this._worker = null;
@@ -811,7 +820,7 @@
 					file = files[filenames[indexFilename]];
 					length += 46 + file.filename.length + file.comment.length;
 				}
-				data = getDataHelper(length + 22 + comment.length);
+				data = getDataHelper(length + 22);
 				for (indexFilename = 0; indexFilename < filenames.length; indexFilename++) {
 					file = files[filenames[indexFilename]];
 					data.view.setUint32(index, 0x504b0102);
@@ -830,14 +839,6 @@
 				data.view.setUint16(index + 10, filenames.length, true);
 				data.view.setUint32(index + 12, length, true);
 				data.view.setUint32(index + 16, datalength, true);
-				data.view.setUint16(index + 20, comment.length, true);
-				
-				//ZIP comments (not file comments!) are at the end of the file
-				for (var i = 0; i < comment.length ; i++)
-				{				
-				   data.view.setUint8(index + i + 22, comment.charCodeAt(i));
-				}
-				
 				writer.writeUint8Array(data.array, function() {
 					writer.getData(callback);
 				}, onwriteerror);
@@ -848,7 +849,7 @@
 		if (!obj.zip.useWebWorkers)
 			callback(zipWriter);
 		else {
-			createWorker(obj.zip.workerScripts.deflater,
+			createWorker('deflater',
 				function(worker) {
 					zipWriter._worker = worker;
 					callback(zipWriter);
@@ -860,8 +861,36 @@
 		}
 	}
 
-	function createWorker(scripts, callback, onerror) {
-		var worker = new Worker(obj.zip.workerScriptsPath + 'z-worker.js');
+	function resolveURLs(urls) {
+		var a = document.createElement('a');
+		return urls.map(function(url) {
+			a.href = url;
+			return a.href;
+		});
+	}
+
+	var DEFAULT_WORKER_SCRIPTS = {
+		deflater: ['z-worker.js', 'deflate.js'],
+		inflater: ['z-worker.js', 'inflate.js']
+	};
+	function createWorker(type, callback, onerror) {
+		if (obj.zip.workerScripts !== null && obj.zip.workerScriptsPath !== null) {
+			onerror(new Error('Either zip.workerScripts or zip.workerScriptsPath may be set, not both.'));
+			return;
+		}
+		var scripts;
+		if (obj.zip.workerScripts) {
+			scripts = obj.zip.workerScripts[type];
+			if (!Array.isArray(scripts)) {
+				onerror(new Error('zip.workerScripts.' + type + ' is not an array!'));
+				return;
+			}
+			scripts = resolveURLs(scripts);
+		} else {
+			scripts = DEFAULT_WORKER_SCRIPTS[type].slice(0);
+			scripts[0] = (obj.zip.workerScriptsPath || '') + scripts[0];
+		}
+		var worker = new Worker(scripts[0]);
 		// record total consumed time by inflater/deflater/crc32 in this worker
 		worker.codecTime = worker.crcTime = 0;
 		worker.postMessage({ type: 'importScripts', scripts: scripts.slice(1) });
@@ -875,8 +904,15 @@
 			}
 			if (msg.type === 'importScripts') {
 				worker.removeEventListener('message', onmessage);
+				worker.removeEventListener('error', errorHandler);
 				callback(worker);
 			}
+		}
+		// catch entry script loading error and other unhandled errors
+		worker.addEventListener('error', errorHandler);
+		function errorHandler(err) {
+			worker.terminate();
+			onerror(err);
 		}
 	}
 
@@ -907,14 +943,24 @@
 				createZipWriter(writer, callback, onerror, dontDeflate);
 			}, onerror);
 		},
-		// Path to the directory containing z-worker.js (defaults to location of this script).
-		workerScriptsPath: '',
-		// Scripts to be loaded in the Web Worker using importScripts(). These are resolved relative to z-worker.js
-		workerScripts : {
-			deflater: ['deflate.js'],
-			inflater: ['inflate.js']
-		},
-		useWebWorkers : true
+		useWebWorkers : true,
+		/**
+		 * Directory containing the default worker scripts (z-worker.js, deflate.js, and inflate.js), relative to current base url.
+		 * E.g.: zip.workerScripts = './';
+		 */
+		workerScriptsPath : null,
+		/**
+		 * Advanced option to control which scripts are loaded in the Web worker. If this option is specified, then workerScriptsPath must not be set.
+		 * workerScripts.deflater/workerScripts.inflater should be arrays of urls to scripts for deflater/inflater, respectively.
+		 * Scripts in the array are executed in order, and the first one should be z-worker.js, which is used to start the worker.
+		 * All urls are relative to current base url.
+		 * E.g.:
+		 * zip.workerScripts = {
+		 *   deflater: ['z-worker.js', 'deflate.js'],
+		 *   inflater: ['z-worker.js', 'inflate.js']
+		 * };
+		 */
+		workerScripts : null,
 	};
 
 })(this);
