@@ -555,12 +555,11 @@ function loadComic(callback, step, metaData) {
 	}, 100);
 
 	var pos = -1,
-		skipCount = 0,
-		skipStreak = 0,
+		dualPageProofCount = 0,
 		numLength = String(l - 1).length,
-		nextPage = function(callback) {
+		nextPage = function(callback, mode) {
 			clearTimeout(noChangeTimeout);
-			pos++;
+			var targetPage = ++pos;
 			if(pos >= l) {
 				changeWaiter = null;
 				end();
@@ -579,18 +578,40 @@ function loadComic(callback, step, metaData) {
 					var canvasContainer = dom.canvasContainer;
 
 					if(changeWaiter === callback) {
+						(function waitAgain() {
+							noChangeTimeout = setTimeout(function() {
+								if(changeWaiter === callback && canvasContainer === dom.canvasContainer) {
+									if(dom.isLoading() || !dom.isActivePage(fig))
+										waitAgain();
+									else if(mode === "back")
+										nextPage(callback, "forward");
+									else if(mode === "forward") {
+										dualPageProofCount++;
+										changeWaiter = null;
+										callback(true);
+									}
+									else if(dualPageProofCount > 1 && mode !== "noskip") {
+										nextPage(callback, "noskip");
+									}
+									else {
+										// => Try opening the page again by going back and then forward:
+										pos = targetPage === 0 ? l - 1 : targetPage - 2;
+										nextPage(function(dualPageAssumed) {
+											// If the previous nextPage call caused skipping to the target page, use it:
+											if(pos === targetPage && !dualPageAssumed)
+												callback();
+											else {
+												// Skip page if dual page is assumed:
+												pos = dualPageAssumed ? targetPage : targetPage - 1;
 
-						// Delay page skips if they occurred rarely so far or more than one in a row:
-						var delayFactor = Math.min(skipCount / pos, 1) > 0.3 && skipStreak < 2 ? 1 : 2;
+												nextPage(callback);
+											}
+										}, "back");
+									}
+								}
+							}, settings.pageSkipDelay);
+						}());
 
-						noChangeTimeout = setTimeout(function() {
-							if(changeWaiter === callback && !dom.isLoading() && dom.isActivePage(fig) && canvasContainer === dom.canvasContainer) {
-								changeWaiter = null;
-								skipCount++;
-								skipStreak++;
-								nextPage(callback);
-							}
-						}, settings.pageSkipDelay * delayFactor);
 						realClick(fig);
 					}
 				});
@@ -602,7 +623,6 @@ function loadComic(callback, step, metaData) {
 		interval = function() {
 			nextPage(function() {
 				getOpenedPage(function(page) {
-					skipStreak = 0;
 					port.send({
 						what: "add_page",
 						page: (settings.container != 2 ? page : null),
