@@ -551,66 +551,73 @@ function loadComic(callback, step, metaData) {
 
 	if(!dom.getCanvasContainer() || dom.loaderVisible() || !dom.countCanvas()) // delay download if comic isn't displayed yet => reader not ready, first page is not loaded yet, first page is not displayed yet
 		return setTimeout(function() {
-		loadComic(callback, step, metaData);
-	}, 100);
+			loadComic(callback, step, metaData);
+		}, 100);
 
 	var pos = -1,
 		dualPageProofCount = 0,
 		numLength = String(l - 1).length,
 		nextPage = function(callback, mode) {
-			clearTimeout(noChangeTimeout);
 			var targetPage = ++pos;
+
+			clearTimeout(noChangeTimeout);
+
+			if(changeWaiter)
+				changeWaiter.killed = true;
+
 			if(pos >= l) {
-				changeWaiter = null;
 				end();
 				return;
 			}
 			var fig = dom.pages[pos];
 			if(dom.isActivePage(fig)) {
-				changeWaiter = null;
 				callback();
 			}
 			else {
-				changeWaiter = callback;
+				callback = changeWaiter = callback.bind(); // to remove killed or toBeHandled properties
 				// Guarantee that at least settings.pageSwapDelay ms have passed between this and last swap:
 				swapPage(function() {
-					// Only swap if no other actor already swapped pages:
-					var canvasContainer = dom.canvasContainer;
+					function tryAgain() {
+						// => Try opening the page again by going back and then forward:
+						pos = targetPage === 0 ? l - 2 : targetPage - 2;
+						nextPage(function(dualPageAssumed) {
+							// If the previous nextPage call caused skipping to the target page, use it:
+							if(pos === targetPage && !dualPageAssumed)
+								callback();
+							else {
+								// Skip page if dual page is assumed:
+								pos = dualPageAssumed ? targetPage : targetPage - 1;
+
+								nextPage(callback);
+							}
+						}, "back");
+					}
 
 					if(changeWaiter === callback) {
-						(function waitAgain() {
+						(function waitAgain(i) {
 							noChangeTimeout = setTimeout(function() {
-								if(changeWaiter === callback && canvasContainer === dom.canvasContainer) {
-									if(dom.isLoading() || !dom.isActivePage(fig))
-										waitAgain();
+								if(changeWaiter === callback) {
+									if(dom.isLoading() || !dom.isActivePage(fig)) {
+										if(i < 5)
+											waitAgain(i + 1);
+										else
+											tryAgain();
+									}
 									else if(mode === "back")
 										nextPage(callback, "forward");
 									else if(mode === "forward") {
 										dualPageProofCount++;
-										changeWaiter = null;
+										callback.killed = true;
 										callback(true);
 									}
 									else if(dualPageProofCount > 1 && mode !== "noskip") {
 										nextPage(callback, "noskip");
 									}
-									else {
-										// => Try opening the page again by going back and then forward:
-										pos = targetPage === 0 ? l - 1 : targetPage - 2;
-										nextPage(function(dualPageAssumed) {
-											// If the previous nextPage call caused skipping to the target page, use it:
-											if(pos === targetPage && !dualPageAssumed)
-												callback();
-											else {
-												// Skip page if dual page is assumed:
-												pos = dualPageAssumed ? targetPage : targetPage - 1;
-
-												nextPage(callback);
-											}
-										}, "back");
-									}
+									else
+										tryAgain();
 								}
 							}, settings.pageSkipDelay);
-						}());
+						}(1));
 
 						realClick(fig);
 					}
@@ -670,17 +677,19 @@ function loadComic(callback, step, metaData) {
 			}
 		},
 		rmListener = function() {
-			clearTimeout(noChangeTimeout);
 			var container = dom.canvasContainer,
 				waiter = changeWaiter;
 
-			if(typeof waiter === "function" && (!dom.countCanvas() || !dom.isVisible(container))) {
-				changeWaiter = null;
+			if(typeof waiter === "function" && !waiter.killed && !waiter.toBeHandled && (!dom.countCanvas() || !dom.isVisible(container))) {
+				waiter.toBeHandled = true;
+
 				(function check() {
-					if(container === dom.getCanvasContainer())
+					if(container === dom.getCanvasContainer() || dom.isLoading())
 						setTimeout(check, 100);
-					else
+					else if(!waiter.killed) {
+						clearTimeout(noChangeTimeout);
 						waiter();
+					}
 				}());
 			}
 		},
@@ -715,9 +724,8 @@ function loadComic(callback, step, metaData) {
 		pos = settings.start ? Math.max(firstPage - 1, -1) : -1;
 		if(dom.onepageButton != null && !dom.isActiveOnepageButton())
 			realClick(dom.onepageButton);
-		pageLoaded(function() {
-			start();
-		});
+
+		pageLoaded(start);
 	});
 }
 
@@ -732,7 +740,7 @@ function getName() {
 			3: "-",
 			4: ""
 		}[settings.filename];
-		return(getName.title = sanitizeFilename(title[0].innerHTML.substr(0, title[0].innerHTML.lastIndexOf("-")).trim(), spaceReplacement) || "comic");
+		return (getName.title = sanitizeFilename(title[0].innerHTML.substr(0, title[0].innerHTML.lastIndexOf("-")).trim(), spaceReplacement) || "comic");
 	}
 	return "comic";
 }
@@ -740,7 +748,7 @@ getName.title = null;
 
 function getUsername() {
 	var reader = document.getElementById("reader");
-	return(reader && reader.getAttribute("data-username")) || "";
+	return (reader && reader.getAttribute("data-username")) || "";
 }
 
 function getUsernameImage(ctx, w, h) {
@@ -814,7 +822,6 @@ function pageLoaded(callback) {
 // get data URL of the currently opened page in the reader (async! result is given to callback)
 function getOpenedPage(callback) {
 	pageLoaded(function() {
-
 		var view = dom.getCanvasContainer(),
 			canvasOnThisPage = dom.canvasElements;
 
