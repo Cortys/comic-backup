@@ -34,7 +34,7 @@
 		"run_at": "document_start"
 	}, {
 		"matches": ["*://www.comixology.com/comic-reader/*", "*://www.comixology.eu/comic-reader/*", "*://www.comixology.co.uk/comic-reader/*", "*://www.comixology.fr/comic-reader/*", "*://www.comixology.de/comic-reader/*", "*://comicstore.marvel.com/comic-reader/*", "*://www.readdcentertainment.com/comic-reader/*"],
-		"js": ["HackTimer.js", "diffMatchPatch.js", "common.js", "comicReader.js"],
+		"js": ["HackTimer.js", "diffMatchPatch.js", "common.js", "throttleBlocker.js", "comicReader.js"],
 		"run_at": "document_idle"
 	}, {
 		"matches": ["*://www.comixology.com/my-*", "*://www.comixology.eu/my-*", "*://www.comixology.co.uk/my-*", "*://www.comixology.fr/my-*", "*://www.comixology.de/my-*", "*://comicstore.marvel.com/my-*", "*://www.readdcentertainment.com/my-*", "*://www.comixology.com/wishlists*", "*://www.comixology.eu/wishlists", "*://www.comixology.co.uk/wishlists", "*://www.comixology.fr/wishlists", "*://www.comixology.de/wishlists", "*://comicstore.marvel.com/wishlists", "*://www.readdcentertainment.com/wishlists"],
