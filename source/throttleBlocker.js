@@ -1,8 +1,10 @@
 "use strict";
 
-(function() {
-	if(typeof AudioContext !== "function")
+function throttleBlocker() {
+	if(typeof AudioContext !== "function" || throttleBlocker.active)
 		return;
+
+	throttleBlocker.active = true;
 
 	var ctx = new AudioContext();
 	var o = ctx.createOscillator();
@@ -14,5 +16,6 @@
 
 	o.connect(g);
 	g.connect(ctx.destination);
+
 	o.start();
-}());
+}

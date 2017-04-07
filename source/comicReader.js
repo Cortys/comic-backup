@@ -531,7 +531,7 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 
 // download the opened comic. a callback and a step function can be used.
 function loadComic(callback, step, metaData) {
-
+	throttleBlocker();
 	addTopBar();
 	overlay.style.display = "block";
 
