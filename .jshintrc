@@ -29,6 +29,8 @@
 		"TEMPORARY": true,
 		"current_version": true,
 		"MetaData": true,
-		"toastr": true
+		"toastr": true,
+		"throttleBlocker": true,
+		"AudioContext": true
 	}
 }
