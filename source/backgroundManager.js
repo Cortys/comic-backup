@@ -37,38 +37,8 @@ var ports = { // stores all opened connections of tabs to bg page: key = tab id,
 			delete openers[sender];
 		}
 	},
-	requestFileSystem = window.requestFileSystem || window.webkitRequestFileSystem,
-	fs = null,
 	getWriter = function(callback) {
-		var tmpName, run;
-		if(!settings.tempMemory || !requestFileSystem) {
-			callback(new zip.BlobWriter("application/" + (settings.container ? "zip" : "x-cbz")));
-			fs = null;
-		}
-		else {
-			run = function() {
-				tmpName = "tmp" + (Date.now()) + ".zip";
-
-				function create() {
-					fs.root.getFile(tmpName, {
-						create: true
-					}, function(zipFile) {
-						callback(new zip.FileWriter(zipFile), zipFile);
-					});
-				}
-				fs.root.getFile(tmpName, null, function() {
-					run();
-				}, create);
-			};
-
-			if(!fs)
-				requestFileSystem(TEMPORARY, 4 * 1024 * 1024 * 1024, function(f) {
-					fs = f;
-					run();
-				});
-			else
-				run();
-		}
+		callback(new zip.BlobWriter("application/" + (settings.container ? "zip" : "x-cbz")));
 	};
 
 getSettings(function() {
