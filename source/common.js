@@ -348,7 +348,7 @@ function downloadFile(name, data, overwrite, callback) { // overwrite is not use
 	if(chrome.downloads) {
 		chrome.downloads.download({
 			url: data,
-			filename: name,
+			filename: settings.directory + name,
 			method: "GET",
 			conflictAction: (overwrite ? "overwrite" : "uniquify")
 		}, function(downloadId) {

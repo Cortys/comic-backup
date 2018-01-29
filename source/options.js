@@ -15,7 +15,9 @@ for(var i = 0; i < selects.length; i++)
 					toastr.success("Changes saved.");
 
 				if(e.id === "updateServer")
-					o[e.id] = e.value.charAt(e.value.length - 1) == "/" ? e.value.substr(0, e.value.length - 1) : e.value;
+					o[e.id] = e.value.charAt(e.value.length - 1) === "/" ? e.value.substr(0, e.value.length - 1) : e.value;
+				else if(e.id === "directory")
+                    o[e.id] = e.value.charAt(e.value.length - 1) !== "/" ? e.value + "/" : e.value;
 				else {
 					o[e.id] = e.value * 1;
 					if(!Number.isFinite(o[e.id]))
