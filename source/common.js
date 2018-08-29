@@ -346,9 +346,11 @@ connector.onConnect = {
 // Download files:
 function downloadFile(name, data, overwrite, callback) { // overwrite is not used currently
 	if(chrome.downloads) {
+		var filename = (settings.directory || "") + name;
+		
 		chrome.downloads.download({
-			url: data,
-			filename: (settings.directory || "") + name,
+			url: data + "#comic-backup/" + filename,
+			filename: filename,
 			method: "GET",
 			conflictAction: (overwrite ? "overwrite" : "uniquify")
 		}, function(downloadId) {
