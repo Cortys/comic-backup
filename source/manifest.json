@@ -3,7 +3,7 @@
 
 	"name": "Comic Backup",
 	"description": "Save your comics as standard CBZ files.",
-	"version": "2.4.1",
+	"version": "2.4.0",
 	"minimum_chrome_version": "41",
 
 	"icons": {
@@ -42,7 +42,7 @@
 		"run_at": "document_end"
 	}],
 
-	"options_page": "options.html",
+	"options_page": "options/options.html",
 
 	"web_accessible_resources": ["blankLogo.png"]
 }
