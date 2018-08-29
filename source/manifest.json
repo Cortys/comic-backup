@@ -42,7 +42,7 @@
 		"run_at": "document_end"
 	}],
 
-	"options_page": "options.html",
+	"options_page": "options/options.html",
 
 	"web_accessible_resources": ["blankLogo.png"]
 }

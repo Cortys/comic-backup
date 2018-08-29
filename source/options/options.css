@@ -1,0 +1,114 @@
+@font-face {
+	font-family: League-Gothic;
+	src: url("League-Gothic.otf") format("opentype");
+}
+
+body {
+	text-align: center;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	line-height: 50px;
+	cursor: default;
+	font-size: 14px;
+	margin: 0;
+	padding: 0;
+	padding-bottom: 40px;
+	color: #3b3a3a;
+}
+
+#content {
+	margin: 0;
+	padding: 0;
+	visibility: hidden;
+}
+
+h1 {
+	margin-top: 0;
+	margin-bottom: 20px;
+	padding: 0;
+	height: 200px;
+	background-image: linear-gradient(-180deg, #3583AE 0%, #2DAF7E 100%);
+}
+
+h1 img {
+	width: 200px;
+	height: 200px;
+}
+
+h2 {
+	color: #3583ae;
+	font-size: 35px;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	font-family: League-Gothic, Courier;
+	text-shadow: 1px 1px 0 #ffffff, 3px 3px 0 #2daf7e;
+	margin-top: 30px;
+	margin-bottom: 10px;
+}
+
+select, input {
+	background: #eddfca;
+	border-radius: 3px;
+	background-image: linear-gradient(-180deg, #FCF8F2 0%, #DDBA89 61%);
+	border: 2px solid #3B3A3A;
+	font-size: 13px;
+	outline: none;
+	padding: 5px;
+	text-align: center;
+}
+select:active, input:active, input:focus {
+	box-shadow: 0 0 10px #3b3a3a;
+}
+
+input[type=text] {
+	background: #ffffff;
+	color: #3b3a3a;
+	text-align: left;
+	background-image: none;
+	width: 350px;
+	border-width: 1px;
+}
+
+.aligner input[type=text] {
+	width: 200px;
+}
+
+p, section {
+	position: relative;
+	width: 600px;
+	margin: 10px auto;
+	line-height: 20px;
+}
+
+section {
+	margin-top: 40px;
+	text-align: justify;
+}
+
+div.aligner {
+	position: relative;
+	display: inline-block;
+	min-width: 240px;
+	margin: 0 5px;
+	text-align: right;
+}
+div.aligner.r {
+	text-align: left;
+}
+
+#pageSwapDelay, #pageSkipDelay {
+	width: 50px;
+	text-align: right;
+}
+
+#credits {
+	font-size: 10px;
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	text-decoration: none;
+	color: #3ef4b1;
+	line-height: 12px;
+}
+#credits:hover {
+	color: #ffffff;
+}
