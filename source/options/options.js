@@ -19,7 +19,7 @@ for(var i = 0; i < selects.length; i++)
 				else if(e.id === "directory")
 					o[e.id] = e.value.length > 1 && e.value.charAt(e.value.length - 1) !== "/" ? e.value + "/" : e.value;
 				else {
-					o[e.id] = e.value * 1;
+					o[e.id] = +e.value;
 					if(!Number.isFinite(o[e.id]))
 						return;
 					if((e.id === "pageSwapDelay" || e.id === "pageSkipDelay") && o[e.id] < 0)
@@ -51,7 +51,7 @@ for(var i = 0; i < selects.length; i++)
 			});
 		};
 
-		if(e.id == "selectors")
+		if(e.id === "selectors")
 			chrome.storage.local.get(["scannedOnce", "selectors"], function(a) {
 				if(!a.scannedOnce) {
 					var p = document.createElement("p");
@@ -62,6 +62,13 @@ for(var i = 0; i < selects.length; i++)
 				if(a.selectors == null)
 					e.value = 1;
 	
+				f();
+			});
+		else if(e.id === "updateServer")
+			chrome.storage.local.get(["updateServer"], function(a) {
+				if(a.updateServer == null)
+					e.value = "https://raw.githubusercontent.com/Cortys/comic-backup/master";
+
 				f();
 			});
 		else

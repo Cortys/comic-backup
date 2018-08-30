@@ -1,6 +1,7 @@
 "use strict";
 
-var current_version = 121,
+var currentVersion = 121,
+	defaultUpdateServer = "https://raw.githubusercontent.com/Cortys/comic-backup/master",
 	div, linkStyle = "color:#ffffff;font-weight:bold;background:linear-gradient(to bottom, rgb(115, 152, 200) 0%,rgb(179, 206, 233) 1%,rgb(82, 142, 204) 5%,rgb(79, 137, 200) 20%,rgb(66, 120, 184) 50%,rgb(49, 97, 161) 100%);padding:3px;text-decoration:none;display:inline-block;width:70px;text-align:center;height:22px;box-sizing:border-box;line-height:14px;border:1px solid rgb(49,96,166);",
 	settings;
 
@@ -45,8 +46,8 @@ function nullFill(num, len) {
 // checks for updates and calls callback with true = new update available or false = no updates
 function checkVersion(callback) {
 	var xhr = new XMLHttpRequest();
-	if(settings.updateServer) {
-		xhr.open("GET", settings.updateServer + "/version", true);
+	if(settings.updateServer != "") {
+		xhr.open("GET", (settings.updateServer || defaultUpdateServer) + "/version", true);
 		xhr.responseType = 'text';
 
 		xhr.onreadystatechange = function() {
@@ -54,8 +55,10 @@ function checkVersion(callback) {
 			if(xhr.readyState == 4) {
 				if(xhr.status != 200)
 					callback(false);
-				var version = this.response * 1;
-				if(version > current_version)
+
+				var version = +this.response;
+
+				if(version > currentVersion)
 					callback(true);
 				else
 					callback(false);
@@ -101,7 +104,7 @@ function updateDialog() {
 			addTopBar();
 			div.style.top = 0;
 			div.style.marginTop = 0;
-			div.innerHTML = "This version of the \"Comic Backup\" extension is outdated.<br><a href=\"" + settings.updateServer + "/download.zip\" style='" + linkStyle + "' target='_blank'>Update</a>";
+			div.innerHTML = "This version of the Comic Backup extension is outdated.<br><a href=\"" + (settings.updateServer || defaultUpdateServer) + "/download.zip\" style='" + linkStyle + "'>Update</a>";
 		}
 	});
 }

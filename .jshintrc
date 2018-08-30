@@ -27,7 +27,7 @@
 		"Queue": true,
 		"chrome": true,
 		"TEMPORARY": true,
-		"current_version": true,
+		"currentVersion": true,
 		"MetaData": true,
 		"toastr": true,
 		"throttleBlocker": true,

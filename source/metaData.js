@@ -10,7 +10,7 @@ function MetaData() {
 	//This object will contain the actual metadata in a format
 	//that should allow easy download via STRINGIFY
 	this.JSONMD = {
-		appID: "Comic Backup/" + current_version,
+		appID: "Comic Backup/" + currentVersion,
 		lastModified: new Date().toISOString().replace(/T|Z/g, " ") + "+0000",
 		"ComicBookInfo/1.0": {
 			series: "",
