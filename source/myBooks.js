@@ -293,10 +293,17 @@ Download.prototype = {
 			}
 
 			for(var key in style) {
-				if(style[key] == null)
+				var val = style[key];
+				
+				if(val == null)
 					entry.button.style.removeProperty(key);
 				else
-					entry.button.style.setProperty(key, style[key]);
+					entry.button.style.setProperty(
+						key,
+						typeof val === "function"
+							? val(window.getComputedStyle(entry.button).getPropertyValue(key))
+							: val
+					);
 			}
 		}
 		this.currentButtonUI = arguments;
@@ -306,16 +313,16 @@ Download.prototype = {
 	showQueued() {
 		this.setButtonUI("Queued", {
 			background: null,
-			"padding-left": "10px",
-			"padding-right": "10px",
+			"padding-left": minPxVal("10px"),
+			"padding-right": minPxVal("10px"),
 			filter: "hue-rotate(220deg)"
 		}, true);
 	},
 	showPrepare() {
 		this.setButtonUI("Preparing", {
 			background: null,
-			"padding-left": "2px",
-			"padding-right": "2px",
+			"padding-left": minPxVal("2px"),
+			"padding-right": minPxVal("2px"),
 			filter: "hue-rotate(245deg)"
 		}, true);
 	},
@@ -339,8 +346,8 @@ Download.prototype = {
 	showDone() {
 		this.setButtonUI("Rescan", {
 			background: null,
-			"padding-left": "10px",
-			"padding-right": "10px",
+			"padding-left": minPxVal("10px"),
+			"padding-right": minPxVal("10px"),
 			filter: "hue-rotate(280deg)"
 		}, false);
 	},
@@ -355,16 +362,16 @@ Download.prototype = {
 	showZipping() {
 		this.setButtonUI("Zipping", {
 			background: null,
-			"padding-left": "10px",
-			"padding-right": "10px",
+			"padding-left": minPxVal("10px"),
+			"padding-right": minPxVal("10px"),
 			filter: "hue-rotate(260deg)"
 		}, true);
 	},
 	showSaving() {
 		this.setButtonUI("Saving", {
 			background: null,
-			"padding-left": "10px",
-			"padding-right": "10px",
+			"padding-left": minPxVal("10px"),
+			"padding-right": minPxVal("10px"),
 			filter: "hue-rotate(270deg)"
 		}, false);
 	},

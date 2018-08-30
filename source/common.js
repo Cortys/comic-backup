@@ -109,6 +109,16 @@ function updateDialog() {
 if(typeof Element.prototype.matches !== "function")
 	Element.prototype.matches = Element.prototype.webkitMatchesSelector;
 
+function minPxVal(a) {
+	var aNum = +(""+a).split("px", 1)[0];
+	
+	return function(b) {
+		var bNum = +(""+b).split("px", 1)[0];
+		
+		return bNum == null || aNum < bNum ? a : b;
+	};
+}
+
 // Converts an RGB (0-255) color value to HSL (0-1)
 function rgbToHsl(r, g, b) {
 	r /= 255;
