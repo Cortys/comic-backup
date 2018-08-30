@@ -1,7 +1,6 @@
 "use strict";
 
 getSettings(function() {
-
 	if(!settings.queueLength)
 		settings.queueLength = 1;
 
@@ -109,7 +108,6 @@ Download.prototype = {
 	currentButtonUI: null,
 
 	get stale() {
-
 		this.cleanUp();
 
 		return this.buttons.size === 0 && !this.downloading && !this.queued;
@@ -123,7 +121,6 @@ Download.prototype = {
 	},
 
 	show(button) {
-
 		if(button.href !== this.comicHref || this.buttons.has(button)) // after switching pages via ajax new button html elements are created, those will be linked to the internal download object
 			return;
 
@@ -152,7 +149,7 @@ Download.prototype = {
 			text: clone.querySelector("span.text." + randomId),
 			progressBG: "linear-gradient(to right, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.4) {X}%, rgba(0,0,0,0) {X}%, rgba(0,0,0,0) 100%), " + buttonComputedStyle.background
 		});
-		if(settings.selectors) {
+		if(settings.selectors || settings.selectors == null) {
 			clone.addEventListener("click", function() {
 				this[this.cancelable ? "cancel" : "start"]();
 			}.bind(this), false);

@@ -52,15 +52,17 @@ for(var i = 0; i < selects.length; i++)
 		};
 
 		if(e.id == "selectors")
-			chrome.storage.local.get(["scannedOnce"], function(a) {
+			chrome.storage.local.get(["scannedOnce", "selectors"], function(a) {
 				if(!a.scannedOnce) {
-					e.setAttribute("disabled", "1");
 					var p = document.createElement("p");
-					p.innerHTML = "You have to do at least one scan before this can be disabled.";
+					p.innerHTML = "<i>Currently using the exploit preset. This can become outdated if the reader is updated.</i>";
 					document.body.appendChild(p);
 				}
-				else
-					f();
+				
+				if(a.selectors == null)
+					e.value = 1;
+	
+				f();
 			});
 		else
 			f();

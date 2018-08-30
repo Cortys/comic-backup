@@ -64,12 +64,10 @@ getSettings(function() {
 		what: "is_child"
 	}, function(isChild) { // tab opened by extension -> autorun / else -> show bar
 		if(!isChild) {
-			if(!settings.selectors)
+			if(!settings.selectors && settings.selectors != null)
 				displayExploitBar();
 			return;
 		}
-
-		renderFaviconPercentage(0);
 
 		port.send({
 			what: "message_to_opener",
@@ -78,8 +76,10 @@ getSettings(function() {
 				data: getName()
 			}
 		}, function(start) {
-			if(start)
-				if(start.download)
+			if(start) {
+				if(start.download) {
+					renderFaviconPercentage(0);
+					
 					loadComic(function(err) {
 						port.send({
 							what: "message_to_opener",
@@ -96,13 +96,14 @@ getSettings(function() {
 							}
 						});
 					}, start.metaData);
+				}
 				else if(start.exploit) {
-				port.send({
-					what: "unlink_from_opener"
-				});
-				setupSelectors();
+					port.send({
+						what: "unlink_from_opener"
+					});
+					setupSelectors();
+				}
 			}
-
 		});
 	});
 });
@@ -271,6 +272,16 @@ function realClick(e) { // simulate a "real" click on given DOMElement e (can't 
 	e.dispatchEvent(evt);
 }
 
+var scanPresets = {
+	selectorActiveOnepageButton: "#onepage-btn.active",
+	selectorActivePage: "#thumbnails-list > LI > FIGURE.active",
+	selectorBrowseButton: "#browse-btn > IMG",
+	selectorOnepageButton: "#onepage-btn",
+	selectorPages: "#thumbnails-list > LI > FIGURE",
+	pagenumAttr: "data-pagenumber",
+	pagenumCorrection: 0
+};
+
 var dom = { // stores DOM elements of the reader page. All DOM calls go here. No queries elsewhere to make it easier to adapt to reader changes.
 	pagesCached: null,
 	canvasContainer: null,
@@ -284,7 +295,7 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 	get pages() {
 		return(this.pagesCached = this.pagesCached) || function() {
 
-			var pages = document.querySelectorAll(settings.selectorPages);
+			var pages = document.querySelectorAll(settings.selectorPages || scanPresets.selectorPages);
 
 			if(pages.length > 1 && pages[0].getAttribute(this.pagenumAttr) * 1 > pages[pages.length - 1].getAttribute(this.pagenumAttr) * 1)
 				pages = Array.prototype.slice.call(pages, 0).reverse();
@@ -293,7 +304,7 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 		}.call(this);
 	},
 	get activePage() {
-		return document.querySelector(settings.selectorActivePage);
+		return document.querySelector(settings.selectorActivePage || scanPresets.selectorActivePage);
 	},
 
 	loopCanvasContainers(f) {
@@ -324,19 +335,19 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 		return this.canvasContainer.querySelectorAll("canvas");
 	},
 	get browseButton() {
-		return(this.browseButtonCached = this.browseButtonCached) || document.querySelector(settings.selectorBrowseButton);
+		return(this.browseButtonCached = this.browseButtonCached) || document.querySelector(settings.selectorBrowseButton || scanPresets.selectorBrowseButton);
 	},
 	get onepageButton() {
-		return(this.onepageButtonCached = this.onepageButtonCached) || document.querySelector(settings.selectorOnepageButton);
+		return(this.onepageButtonCached = this.onepageButtonCached) || document.querySelector(settings.selectorOnepageButton || scanPresets.selectorOnepageButton);
 	},
 	get activeOnepageButton() {
-		return document.querySelector(settings.selectorActiveOnepageButton);
+		return document.querySelector(settings.selectorActiveOnepageButton || scanPresets.selectorActiveOnepageButton);
 	},
 	get pagenumAttr() {
-		return settings.pagenumAttr;
+		return settings.pagenumAttr || scanPresets.pagenumAttr;
 	},
 	get pagenumCorrection() {
-		return settings.pagenumCorrection;
+		return settings.pagenumCorrection != null ? settings.pagenumCorrection : scanPresets.pagenumCorrection;
 	},
 	get loader() {
 		return document.querySelectorAll(".loading");
@@ -347,10 +358,10 @@ var dom = { // stores DOM elements of the reader page. All DOM calls go here. No
 		}, false);
 	},
 	isActivePage(page) {
-		return page.matches(settings.selectorActivePage);
+		return page.matches(settings.selectorActivePage || scanPresets.selectorActivePage);
 	},
 	isActiveOnepageButton() {
-		return this.onepageButton.matches(settings.selectorActiveOnepageButton);
+		return this.onepageButton.matches(settings.selectorActiveOnepageButton || scanPresets.selectorActiveOnepageButton);
 	},
 	countCanvas() {
 		return this.canvasElements.length;
@@ -530,7 +541,7 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 }
 
 // download the opened comic. a callback and a step function can be used.
-function loadComic(callback, step, metaData) {
+function loadComic(callback, step, metaData) {	
 	throttleBlocker();
 	addTopBar();
 	overlay.style.display = "block";
