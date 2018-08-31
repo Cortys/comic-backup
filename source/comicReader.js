@@ -139,7 +139,7 @@ function renderFaviconPercentage(perc) {
 
 	if(perc < 1) {
 		ctx.globalCompositeOperation = "source-over";
-		ctx.fillStyle = "#000000";
+		ctx.fillStyle = settings.faviconColor ? "#ffffff" : "#000000";
 		ctx.font = "13px Arial";
 		ctx.textAlign = "center";
 		ctx.textBaseline = "middle";
