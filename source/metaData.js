@@ -21,7 +21,7 @@ function MetaData() {
 			issue: "",
 			numberOfIssues: "",
 			volume: "",
-			nubmerOfVolumes: "",
+			numberOfVolumes: "",
 			rating: "",
 			genre: "",
 			language: "",
