@@ -79,7 +79,7 @@ getSettings(function() {
 			if(start) {
 				if(start.download) {
 					renderFaviconPercentage(0);
-					
+
 					loadComic(function(err) {
 						port.send({
 							what: "message_to_opener",
@@ -541,7 +541,7 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 }
 
 // download the opened comic. a callback and a step function can be used.
-function loadComic(callback, step, metaData) {	
+function loadComic(callback, step, metaData) {
 	throttleBlocker();
 	addTopBar();
 	overlay.style.display = "block";
@@ -645,6 +645,26 @@ function loadComic(callback, step, metaData) {
 						what: "add_page",
 						page: (settings.container != 2 ? page : null),
 						i: pos,
+						len: numLength,
+						extension: (settings.page ? "png" : "jpeg"),
+						toZip: (settings.container != 2)
+					}, function(result) {
+						if(settings.container == 2)
+							downloadData(getName() + "/" + result.name, page, true);
+
+						var floatingPerc = (pos + 1) / l,
+							perc = Math.round(floatingPerc * 100);
+						div.getElementsByTagName("span")[0].innerHTML = perc;
+						renderFaviconPercentage(floatingPerc);
+						step(perc);
+						interval();
+					});
+				},
+				function(page) {
+					port.send({
+						what: "add_page",
+						page: (settings.container != 2 ? page : null),
+						i: pos-1,
 						len: numLength,
 						extension: (settings.page ? "png" : "jpeg"),
 						toZip: (settings.container != 2)
@@ -831,7 +851,7 @@ function pageLoaded(callback) {
 }
 
 // get data URL of the currently opened page in the reader (async! result is given to callback)
-function getOpenedPage(callback) {
+function getOpenedPage(callback, callback2) {
 	pageLoaded(function() {
 		var view = dom.getCanvasContainer(),
 			canvasOnThisPage = dom.canvasElements;
@@ -841,15 +861,39 @@ function getOpenedPage(callback) {
 			outCanvas = document.createElement('canvas'),
 			ctx = outCanvas.getContext('2d'),
 			canvas, data;
-		outCanvas.width = w;
-		outCanvas.height = h;
+			outCanvas.width = w;
+			outCanvas.height = h;
+
+			if(w > h) {
+				var outCanvas2 = document.createElement('canvas'),
+				ctx2 = outCanvas2.getContext('2d');
+				outCanvas.width = w/2;
+				outCanvas2.width = w/2;
+				outCanvas2.height = h;
+			}
+
 		for(var i = 0; i < canvasOnThisPage.length; i++) {
 			canvas = canvasOnThisPage[i];
-			ctx.drawImage(canvas, parseInt(canvas.style.left) || 0, parseInt(canvas.style.top) || 0, parseInt(canvas.style.width) || 0, parseInt(canvas.style.height) || 0);
+			if(w > h) {
+				ctx.drawImage(canvas, 0, 0, w/2, h, 0, 0, w/2, h);
+				ctx2.drawImage(canvas, w/2, 0 , w/2, h, 0, 0, w/2, h);
+			}
+			else {
+				ctx.drawImage(canvas, parseInt(canvas.style.left) || 0, parseInt(canvas.style.top) || 0, parseInt(canvas.style.width) || 0, parseInt(canvas.style.height) || 0);
+			}
 		}
 		data = getUsernameImage(ctx, w, h);
 		ctx.putImageData(data, w - data.width, h - data.height);
 
-		callback(outCanvas.toDataURL("image/" + (settings.page ? "png" : "jpeg")));
+		if(w > h) {
+			//console.log("Returning 2 pages");
+			callback(outCanvas.toDataURL("image/" + (settings.page ? "png" : "jpeg")));
+			callback2(outCanvas2.toDataURL("image/" + (settings.page ? "png" : "jpeg")));
+		}
+		else {
+			//console.log("Returning 1 page");
+			callback(outCanvas.toDataURL("image/" + (settings.page ? "png" : "jpeg")), null);
+		}
+
 	});
 }
