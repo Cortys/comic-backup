@@ -864,7 +864,7 @@ function getOpenedPage(callback, callback2) {
 			outCanvas.width = w;
 			outCanvas.height = h;
 
-			if(w > h) {
+			if(settings.pageSplit && w > h) {
 				var outCanvas2 = document.createElement('canvas'),
 				ctx2 = outCanvas2.getContext('2d');
 				outCanvas.width = w/2;
@@ -874,7 +874,7 @@ function getOpenedPage(callback, callback2) {
 
 		for(var i = 0; i < canvasOnThisPage.length; i++) {
 			canvas = canvasOnThisPage[i];
-			if(w > h) {
+			if(settings.pageSplit && w > h) {
 				ctx.drawImage(canvas, 0, 0, w/2, h, 0, 0, w/2, h);
 				ctx2.drawImage(canvas, w/2, 0 , w/2, h, 0, 0, w/2, h);
 			}
@@ -885,7 +885,7 @@ function getOpenedPage(callback, callback2) {
 		data = getUsernameImage(ctx, w, h);
 		ctx.putImageData(data, w - data.width, h - data.height);
 
-		if(w > h) {
+		if(settings.pageSplit && w > h) {
 			//console.log("Returning 2 pages");
 			callback(outCanvas.toDataURL("image/" + (settings.page ? "png" : "jpeg")));
 			callback2(outCanvas2.toDataURL("image/" + (settings.page ? "png" : "jpeg")));
