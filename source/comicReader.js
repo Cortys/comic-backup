@@ -864,19 +864,20 @@ function getOpenedPage(callback, callback2) {
 			outCanvas.width = w;
 			outCanvas.height = h;
 
+			//console.log("Width: ",w,"Height:",h);
 			if(w > h) {
 				var outCanvas2 = document.createElement('canvas'),
 				ctx2 = outCanvas2.getContext('2d');
 				outCanvas.width = w/2;
-				outCanvas2.width = w/2;
-				outCanvas2.height = h;
+				outCanvas2.width = outCanvas.width;
+				outCanvas2.height = outCanvas.height;
 			}
 
 		for(var i = 0; i < canvasOnThisPage.length; i++) {
 			canvas = canvasOnThisPage[i];
 			if(w > h) {
-				ctx.drawImage(canvas, 0, 0, w/2, h, 0, 0, w/2, h);
-				ctx2.drawImage(canvas, w/2, 0 , w/2, h, 0, 0, w/2, h);
+				ctx.drawImage(canvas, parseInt(canvas.style.left) || 0, parseInt(canvas.style.top) || 0, parseInt(canvas.style.width), parseInt(canvas.style.height) || 0);
+				ctx2.drawImage(canvas, (canvas.width/2) , 0, (canvas.width/2), (canvas.height), 0, 0, outCanvas2.width, outCanvas2.height);
 			}
 			else {
 				ctx.drawImage(canvas, parseInt(canvas.style.left) || 0, parseInt(canvas.style.top) || 0, parseInt(canvas.style.width) || 0, parseInt(canvas.style.height) || 0);
