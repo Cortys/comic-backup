@@ -25,7 +25,7 @@ function randomString(min, max) { // generates random alphanumeric string with a
 // Inspired by https://github.com/parshap/node-sanitize-filename.
 function sanitizeFilename(input, spaceReplacement) {
 	var result = input
-		.replace(/\s?[\/\\\|\?<>:\*\":]+\s?/g, " ")
+		.replace(/\s?[\/\\\|\?<>:\*\":~]+\s?/g, " ")
 		.replace(/[\x00-\x1f\x80-\x9f]/g, "")
 		.replace(/(\.|\s)+$/g, "")
 		.replace(/^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i, "");

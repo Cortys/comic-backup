@@ -71,7 +71,7 @@ getSettings(function() {
 						zip.createWriter(writer, function(writer) {
 							port.zip = writer;
 							port.user = request.user;
-							writer.add(".meta.asc", new zip.TextReader("This is a ComiXology backup.\nPlease do not distribute it.\nBackup created by " + (request.user || "[UNKNOWN USER]")));
+							writer.add(".meta.asc", new zip.TextReader("This is a ComiXology backup.\nPlease do not distribute it.\nBackup created by " + (request.user || "[UNKNOWN USER]")), function() {});
 							callback({
 								what: "new_zip_created",
 								error: false
