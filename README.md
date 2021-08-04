@@ -3,7 +3,7 @@ Comic Backup
 
 This is a Chrome/Chromium extension, that allows you to download all the comics you bought on ~~Comix~~ *a popular online comic platform* :wink:. After the installation you are able to download comics from any publisher. It should work on any OS where Chrome works.
 
-*IMPORTANT:* Do not use the extension for piracy! Only create private backups! We do not intend to compromise any comic platform. **Downloaded comics always have your username included. Distributed comics can be tracked back to you!**
+*IMPORTANT:* Do not use the extension for piracy! Only create private backups! We do not intend to compromise any comic platform. **Downloaded comics always have your username included. Distributed comics can be [tracked back](https://cortys.github.io/comic-backup/originCheck) to you!**
 
 Installation
 -----
