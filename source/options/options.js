@@ -10,21 +10,33 @@ for(var i = 0; i < selects.length; i++)
 			e.addEventListener("change", function() {
 				var o = {},
 					message = e.getAttribute("data-message");
-					toastr.remove();
-					/*This function will create a toast message every time the user does an action in the field options. */
-					toastr.success("Changes saved.");
+				toastr.remove();
 
 				if(e.id === "updateServer")
 					o[e.id] = e.value.charAt(e.value.length - 1) === "/" ? e.value.substr(0, e.value.length - 1) : e.value;
-				else if(e.id === "directory")
-					o[e.id] = e.value.length > 1 && e.value.charAt(e.value.length - 1) !== "/" ? e.value + "/" : e.value;
+				else if(e.id === "directory") {
+					var ev = e.value;
+					if(ev.match(/^\.|^([A-Za-z]:)|^(\\|\/)/g) != null) {
+						toastr.error("Invalid download directory.");
+						return;
+					}
+					ev = ev.replace(/\\/g, "/");
+					o[e.id] = ev.length > 1 && ev.charAt(ev.length - 1) !== "/" ? ev + "/" : ev;
+					e.value = o[e.id];
+				}
 				else {
 					o[e.id] = +e.value;
-					if(!Number.isFinite(o[e.id]))
+					if(!Number.isFinite(o[e.id])) {
+						toastr.error("Invalid number.");
 						return;
+					}
 					if((e.id === "pageSwapDelay" || e.id === "pageSkipDelay") && o[e.id] < 0)
 						o[e.id] = 0;
+					e.value = o[e.id];
 				}
+
+				/*This function will create a toast message every time the user does an action in the field options. */
+				toastr.success("Changes saved.");
 
 				if(message)
 					chrome.runtime.sendMessage({
@@ -58,10 +70,10 @@ for(var i = 0; i < selects.length; i++)
 					p.innerHTML = "<i>Currently using the exploit preset. This can become outdated if the reader is updated.</i>";
 					document.body.appendChild(p);
 				}
-				
+
 				if(a.selectors == null)
 					e.value = 1;
-	
+
 				f();
 			});
 		else if(e.id === "updateServer")

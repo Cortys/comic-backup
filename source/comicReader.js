@@ -79,7 +79,7 @@ getSettings(function() {
 			if(start) {
 				if(start.download) {
 					renderFaviconPercentage(0);
-					
+
 					loadComic(function(err) {
 						port.send({
 							what: "message_to_opener",
@@ -116,8 +116,7 @@ function renderFaviconPercentage(perc) {
 	}
 
 	var canvas = document.createElement('canvas'),
-		ctx = canvas.getContext('2d'),
-		data;
+		ctx = canvas.getContext('2d');
 
 	canvas.width = canvas.height = 32;
 
@@ -541,7 +540,7 @@ function setupSelectors() { // run a DOM scan to analyse how the reader DOM tree
 }
 
 // download the opened comic. a callback and a step function can be used.
-function loadComic(callback, step, metaData) {	
+function loadComic(callback, step, metaData) {
 	throttleBlocker();
 	addTopBar();
 	overlay.style.display = "block";

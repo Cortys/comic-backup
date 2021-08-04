@@ -25,7 +25,7 @@ The default update server URL is: `https://raw.githubusercontent.com/Cortys/comi
 
 ### Why it's not on Chrome Store?
 
-I am fairly certain comic platforms will, unfortunately, try to remove this extension from Chrome Store, because it goes around their DRM.
+I am fairly certain that *certain comic platforms* will, unfortunately, try to remove this extension from Chrome Store, because it goes around their DRM.
 
 How to use
 -----
