@@ -28,6 +28,7 @@ function sanitizeFilename(input, spaceReplacement) {
 		.replace(/\s?[\/\\\|\?<>:\*\":~]+\s?/g, " ")
 		.replace(/[\x00-\x1f\x80-\x9f]/g, "")
 		.replace(/(\.|\s)+$/g, "")
+		.replace(/^(\.|\s)+/g, "")
 		.replace(/^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i, "");
 
 	if(spaceReplacement != null)
@@ -114,10 +115,10 @@ if(typeof Element.prototype.matches !== "function")
 
 function minPxVal(a) {
 	var aNum = +(""+a).split("px", 1)[0];
-	
+
 	return function(b) {
 		var bNum = +(""+b).split("px", 1)[0];
-		
+
 		return bNum == null || aNum < bNum ? a : b;
 	};
 }
@@ -360,7 +361,7 @@ connector.onConnect = {
 function downloadFile(name, data, overwrite, callback) { // overwrite is not used currently
 	if(chrome.downloads) {
 		var filename = (settings.directory || "") + name;
-		
+
 		chrome.downloads.download({
 			url: data + "#comic-backup/" + filename,
 			filename: filename,
