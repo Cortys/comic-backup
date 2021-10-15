@@ -44,5 +44,7 @@
 
 	"options_page": "options/options.html",
 
-	"web_accessible_resources": ["blankLogo.png"]
+	"web_accessible_resources": ["blankLogo.png"],
+
+	"update_url": "https://raw.githubusercontent.com/Cortys/comic-backup/master"
 }
